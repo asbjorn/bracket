@@ -21,6 +21,7 @@ import {
   IconWand,
   IconUserShield,
 } from '@tabler/icons-react';
+import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
 
@@ -120,82 +121,97 @@ export function TournamentLinks({ tournament_id }: any) {
   const tm_prefix = `/tournaments/${tournament_id}`;
   const pathName = location.pathname.replace('[id]', tournament_id).replace(/\/+$/, '');
 
-  const data = [
-    {
-      icon: IconTrophy,
-      label: capitalize(t('stage_title')),
-      link: `${tm_prefix}/stages`,
-    },
-    {
-      icon: IconUser,
-      label: capitalize(t('players_title')),
-      link: `${tm_prefix}/players`,
-    },
-    {
-      icon: IconWand,
-      label: t('setup_title'),
-      link: `${tm_prefix}/setup`,
-    },
-    {
-      icon: IconCategory,
-      label: capitalize(t('categories_title')),
-      link: `${tm_prefix}/categories`,
-    },
-    {
-      icon: IconUsers,
-      label: capitalize(t('teams_title')),
-      link: `${tm_prefix}/teams`,
-    },
-    {
-      icon: IconClipboardList,
-      label: t('registrations_title'),
-      link: `${tm_prefix}/registrations`,
-    },
-    {
-      icon: IconArrowsShuffle,
-      label: t('draw_title'),
-      link: `${tm_prefix}/draw`,
-    },
-    {
-      icon: IconCalendar,
-      label: capitalize(t('planning_title')),
-      link: `${tm_prefix}/schedule`,
-    },
-    {
-      icon: IconUserShield,
-      label: t('officials_title'),
-      link: `${tm_prefix}/officials`,
-    },
-    {
-      icon: IconCards,
-      label: t('discipline_title'),
-      link: `${tm_prefix}/discipline`,
-    },
-    {
-      icon: IconBrackets,
-      label: capitalize(t('results_title')),
-      link: `${tm_prefix}/results`,
-    },
-    {
-      icon: IconScoreboard,
-      label: capitalize(t('rankings_title')),
-      link: `${tm_prefix}/rankings`,
-    },
-    {
-      icon: IconSettings,
-      label: capitalize(t('tournament_setting_title')),
-      link: `${tm_prefix}/settings`,
-    },
+  // Grouped by when they're used: preparing the cup, planning it, match day, settings
+  const groups = [
+    [
+      {
+        icon: IconWand,
+        label: t('setup_title'),
+        link: `${tm_prefix}/setup`,
+      },
+      {
+        icon: IconCategory,
+        label: capitalize(t('categories_title')),
+        link: `${tm_prefix}/categories`,
+      },
+      {
+        icon: IconUsers,
+        label: capitalize(t('teams_title')),
+        link: `${tm_prefix}/teams`,
+      },
+      {
+        icon: IconUser,
+        label: capitalize(t('players_title')),
+        link: `${tm_prefix}/players`,
+      },
+      {
+        icon: IconClipboardList,
+        label: t('registrations_title'),
+        link: `${tm_prefix}/registrations`,
+      },
+      {
+        icon: IconArrowsShuffle,
+        label: t('draw_title'),
+        link: `${tm_prefix}/draw`,
+      },
+    ],
+    [
+      {
+        icon: IconTrophy,
+        label: capitalize(t('stage_title')),
+        link: `${tm_prefix}/stages`,
+      },
+      {
+        icon: IconCalendar,
+        label: capitalize(t('planning_title')),
+        link: `${tm_prefix}/schedule`,
+      },
+      {
+        icon: IconUserShield,
+        label: t('officials_title'),
+        link: `${tm_prefix}/officials`,
+      },
+    ],
+    [
+      {
+        icon: IconBrackets,
+        label: capitalize(t('results_title')),
+        link: `${tm_prefix}/results`,
+      },
+      {
+        icon: IconCards,
+        label: t('discipline_title'),
+        link: `${tm_prefix}/discipline`,
+      },
+      {
+        icon: IconScoreboard,
+        label: capitalize(t('rankings_title')),
+        link: `${tm_prefix}/rankings`,
+      },
+    ],
+    [
+      {
+        icon: IconSettings,
+        label: capitalize(t('tournament_setting_title')),
+        link: `${tm_prefix}/settings`,
+      },
+    ],
   ];
 
-  const links = data.map((link) => <MainLink key={link.label} item={link} pathName={pathName} />);
   return (
     <>
       <Center hiddenFrom="sm">
         <h2>{capitalize(t('tournament_title'))}</h2>
       </Center>
       <Divider hiddenFrom="sm" />
-      {links}
+      {groups.map((group, index) => (
+        <Fragment key={index}>
+          {index > 0 ? <Divider my={6} mx="md" visibleFrom="sm" /> : null}
+          {group.map((link) => (
+            <MainLink key={link.label} item={link} pathName={pathName} />
+          ))}
+        </Fragment>
+      ))}
     </>
   );
 }
