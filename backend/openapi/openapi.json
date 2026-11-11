@@ -7622,6 +7622,8 @@
             "type": "integer"
           },
           "name": {
+            "maxLength": 100,
+            "minLength": 1,
             "title": "Name",
             "type": "string"
           },
@@ -7861,6 +7863,8 @@
             "type": "integer"
           },
           "name": {
+            "maxLength": 100,
+            "minLength": 1,
             "title": "Name",
             "type": "string"
           },

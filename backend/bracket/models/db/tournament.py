@@ -1,4 +1,5 @@
 from enum import auto
+from typing import Annotated
 
 from heliclockter import datetime_utc
 from pydantic import Field
@@ -6,6 +7,7 @@ from pydantic import Field
 from bracket.models.db.shared import BaseModelORM
 from bracket.utils.id_types import ClubId, TournamentId
 from bracket.utils.pydantic import EmptyStrToNone
+from bracket.utils.text import SingleLine
 from bracket.utils.types import EnumAutoStr
 
 
@@ -38,7 +40,7 @@ class Tournament(TournamentInsertable):
 
 class TournamentUpdateBody(BaseModelORM):
     start_time: datetime_utc
-    name: str
+    name: Annotated[str, Field(min_length=1, max_length=100), SingleLine]
     dashboard_public: bool
     dashboard_endpoint: EmptyStrToNone | str = None
     players_can_be_in_multiple_teams: bool

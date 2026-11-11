@@ -57,6 +57,7 @@ from bracket.utils.errors import ForeignKey, check_foreign_key_violation
 from bracket.utils.id_types import CategoryId, PlayerId, TeamId, TournamentId
 from bracket.utils.logging import logger
 from bracket.utils.pagination import PaginationTeams
+from bracket.utils.text import CONTROL_CHARACTERS
 from bracket.utils.types import assert_some
 
 router = APIRouter(prefix=config.api_prefix)
@@ -296,12 +297,20 @@ async def create_multiple_teams(
 ) -> SuccessResponse:
     await check_foreign_keys_belong_to_tournament(team_body, tournament_id)
     reader = list(csv.reader(team_body.names.split("\n"), delimiter=","))
+    # Pasted text may have Windows line endings: names are stripped
     teams_and_players = [
-        (row[0], [p for p in row[1:] if len(p) > 0] if len(row) > 1 else [])
+        (row[0].strip(), [p.strip() for p in row[1:] if len(p.strip()) > 0])
         for row in reader
-        if len(row) > 0
+        if len(row) > 0 and len(row[0].strip()) > 0
     ]
     players = [player for row in teams_and_players for player in row[1]]
+    if any(
+        CONTROL_CHARACTERS.search(name) for name in [row[0] for row in teams_and_players] + players
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Names may not contain control characters",
+        )
 
     existing_teams = await get_teams_with_members(tournament_id, only_participating=False)
     existing_players = await get_all_players_in_tournament(tournament_id)

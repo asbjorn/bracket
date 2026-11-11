@@ -9,6 +9,7 @@ sure the same message is never queued twice, also when a request is retried.
 """
 
 import hashlib
+import re
 from dataclasses import dataclass
 from email.message import EmailMessage
 from enum import StrEnum
@@ -30,9 +31,15 @@ from bracket.sql.tournaments import sql_get_tournament
 from bracket.utils.email import EmailSender, get_email_sender, sender_address
 from bracket.utils.id_types import TeamId, TournamentId
 from bracket.utils.logging import logger
+from bracket.utils.text import strip_control_characters
 
 SEND_BATCH_SIZE = 20  # Per run of the cronjob (every 15 seconds): at most 80 emails a minute
 MAX_ATTEMPTS = 3
+# Sign-up confirmations (the public form can trigger them): per address a day, per cup an hour
+MAX_REGISTRATION_EMAILS_PER_ADDRESS = 3
+MAX_REGISTRATION_EMAILS_HOUR = 60
+# A plain address, nothing that could add headers or recipients
+PLAIN_ADDRESS = re.compile(r"^[^\s@<>,;:\"()\[\]\\]+@[^\s@<>,;:\"()\[\]\\]+$")
 STALE_SENDING = timedelta(minutes=10)
 
 
@@ -55,10 +62,11 @@ TEXTS: dict[EmailLanguage, dict[str, str]] = {
         "schedule_subject": "{tournament}: kampoppsett for {team}",
         "schedule_intro": "Her er de neste kampene for {team}:",
         "schedule_note": "Tidene kan endres. Følg med på cupens nettside for siste oppdatering.",
-        "registered_subject": "{tournament}: {team} er påmeldt",
-        "registered": "Takk! {team} er påmeldt i klassen {category}.",
-        "waitlist_subject": "{tournament}: {team} står på venteliste",
-        "waitlist": "{team} står på venteliste i klassen {category}, plass {place}. "
+        "greeting_plain": "Hei,",
+        "registered_subject": "{tournament}: påmelding mottatt",
+        "registered": "Takk! Påmeldingen til klassen {category} er registrert.",
+        "waitlist_subject": "{tournament}: påmelding på venteliste",
+        "waitlist": "Påmeldingen til klassen {category} står på venteliste, plass {place}. "
         "Vi gir beskjed hvis det blir ledig plass.",
         "promotion_subject": "{tournament}: {team} har fått plass",
         "promotion": "Godt nytt! {team} har fått plass i klassen {category}.",
@@ -73,11 +81,12 @@ TEXTS: dict[EmailLanguage, dict[str, str]] = {
         "schedule_subject": "{tournament}: schedule for {team}",
         "schedule_intro": "These are the next matches of {team}:",
         "schedule_note": "Times may change. See the cup's website for the latest schedule.",
-        "registered_subject": "{tournament}: {team} is registered",
-        "registered": "Thank you! {team} is registered in the class {category}.",
-        "waitlist_subject": "{tournament}: {team} is on the waitlist",
-        "waitlist": "{team} is on the waitlist of the class {category}, place {place}. "
-        "We'll let you know when a place becomes available.",
+        "greeting_plain": "Hello,",
+        "registered_subject": "{tournament}: registration received",
+        "registered": "Thank you! The registration for the class {category} is received.",
+        "waitlist_subject": "{tournament}: registration on the waitlist",
+        "waitlist": "The registration for the class {category} is on the waitlist, place "
+        "{place}. We'll let you know when a place becomes available.",
         "promotion_subject": "{tournament}: {team} has a place",
         "promotion": "Good news! {team} now has a place in the class {category}.",
         "organiser": "Questions? Contact the organiser:",
@@ -199,16 +208,29 @@ def organiser_block(texts: dict[str, str], details: TournamentDetails) -> list[s
 
 
 async def compose(
-    tournament_id: TournamentId, recipient: Recipient, subject_key: str, lines: list[str]
+    tournament_id: TournamentId,
+    recipient: Recipient,
+    subject_key: str,
+    lines: list[str],
+    *,
+    personal: bool = True,
 ) -> tuple[str, str, str | None]:
-    """Subject, body and reply-to address of an email to one team's contact."""
+    """
+    Subject, body and reply-to address of an email to one team's contact. Not `personal`:
+    without the names the contact typed in (for emails caused by the public sign-up form).
+    """
     tournament = await sql_get_tournament(tournament_id)
     details = await get_details(tournament_id)
     texts = TEXTS[await get_language(tournament_id)]
     subject = texts[subject_key].format(tournament=tournament.name, team=recipient.team_name)
+    greeting = (
+        texts["greeting"].format(name=recipient.contact_name or recipient.team_name)
+        if personal
+        else texts["greeting_plain"]
+    )
     body = "\n".join(
         [
-            texts["greeting"].format(name=recipient.contact_name or recipient.team_name),
+            greeting,
             "",
             *lines,
             *organiser_block(texts, details),
@@ -364,24 +386,59 @@ async def queue_schedule_notices(
 async def queue_registration_email(
     tournament_id: TournamentId, team_id: TeamId, waitlist_place: int | None
 ) -> None:
-    """Confirms a sign-up: registered, or on the waitlist (with the place)."""
+    """
+    Confirms a sign-up: registered, or on the waitlist (with the place).
+
+    Anyone can sign up with any address, so this email must not be usable to send text of
+    the sender's choice: it only contains what the organiser wrote (cup and class names, the
+    organiser's contact), never the team name, contact name or comment from the form. And
+    an address gets at most a few of them a day, a cup at most `MAX_REGISTRATION_EMAILS_HOUR`.
+    """
     if get_email_sender() is None:
         return
     recipients = await get_recipients(tournament_id, team_id, only_participating=False)
     if len(recipients) < 1:
         return
     [recipient] = recipients
+    if await too_many_registration_emails(tournament_id, recipient.email):
+        logger.warning(f"Not confirming registration of team {team_id}: too many emails")
+        return
     texts = TEXTS[await get_language(tournament_id)]
-    values = {"team": recipient.team_name, "category": recipient.category_name or ""}
+    category = recipient.category_name or ""
     if waitlist_place is None:
-        subject_key, line = "registered_subject", texts["registered"].format(**values)
+        subject_key, line = "registered_subject", texts["registered"].format(category=category)
     else:
         subject_key = "waitlist_subject"
-        line = texts["waitlist"].format(**values, place=waitlist_place)
-    subject, body, reply_to = await compose(tournament_id, recipient, subject_key, [line])
+        line = texts["waitlist"].format(category=category, place=waitlist_place)
+    subject, body, reply_to = await compose(
+        tournament_id, recipient, subject_key, [line], personal=False
+    )
     key = f"registration:{team_id}:{'waitlist' if waitlist_place is not None else 'registered'}"
     await queue(
         tournament_id, recipient, NotificationKind.REGISTRATION, key, subject, body, reply_to
+    )
+
+
+async def too_many_registration_emails(tournament_id: TournamentId, email: str) -> bool:
+    counts = await database.fetch_one(
+        """
+        SELECT
+            count(*) FILTER (
+                WHERE lower(recipient) = lower(:email) AND created > now() - interval '1 day'
+            ) AS per_address,
+            count(*) FILTER (
+                WHERE tournament_id = :tournament_id AND created > now() - interval '1 hour'
+            ) AS per_tournament
+        FROM notifications_sent
+        WHERE kind = 'REGISTRATION'
+        AND (lower(recipient) = lower(:email) OR tournament_id = :tournament_id)
+        """,
+        values={"email": email, "tournament_id": tournament_id},
+    )
+    assert counts is not None
+    return (
+        int(counts["per_address"]) >= MAX_REGISTRATION_EMAILS_PER_ADDRESS
+        or int(counts["per_tournament"]) >= MAX_REGISTRATION_EMAILS_HOUR
     )
 
 
@@ -409,6 +466,32 @@ async def queue_promotion_email(tournament_id: TournamentId, team_id: TeamId) ->
     )
 
 
+def build_message(recipient: str, reply_to: str | None, subject: str, body: str) -> EmailMessage:
+    """Headers get no control characters; addresses must be plain addresses."""
+    for address in (recipient, reply_to):
+        if address is not None and not PLAIN_ADDRESS.match(address):
+            raise ValueError("Not a valid email address")
+    message = EmailMessage()
+    message["From"] = sender_address()
+    message["To"] = recipient
+    if reply_to:
+        message["Reply-To"] = reply_to
+    message["Subject"] = strip_control_characters(subject)[:200]
+    message.set_content(body)
+    return message
+
+
+async def mark_failed(notification_id: int, error: Exception, *, final: bool) -> None:
+    await database.execute(
+        "UPDATE notifications_sent SET status = :status, error = :error WHERE id = :id",
+        values={
+            "id": notification_id,
+            "status": "FAILED" if final else "PENDING",
+            "error": str(error)[:500],
+        },
+    )
+
+
 async def process_pending(sender: EmailSender, limit: int = SEND_BATCH_SIZE) -> int:
     """Sends up to `limit` queued emails; failures are retried up to `MAX_ATTEMPTS` times."""
     # Emails left "sending" by a stopped process are sent again
@@ -424,34 +507,27 @@ async def process_pending(sender: EmailSender, limit: int = SEND_BATCH_SIZE) -> 
         UPDATE notifications_sent
         SET status = 'SENDING', attempts = attempts + 1, claimed_at = now()
         WHERE id IN (
-            SELECT id FROM notifications_sent WHERE status = 'PENDING'
+            SELECT id FROM notifications_sent
+            WHERE status = 'PENDING' AND attempts < :max_attempts
             ORDER BY id LIMIT :limit FOR UPDATE SKIP LOCKED
         )
         RETURNING id, recipient, reply_to, subject, body, attempts
         """,
-        values={"limit": limit},
+        values={"limit": limit, "max_attempts": MAX_ATTEMPTS},
     )
     sent = 0
     for row in rows:
-        message = EmailMessage()
-        message["From"] = sender_address()
-        message["To"] = row["recipient"]
-        if row["reply_to"]:
-            message["Reply-To"] = row["reply_to"]
-        message["Subject"] = row["subject"]
-        message.set_content(row["body"])
+        try:
+            message = build_message(row["recipient"], row["reply_to"], row["subject"], row["body"])
+        except ValueError as error:
+            # Can't ever be sent: don't try again
+            await mark_failed(row["id"], error, final=True)
+            continue
         try:
             await run_in_threadpool(sender.send, message)
         except Exception as error:  # pylint: disable=broad-exception-caught
             logger.warning(f"Could not send notification {row['id']}: {error}")
-            await database.execute(
-                "UPDATE notifications_sent SET status = :status, error = :error WHERE id = :id",
-                values={
-                    "id": row["id"],
-                    "status": "FAILED" if row["attempts"] >= MAX_ATTEMPTS else "PENDING",
-                    "error": str(error)[:500],
-                },
-            )
+            await mark_failed(row["id"], error, final=row["attempts"] >= MAX_ATTEMPTS)
             continue
         await database.execute(
             """

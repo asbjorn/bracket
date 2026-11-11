@@ -5,12 +5,17 @@ from pydantic import BaseModel, EmailStr, Field, StringConstraints
 
 from bracket.models.db.team import ClubName, RegistrationStatus
 from bracket.utils.id_types import CategoryId, TeamId
+from bracket.utils.text import SingleLine
 
 MAX_TEAMS_PER_CLASS = 256
 MAX_ENTRY_FEE = 100_000
 
-TeamName = Annotated[str, StringConstraints(min_length=1, max_length=30, strip_whitespace=True)]
-PersonName = Annotated[str, StringConstraints(min_length=1, max_length=100, strip_whitespace=True)]
+TeamName = Annotated[
+    str, StringConstraints(min_length=1, max_length=30, strip_whitespace=True), SingleLine
+]
+PersonName = Annotated[
+    str, StringConstraints(min_length=1, max_length=100, strip_whitespace=True), SingleLine
+]
 # Digits and spaces, optionally a leading +, e.g. "+47 912 34 567"
 Phone = Annotated[
     str, StringConstraints(pattern=r"^\+?[0-9 ]{5,20}$", strip_whitespace=True, max_length=21)

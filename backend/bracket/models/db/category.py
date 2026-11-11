@@ -6,6 +6,7 @@ from pydantic import Field, StringConstraints
 from bracket.models.db.game_format import GameFormat
 from bracket.models.db.shared import BaseModelORM
 from bracket.utils.id_types import CategoryId, TournamentId
+from bracket.utils.text import SingleLine
 
 # NFF: from the 13-year class, results and tables may be published (youth football).
 # In children's football (12 and younger) they must not be.
@@ -46,7 +47,9 @@ class CategoryBody(BaseModelORM):
     otherwise, following the NFF rules.
     """
 
-    name: Annotated[str, StringConstraints(min_length=1, max_length=50, strip_whitespace=True)]
+    name: Annotated[
+        str, StringConstraints(min_length=1, max_length=50, strip_whitespace=True), SingleLine
+    ]
     age: int | None = Field(None, ge=4, le=99)
     results_public: bool | None = None
     duration_minutes: int | None = Field(None, ge=1, le=240)

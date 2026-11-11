@@ -12,6 +12,7 @@ from bracket.logic.ranking.statistics import START_ELO
 from bracket.models.db.player import Player
 from bracket.models.db.shared import BaseModelORM
 from bracket.utils.id_types import CategoryId, PlayerId, TeamId, TournamentId
+from bracket.utils.text import SingleLine
 
 
 class RegistrationStatus(StrEnum):
@@ -91,11 +92,13 @@ class FullTeamWithPlayers(TeamWithPlayers, Team):
     pass
 
 
-ClubName = Annotated[str, StringConstraints(min_length=1, max_length=50, strip_whitespace=True)]
+ClubName = Annotated[
+    str, StringConstraints(min_length=1, max_length=50, strip_whitespace=True), SingleLine
+]
 
 
 class TeamBody(BaseModelORM):
-    name: Annotated[str, StringConstraints(min_length=1, max_length=30)]
+    name: Annotated[str, StringConstraints(min_length=1, max_length=30), SingleLine]
     active: bool
     player_ids: set[PlayerId]
     category_id: CategoryId | None = None

@@ -7,7 +7,7 @@ game formats and the order of stages are taken into account.
 """
 
 from enum import StrEnum
-from typing import Self
+from typing import Annotated, Self
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -36,6 +36,7 @@ from bracket.models.db.category import YOUTH_FOOTBALL_MIN_AGE
 from bracket.models.db.game_format import GameFormat
 from bracket.models.db.time_window import TimeWindowBody
 from bracket.utils.id_types import CourtId, MatchId
+from bracket.utils.text import SingleLine
 
 MAX_TEAMS_TOTAL = 600
 MAX_COURTS = 100
@@ -47,7 +48,7 @@ MAX_MATCHES_PER_DAY = 5
 
 
 class CapacityClass(BaseModel):
-    name: str = Field(min_length=1, max_length=50)
+    name: Annotated[str, Field(min_length=1, max_length=50), SingleLine]
     age: int | None = Field(default=None, ge=4, le=99)
     team_count: int = Field(ge=2, le=128)
     group_size: int = Field(ge=2, le=10)

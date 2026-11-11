@@ -223,3 +223,102 @@ async def test_emails_without_smtp_and_retries(
         )
     finally:
         await clean_up(auth_context)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_registration_email_is_no_spam_relay(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    """The public form chooses the address: the email only has the organiser's text."""
+    tournament_id = auth_context.tournament.id
+    sender = FakeSender()
+    try:
+        team_ids = await set_up_playable_cup(auth_context)
+        await add_contacts(auth_context, team_ids)
+        set_email_sender(sender)
+        await database.execute(
+            teams.update().where(teams.c.id == team_ids["Brann"]),
+            values={"name": "Buy cheap pills"},
+        )
+        await database.execute(
+            team_registrations.update().where(team_registrations.c.team_id == team_ids["Brann"]),
+            values={"contact_name": "Visit spam.example"},
+        )
+        await queue_registration_email(tournament_id, team_ids["Brann"], None)
+        await queue_registration_email(tournament_id, team_ids["Brann"], 2)
+        assert await process_pending(sender) == 2
+        for message in sender.sent:
+            text = message["Subject"] + message.get_content()
+            assert "pills" not in text and "spam.example" not in text
+            assert "G10" in text
+
+        # At most 3 a day to the same address (also from other teams with that address)
+        for name in ("Lyn", "Fana"):
+            await database.execute(
+                team_registrations.update().where(team_registrations.c.team_id == team_ids[name]),
+                values={"contact_email": CONTACTS["Brann"]},
+            )
+            await queue_registration_email(tournament_id, team_ids[name], None)
+        assert await process_pending(sender) == 1
+    finally:
+        await clean_up(auth_context)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_poison_message_fails_without_blocking(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    tournament_id = auth_context.tournament.id
+    sender = FakeSender()
+    try:
+        team_ids = await set_up_playable_cup(auth_context)
+        rows = [
+            ("poison", "x@example.org\r\nBcc: victim@example.org", "Hei"),
+            ("good", "ok@example.org", "Hei\r\nBcc: victim@example.org"),
+        ]
+        for key, recipient, subject in rows:
+            await database.execute(
+                notifications_sent.insert(),
+                values={
+                    "tournament_id": tournament_id,
+                    "team_id": team_ids["Brann"],
+                    "kind": "ANNOUNCEMENT",
+                    "dedupe_key": key,
+                    "recipient": recipient,
+                    "subject": subject,
+                    "body": "Tekst",
+                },
+            )
+        assert await process_pending(sender) == 1
+        assert len(sender.sent) == 1
+        message = sender.sent[0]
+        assert message["To"] == "ok@example.org"
+        assert "\n" not in message["Subject"] and message["Bcc"] is None
+        status = await database.fetch_one(
+            notifications_sent.select().where(notifications_sent.c.dedupe_key == "poison")
+        )
+        assert status is not None
+        assert (status["status"], status["attempts"]) == ("FAILED", 1)
+        assert await process_pending(sender) == 0
+    finally:
+        await clean_up(auth_context)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_names_without_control_characters(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    body = {"name": "Brann\r\nBcc: x@example.org", "active": True, "player_ids": []}
+    response = await send_tournament_request(HTTPMethod.POST, "teams", auth_context, json=body)
+    assert "control characters" in str(response)
+    response = await send_tournament_request(
+        HTTPMethod.POST,
+        "teams_multi",
+        auth_context,
+        json={"names": "Brann\x1b[31m\nLyn", "active": True},
+    )
+    assert response == {"detail": "Names may not contain control characters"}
+    response = await send_tournament_request(
+        HTTPMethod.POST, "categories", auth_context, json={"name": "G10\nBcc: x"}
+    )
+    assert "control characters" in str(response)

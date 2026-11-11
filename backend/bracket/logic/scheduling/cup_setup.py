@@ -32,8 +32,11 @@ from bracket.sql.stage_items import sql_create_stage_item_with_empty_inputs
 from bracket.sql.stages import get_full_tournament_details, sql_create_stage
 from bracket.sql.time_windows import sql_replace_time_windows
 from bracket.utils.id_types import TournamentId
+from bracket.utils.text import SingleLine
 
-Name = Annotated[str, StringConstraints(min_length=1, max_length=40, strip_whitespace=True)]
+Name = Annotated[
+    str, StringConstraints(min_length=1, max_length=40, strip_whitespace=True), SingleLine
+]
 
 
 class CupSetupClass(CapacityClass):
