@@ -10,18 +10,12 @@ classic cross semifinals 1A-2B and 1B-2A.
 
 import math
 from dataclasses import dataclass
-from functools import partial
-from itertools import combinations, permutations
 
 from bracket.logic.scheduling.elimination import (
     get_bracket_size,
     get_seed_per_slot,
     standard_seed_order,
 )
-
-# Above this number of groups, finding the best order of groups would take too long, so the
-# groups keep their order.
-MAX_GROUPS_TO_OPTIMIZE = 8
 
 
 @dataclass(frozen=True)
@@ -39,52 +33,117 @@ def first_possible_meeting_round(position1: int, position2: int) -> int:
     return (position1 ^ position2).bit_length()
 
 
-def same_group_cost(seeds: list[Qualifier], bracket_size: int) -> int:
+def meeting_cost(position1: int, position2: int, bracket_size: int) -> int:
     """
-    Penalty for teams of the same group that can meet early; meeting in an earlier round costs
-    more than any number of meetings in later rounds.
+    Penalty for two teams of the same group at these positions. Meeting one round earlier costs
+    more than all possible meetings in later rounds together (the base exceeds the number of
+    pairs).
     """
-    position_of_seed = {seed: index for index, seed in enumerate(standard_seed_order(bracket_size))}
     round_count = int(math.log2(bracket_size))
-    # Larger than the number of pairs, so one earlier meeting outweighs all later ones
     base = bracket_size**2
-    cost = 0
-    for (seed1, team1), (seed2, team2) in combinations(enumerate(seeds, start=1), 2):
-        if team1.group_index == team2.group_index:
-            meeting_round = first_possible_meeting_round(
-                position_of_seed[seed1], position_of_seed[seed2]
-            )
-            cost += base ** (round_count - meeting_round)
-    return cost
+    exponent = round_count - first_possible_meeting_round(position1, position2)
+    return int(base**exponent)
 
 
-def order_cost(
-    order: tuple[Qualifier, ...], *, seeded_so_far: list[Qualifier], bracket_size: int
-) -> int:
-    return same_group_cost(seeded_so_far + list(order), bracket_size)
+def assign_along_path(row_of_column: list[int], way: list[int], column: int) -> None:
+    """
+    Part of `min_cost_assignment`: shifts the assignments along the found augmenting path.
+    """
+    while column != 0:
+        previous = way[column]
+        row_of_column[column] = row_of_column[previous]
+        column = previous
+
+
+def min_cost_assignment(cost: list[list[int]]) -> list[int]:
+    """
+    Hungarian algorithm, O(n^3): for a square cost matrix, returns for every row the column it's
+    assigned to, such that every column is used once and the total cost is minimal.
+    """
+    n = len(cost)
+    infinity = sum(sum(row) for row in cost) + 1
+    u = [0] * (n + 1)
+    v = [0] * (n + 1)
+    row_of_column = [0] * (n + 1)
+    way = [0] * (n + 1)
+    for row in range(1, n + 1):
+        row_of_column[0] = row
+        column0 = 0
+        min_value = [infinity] * (n + 1)
+        used = [False] * (n + 1)
+        while True:
+            used[column0] = True
+            row0 = row_of_column[column0]
+            delta = infinity
+            column1 = 0
+            for column in range(1, n + 1):
+                if not used[column]:
+                    reduced = cost[row0 - 1][column - 1] - u[row0] - v[column]
+                    if reduced < min_value[column]:
+                        min_value[column] = reduced
+                        way[column] = column0
+                    if min_value[column] < delta:
+                        delta = min_value[column]
+                        column1 = column
+            for column in range(n + 1):
+                if used[column]:
+                    u[row_of_column[column]] += delta
+                    v[column] -= delta
+                else:
+                    min_value[column] -= delta
+            column0 = column1
+            if row_of_column[column0] == 0:
+                break
+        assign_along_path(row_of_column, way, column0)
+
+    assignment = [0] * n
+    for column in range(1, n + 1):
+        assignment[row_of_column[column] - 1] = column - 1
+    return assignment
 
 
 def seed_qualifiers(qualifiers: list[Qualifier]) -> list[Qualifier]:
     """
     Orders the qualifiers by seed (index 0 = seed 1): by placing, and within a placing by the
     order of groups that keeps teams of the same group apart the longest.
+
+    Within a placing every group has one team, so the penalty of putting a group at a seed only
+    depends on the teams of that group seeded before. That makes it an assignment problem, which
+    is solved exactly in polynomial time.
     """
     bracket_size = get_bracket_size(len(qualifiers))
+    position_of_seed = {seed: index for index, seed in enumerate(standard_seed_order(bracket_size))}
     seeds: list[Qualifier] = []
     for placing in sorted({q.placing for q in qualifiers}):
         same_placing = sorted(
             (q for q in qualifiers if q.placing == placing), key=lambda q: q.group_index
         )
-        if len(same_placing) > MAX_GROUPS_TO_OPTIMIZE:
-            seeds += same_placing
-            continue
-        # `min` keeps the first best order, so ties are resolved by the order of the groups
-        seeded_so_far = list(seeds)
-        best = min(
-            permutations(same_placing),
-            key=partial(order_cost, seeded_so_far=seeded_so_far, bracket_size=bracket_size),
-        )
-        seeds += best
+        count = len(same_placing)
+        first_seed = len(seeds) + 1
+        # Breaking ties: keep the order of the groups. This term is always smaller than one
+        # unit of the main cost.
+        scale = count * count + 1
+        cost = [
+            [
+                scale
+                * sum(
+                    meeting_cost(
+                        position_of_seed[first_seed + column],
+                        position_of_seed[seed],
+                        bracket_size,
+                    )
+                    for seed, team in enumerate(seeds, start=1)
+                    if team.group_index == qualifier.group_index
+                )
+                + abs(row - column)
+                for column in range(count)
+            ]
+            for row, qualifier in enumerate(same_placing)
+        ]
+        ordered: list[Qualifier | None] = [None] * count
+        for row, column in enumerate(min_cost_assignment(cost)):
+            ordered[column] = same_placing[row]
+        seeds += [qualifier for qualifier in ordered if qualifier is not None]
     return seeds
 
 

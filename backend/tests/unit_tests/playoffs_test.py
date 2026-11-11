@@ -1,4 +1,6 @@
-from itertools import combinations
+import random
+import time
+from itertools import combinations, permutations
 
 import pytest
 
@@ -7,6 +9,8 @@ from bracket.logic.scheduling.playoffs import (
     Qualifier,
     first_possible_meeting_round,
     get_qualifiers_per_slot,
+    min_cost_assignment,
+    seed_qualifiers,
 )
 
 A, B, C, D = 0, 1, 2, 3
@@ -67,3 +71,31 @@ def test_same_group_never_meets_in_first_match_with_byes() -> None:
 @pytest.mark.parametrize(("position1", "position2", "expected"), [(0, 1, 1), (0, 3, 2), (0, 7, 3)])
 def test_first_possible_meeting_round(position1: int, position2: int, expected: int) -> None:
     assert first_possible_meeting_round(position1, position2) == expected
+
+
+def test_min_cost_assignment_matches_brute_force() -> None:
+    rng = random.Random(42)
+    for _ in range(300):
+        size = rng.randint(1, 6)
+        cost = [[rng.randint(0, 20) for _ in range(size)] for _ in range(size)]
+        assignment = min_cost_assignment(cost)
+
+        assert sorted(assignment) == list(range(size))
+        best = min(
+            sum(cost[row][column] for row, column in enumerate(order))
+            for order in permutations(range(size))
+        )
+        assert sum(cost[row][column] for row, column in enumerate(assignment)) == best
+
+
+def test_seeding_large_playoffs_is_fast() -> None:
+    """
+    8 groups with 8 placings each (64 teams) used to take ~10 seconds with a brute force search.
+    """
+    qualifiers = [Qualifier(g, p) for g in range(8) for p in range(1, 9)]
+    start = time.perf_counter()
+    seeds = seed_qualifiers(qualifiers)
+    assert time.perf_counter() - start < 1
+    assert sorted(seeds, key=lambda q: (q.placing, q.group_index)) == sorted(
+        qualifiers, key=lambda q: (q.placing, q.group_index)
+    )
