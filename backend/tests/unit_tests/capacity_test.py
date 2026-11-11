@@ -1,7 +1,9 @@
 from datetime import timedelta
 from zoneinfo import ZoneInfo
 
+import pytest
 from heliclockter import datetime_utc
+from pydantic import ValidationError
 
 from bracket.logic.planning.capacity import (
     CapacityBody,
@@ -140,3 +142,33 @@ def test_matches_per_team_with_bronze_final() -> None:
     # The bronze final replaces the final for the semifinal losers: no extra match
     assert (result.min_matches_per_team, result.max_matches_per_team) == (4, 6)
     assert result.warnings == []
+
+
+def test_input_limits() -> None:
+    def cup_class(**kwargs: object) -> CapacityClass:
+        return CapacityClass.model_validate(
+            {"name": "K", "team_count": 8, "group_size": 4, "duration_minutes": 10} | kwargs
+        )
+
+    with pytest.raises(ValidationError, match="only go to one playoff"):
+        cup_class(playoff_placings=[[1, 1, 1, 1]])
+    with pytest.raises(ValidationError, match="only go to one playoff"):
+        cup_class(playoff_placings=[[1, 2], [2]])
+    with pytest.raises(ValidationError, match="only go to one playoff"):
+        cup_class(playoff_placings=[[11]])
+    with pytest.raises(ValidationError, match="at most 3 playoffs"):
+        cup_class(playoff_placings=[[1], [2], [3], [4]])
+    # 128 teams in groups of 4: one playoff for everyone would have 128 teams
+    with pytest.raises(ValidationError, match="at most 64 teams"):
+        cup_class(team_count=128, playoffs=PlayoffPreset.A)
+    assert cup_class(team_count=128, playoffs=PlayoffPreset.AB).get_playoffs([4] * 32) == [
+        [1, 2],
+        [3, 4],
+    ]
+
+    with pytest.raises(ValidationError, match="at most 100 courts"):
+        CapacityBody(
+            classes=[cup_class()],
+            courts=[CapacityCourts(count=60), CapacityCourts(count=41)],
+            time_windows=[window(8, 20)],
+        )

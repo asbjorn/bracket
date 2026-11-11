@@ -197,7 +197,7 @@ def to_proposal(
     match_by_id = {match.id: match for match in matches}
     window_minutes = sum((w.end - w.start).total_seconds() // 60 for w in windows)
     ends = [a.end(match_by_id[a.match_id]) for a in result.assignments.values()]
-    shortfall = determine_shortfall(matches, courts, windows)
+    shortfall = determine_shortfall(matches, courts, windows, result)
     return ScheduleProposal(
         matches_total=len(matches),
         unscheduled_match_ids=result.unscheduled,

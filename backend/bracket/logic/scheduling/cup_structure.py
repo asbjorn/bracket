@@ -21,6 +21,7 @@ class PlayoffPreset(StrEnum):
 
 
 PLAYOFF_NAMES = ["A", "B", "C"]
+MAX_TEAMS_PER_PLAYOFF = 64
 
 
 def split_into_groups(team_count: int, group_size: int) -> list[int]:

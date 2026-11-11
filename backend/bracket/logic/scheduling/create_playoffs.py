@@ -4,6 +4,7 @@ from starlette import status
 from bracket.database import database
 from bracket.logic.results_visibility import check_advancing_allowed
 from bracket.logic.scheduling.builder import build_matches_for_stage_item
+from bracket.logic.scheduling.cup_structure import MAX_TEAMS_PER_PLAYOFF
 from bracket.logic.scheduling.elimination import MIN_TEAMS_THIRD_PLACE_MATCH
 from bracket.logic.scheduling.playoffs import Qualifier, get_qualifiers_per_slot
 from bracket.logic.subscriptions import check_requirement
@@ -20,8 +21,6 @@ from bracket.sql.categories import get_category_by_id
 from bracket.sql.stage_items import sql_create_stage_item_with_inputs
 from bracket.sql.stages import get_full_tournament_details, sql_create_stage
 from bracket.utils.id_types import StageId, TournamentId
-
-MAX_TEAMS_PER_PLAYOFF = 64
 
 
 def bad_request(detail: str) -> HTTPException:

@@ -20,6 +20,8 @@ from bracket.logic.planning.scheduler import (
     schedule_matches,
 )
 from bracket.logic.scheduling.cup_structure import (
+    MAX_TEAMS_PER_PLAYOFF,
+    PLAYOFF_NAMES,
     PlayoffPreset,
     split_into_groups,
     split_placings,
@@ -36,6 +38,7 @@ from bracket.models.db.time_window import TimeWindowBody
 from bracket.utils.id_types import CourtId, MatchId
 
 MAX_TEAMS_TOTAL = 600
+MAX_COURTS = 100
 MIN_MATCHES_PER_TEAM = 3
 MIN_MATCHES_MAX_AGE = 13
 # Many teams aged 10-13 manage 4-5 matches a day before concentration drops (AreaCopa)
@@ -53,13 +56,36 @@ class CapacityClass(BaseModel):
     playoff_placings: list[list[int]] | None = None
     third_place_match: bool = False
 
-    def get_playoff_placings(self, smallest_group: int) -> list[list[int]]:
+    def get_playoffs(self, group_sizes: list[int]) -> list[list[int]]:
+        """The placings of every playoff that has at least two teams."""
+        smallest_group = min(group_sizes)
         if self.playoff_placings is not None:
-            return [
+            all_placings = [
                 [placing for placing in placings if placing <= smallest_group]
                 for placings in self.playoff_placings
             ]
-        return split_placings(smallest_group, self.playoffs.playoff_count)
+        else:
+            all_placings = split_placings(smallest_group, self.playoffs.playoff_count)
+        return [placings for placings in all_placings if len(group_sizes) * len(placings) >= 2]
+
+    @model_validator(mode="after")
+    def check_playoffs(self) -> Self:
+        if self.playoff_placings is not None:
+            placings = [placing for playoff in self.playoff_placings for placing in playoff]
+            if len(self.playoff_placings) > len(PLAYOFF_NAMES):
+                raise ValueError(f"{self.name}: at most {len(PLAYOFF_NAMES)} playoffs")
+            if len(placings) != len(set(placings)) or not all(1 <= p <= 10 for p in placings):
+                raise ValueError(f"{self.name}: each placing (1-10) can only go to one playoff")
+        group_sizes = split_into_groups(self.team_count, self.group_size)
+        if any(
+            len(group_sizes) * len(placings) > MAX_TEAMS_PER_PLAYOFF
+            for placings in self.get_playoffs(group_sizes)
+        ):
+            raise ValueError(
+                f"{self.name}: a playoff can have at most {MAX_TEAMS_PER_PLAYOFF} teams, "
+                "split it into more playoffs"
+            )
+        return self
 
     @property
     def has_playoffs(self) -> bool:
@@ -74,7 +100,7 @@ class CapacityClass(BaseModel):
 
 
 class CapacityCourts(BaseModel):
-    count: int = Field(ge=1, le=64)
+    count: int = Field(ge=1, le=MAX_COURTS)
     game_format: GameFormat | None = None
 
 
@@ -88,6 +114,8 @@ class CapacityBody(BaseModel):
     def check_size(self) -> Self:
         if sum(c.team_count for c in self.classes) > MAX_TEAMS_TOTAL:
             raise ValueError(f"The calculator handles at most {MAX_TEAMS_TOTAL} teams")
+        if sum(c.count for c in self.courts) > MAX_COURTS:
+            raise ValueError(f"The calculator handles at most {MAX_COURTS} courts")
         return self
 
 
@@ -221,11 +249,7 @@ def class_matches(
     matches = group_matches(factory, group_sizes, class_index)
     group_match_ids = [match.id for match in matches]
 
-    playoff_placings = [
-        placings
-        for placings in cup_class.get_playoff_placings(min(group_sizes))
-        if len(group_sizes) * len(placings) >= 2
-    ]
+    playoff_placings = cup_class.get_playoffs(group_sizes)
     playoff_team_counts = [len(group_sizes) * len(placings) for placings in playoff_placings]
     playoffs = [
         playoff_matches(

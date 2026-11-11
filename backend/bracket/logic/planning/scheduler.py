@@ -16,10 +16,12 @@ slots whose team is not known yet. Matches whose teams are not known (later knoc
 depend on the matches they get their teams from.
 """
 
+from bisect import bisect_left, bisect_right
 from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 from datetime import timedelta
 from enum import StrEnum
+from zoneinfo import ZoneInfo
 
 from heliclockter import datetime_utc
 
@@ -91,31 +93,63 @@ def court_fits(court: CourtToPlan, match: MatchToPlan) -> bool:
     return court.game_format is None or court.game_format == match.game_format
 
 
-def find_start_on_court(
-    ready: datetime_utc,
-    match: MatchToPlan,
-    booked: list[tuple[datetime_utc, datetime_utc]],
-    windows: list[Window],
-) -> datetime_utc | None:
+EPOCH = datetime_utc(1970, 1, 1, tzinfo=ZoneInfo("UTC"))
+MICROSECOND = timedelta(microseconds=1)
+
+
+def to_micros(moment: datetime_utc) -> int:
+    """Exact integer time for the hot loop; datetime arithmetic is much slower."""
+    return (moment - EPOCH) // MICROSECOND
+
+
+def from_micros(micros: int) -> datetime_utc:
+    return EPOCH + micros * MICROSECOND
+
+
+class CourtBookings:
     """
-    The earliest start at or after `ready` where the match fits in a window and doesn't overlap
-    booked intervals of the court. Candidates are `ready`, window starts and ends of bookings.
+    The busy time of one court as sorted, disjoint intervals in microseconds (touching or
+    overlapping bookings are merged), so the earliest free start is found with binary search.
     """
-    playing_time = match.duration_minutes * MINUTE
-    occupied_time = (match.duration_minutes + match.margin_minutes) * MINUTE
-    candidates = sorted(
-        {ready}
-        | {window.start for window in windows if window.start > ready}
-        | {end for _, end in booked if end > ready}
-    )
-    for start in candidates:
-        window = next((w for w in windows if w.start <= start < w.end), None)
-        if window is None or start + playing_time > window.end:
-            continue
-        end = start + occupied_time
-        if all(end <= booked_start or start >= booked_end for booked_start, booked_end in booked):
-            return start
-    return None
+
+    def __init__(self) -> None:
+        self.starts: list[int] = []
+        self.ends: list[int] = []
+
+    def add(self, start: datetime_utc, end: datetime_utc) -> None:
+        start_us, end_us = to_micros(start), to_micros(end)
+        first = bisect_left(self.ends, start_us)  # First interval ending at or after the start
+        last = bisect_right(self.starts, end_us)  # After the last one starting at or before the end
+        if first < last:
+            start_us = min(start_us, self.starts[first])
+            end_us = max(end_us, self.ends[last - 1])
+        self.starts[first:last] = [start_us]
+        self.ends[first:last] = [end_us]
+
+    def earliest_start(
+        self, ready: int, match: MatchToPlan, windows: list[tuple[int, int]], before: int | None
+    ) -> int | None:
+        """
+        The earliest start at or after `ready` (and before `before`) where the match is played
+        within one window and the match plus its margin doesn't overlap a booking. `windows` are
+        sorted, disjoint (start, end) pairs.
+        """
+        playing_time = match.duration_minutes * 60_000_000
+        occupied_time = (match.duration_minutes + match.margin_minutes) * 60_000_000
+        start = ready
+        window_index = bisect_right(windows, start, key=lambda window: window[1])
+        while window_index < len(windows) and (before is None or start < before):
+            window_start, window_end = windows[window_index]
+            start = max(start, window_start)
+            if start + playing_time > window_end:
+                window_index += 1
+                continue
+            booking = bisect_right(self.ends, start)  # First booking that ends after the start
+            if booking < len(self.starts) and self.starts[booking] < start + occupied_time:
+                start = self.ends[booking]
+                continue
+            return start if before is None or start < before else None
+        return None
 
 
 def in_dependency_order(matches: list[MatchToPlan]) -> list[MatchToPlan]:
@@ -169,33 +203,50 @@ def best_assignment(
     match: MatchToPlan,
     ready: datetime_utc,
     courts: list[CourtToPlan],
-    booked: dict[CourtId, list[tuple[datetime_utc, datetime_utc]]],
-    windows: list[Window],
+    booked: dict[CourtId, CourtBookings],
+    windows: list[tuple[int, int]],
 ) -> Assignment | None:
     """The earliest start over all courts of the right format (first court on a tie)."""
-    best: Assignment | None = None
+    ready_us = to_micros(ready)
+    best: tuple[int, CourtId] | None = None
     for court in courts:
         if not court_fits(court, match):
             continue
-        start = find_start_on_court(ready, match, booked[court.id], windows)
-        if start is not None and (best is None or start < best.start):
-            best = Assignment(match.id, court.id, start)
-    return best
+        # Only a strictly earlier start beats the best court so far
+        start = booked[court.id].earliest_start(
+            ready_us, match, windows, None if best is None else best[0]
+        )
+        if start is not None:
+            best = (start, court.id)
+            if start == ready_us:
+                break  # No court can do better
+    return None if best is None else Assignment(match.id, best[1], from_micros(best[0]))
+
+
+def merge_overlapping(windows: list[Window]) -> list[Window]:
+    """Sorted windows where overlapping ones are joined (touching ones stay separate)."""
+    merged: list[Window] = []
+    for window in sorted(windows, key=lambda w: w.start):
+        if merged and window.start < merged[-1].end:
+            merged[-1] = Window(merged[-1].start, max(merged[-1].end, window.end))
+        else:
+            merged.append(window)
+    return merged
 
 
 def schedule_matches(
     matches: list[MatchToPlan], courts: list[CourtToPlan], windows: list[Window]
 ) -> ScheduleResult:
-    windows = sorted(windows, key=lambda w: w.start)
+    windows = merge_overlapping(windows)
     result = ScheduleResult()
-    booked: dict[CourtId, list[tuple[datetime_utc, datetime_utc]]] = {c.id: [] for c in courts}
+    booked = {court.id: CourtBookings() for court in courts}
     team_ready: dict[str, datetime_utc] = {}
     match_by_id = {match.id: match for match in matches}
 
     def book(match: MatchToPlan, assignment: Assignment) -> None:
         result.assignments[match.id] = assignment
         end = assignment.end(match)
-        booked.setdefault(assignment.court_id, []).append((assignment.start, end))
+        booked.setdefault(assignment.court_id, CourtBookings()).add(assignment.start, end)
         for team in match.teams:
             team_ready[team] = max(team_ready.get(team, end), end + match.rest_minutes * MINUTE)
 
@@ -210,10 +261,11 @@ def schedule_matches(
     if len(windows) < 1:
         result.unscheduled = [match.id for match in movable]
         return result
+    spans = [(to_micros(window.start), to_micros(window.end)) for window in windows]
 
     for match in in_dependency_order(movable):
         ready = ready_time(match, windows[0].start, result.assignments, match_by_id, team_ready)
-        best = None if ready is None else best_assignment(match, ready, courts, booked, windows)
+        best = None if ready is None else best_assignment(match, ready, courts, booked, spans)
         if best is None:
             result.unscheduled.append(match.id)
         else:
@@ -252,14 +304,17 @@ def smallest_that_fits(low: int, high: int, fits: Callable[[int], bool]) -> int 
 
 
 def determine_shortfall(
-    matches: list[MatchToPlan], courts: list[CourtToPlan], windows: list[Window]
+    matches: list[MatchToPlan],
+    courts: list[CourtToPlan],
+    windows: list[Window],
+    result: ScheduleResult,
 ) -> Shortfall:
     """
     Simulates the schedule with more courts (of the game formats of the matches that didn't fit)
     and, separately, with a later end of the last time window, to tell the organiser exactly
     how many courts or how much time is missing. `None` means even the maximum wasn't enough.
+    `result` is the schedule with the current courts and windows.
     """
-    result = schedule_matches(matches, courts, windows)
     if result.fits:
         return Shortfall(extra_courts={}, extra_minutes=0)
 

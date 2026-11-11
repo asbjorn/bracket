@@ -7,6 +7,7 @@ from heliclockter import datetime_utc
 
 from bracket.logic.planning.scheduler import (
     Assignment,
+    CourtBookings,
     CourtToPlan,
     Dependency,
     IssueKind,
@@ -15,7 +16,9 @@ from bracket.logic.planning.scheduler import (
     Window,
     determine_shortfall,
     find_plan_issues,
+    merge_overlapping,
     schedule_matches,
+    to_micros,
     window_start_for,
 )
 from bracket.logic.scheduling.round_robin import get_round_robin_combinations
@@ -163,8 +166,9 @@ def test_shortfall_courts_and_time() -> None:
     courts = [CourtToPlan(CourtId(1))]
     windows = [Window(at(14), at(16))]
 
-    assert not schedule_matches(matches, courts, windows).fits
-    shortfall = determine_shortfall(matches, courts, windows)
+    result = schedule_matches(matches, courts, windows)
+    assert not result.fits
+    shortfall = determine_shortfall(matches, courts, windows, result)
     assert shortfall.extra_courts == {None: 1}
     assert shortfall.extra_minutes == 60
 
@@ -260,3 +264,32 @@ def test_scheduler_output_has_no_issues() -> None:
 
         result = schedule_matches(matches, courts, windows)
         assert not find_plan_issues(matches, courts, windows, result.assignments)
+
+
+def test_court_bookings_merge() -> None:
+    bookings = CourtBookings()
+    bookings.add(at(10), at(11))
+    bookings.add(at(9), at(9, 30))
+    bookings.add(at(10, 30), at(12))  # Overlaps the first: merged
+    bookings.add(at(12), at(12, 10))  # Touches: merged
+    assert bookings.starts == [to_micros(at(9)), to_micros(at(10))]
+    assert bookings.ends == [to_micros(at(9, 30)), to_micros(at(12, 10))]
+
+    match = MatchToPlan(MatchId(1), duration_minutes=20, margin_minutes=5, teams=frozenset())
+    windows = [(to_micros(at(9)), to_micros(at(18)))]
+    # 9:30-9:55 fits before 10:00; 9:40 would overlap with its margin
+    assert bookings.earliest_start(to_micros(at(9)), match, windows, None) == to_micros(at(9, 30))
+    assert bookings.earliest_start(to_micros(at(9, 40)), match, windows, None) == to_micros(
+        at(12, 10)
+    )
+    # Not before the best start of another court
+    assert bookings.earliest_start(to_micros(at(9, 40)), match, windows, to_micros(at(12))) is None
+
+
+def test_merge_overlapping_windows() -> None:
+    windows = [Window(at(13), at(15)), Window(at(9), at(12)), Window(at(11), at(12, 30))]
+    assert merge_overlapping(windows + [Window(at(15), at(16))]) == [
+        Window(at(9), at(12, 30)),
+        Window(at(13), at(15)),
+        Window(at(15), at(16)),  # Touching windows stay separate: no match across them
+    ]

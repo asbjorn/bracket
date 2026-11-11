@@ -318,7 +318,7 @@
       "CapacityCourts": {
         "properties": {
           "count": {
-            "maximum": 64.0,
+            "maximum": 100.0,
             "minimum": 1.0,
             "title": "Count",
             "type": "integer"
