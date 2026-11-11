@@ -55,6 +55,147 @@ export type BodyUploadLogoTournamentsTournamentIdLogoPost = {
 };
 
 /**
+ * CapacityBody
+ */
+export type CapacityBody = {
+  /**
+   * Classes
+   */
+  classes: Array<CapacityClass>;
+  /**
+   * Courts
+   */
+  courts: Array<CapacityCourts>;
+  /**
+   * Stage Buffer Minutes
+   */
+  stage_buffer_minutes: number;
+  /**
+   * Time Windows
+   */
+  time_windows: Array<TimeWindowBody>;
+};
+
+/**
+ * CapacityClass
+ */
+export type CapacityClass = {
+  /**
+   * Age
+   */
+  age: number | null;
+  /**
+   * Duration Minutes
+   */
+  duration_minutes: number;
+  game_format: GameFormat | null;
+  /**
+   * Group Size
+   */
+  group_size: number;
+  /**
+   * Margin Minutes
+   */
+  margin_minutes: number;
+  /**
+   * Min Rest Minutes
+   */
+  min_rest_minutes: number;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Playoff Placings
+   */
+  playoff_placings: Array<Array<number>> | null;
+  playoffs: PlayoffPreset;
+  /**
+   * Team Count
+   */
+  team_count: number;
+  /**
+   * Third Place Match
+   */
+  third_place_match: boolean;
+};
+
+/**
+ * CapacityClassResult
+ */
+export type CapacityClassResult = {
+  /**
+   * Group Matches
+   */
+  group_matches: number;
+  /**
+   * Group Sizes
+   */
+  group_sizes: Array<number>;
+  /**
+   * Max Matches Per Team
+   */
+  max_matches_per_team: number;
+  /**
+   * Min Matches Per Team
+   */
+  min_matches_per_team: number;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Playoff Matches
+   */
+  playoff_matches: number;
+  /**
+   * Playoff Team Counts
+   */
+  playoff_team_counts: Array<number>;
+  /**
+   * Warnings
+   */
+  warnings: Array<CapacityWarning>;
+};
+
+/**
+ * CapacityCourts
+ */
+export type CapacityCourts = {
+  /**
+   * Count
+   */
+  count: number;
+  game_format: GameFormat | null;
+};
+
+/**
+ * CapacityResponse
+ */
+export type CapacityResponse = {
+  data: CapacityResult;
+};
+
+/**
+ * CapacityResult
+ */
+export type CapacityResult = {
+  /**
+   * Classes
+   */
+  classes: Array<CapacityClassResult>;
+  schedule: ScheduleProposal;
+};
+
+/**
+ * CapacityWarning
+ */
+export type CapacityWarning =
+  | 'TOO_FEW_MATCHES'
+  | 'TOO_MANY_MATCHES_PER_DAY'
+  | 'PLAYOFFS_IN_CHILDRENS_FOOTBALL';
+
+/**
  * CategoriesResponse
  */
 export type CategoriesResponse = {
@@ -1044,6 +1185,13 @@ export type PlayoffBody = {
    */
   third_place_match: boolean;
 };
+
+/**
+ * PlayoffPreset
+ *
+ * No playoffs, one playoff for everyone, or A/B (/C) playoffs split by placing.
+ */
+export type PlayoffPreset = 'NONE' | 'A' | 'AB' | 'ABC';
 
 /**
  * PlayoffsCreateBody
@@ -2459,6 +2607,33 @@ export type ValidationError = {
    */
   type: string;
 };
+
+export type CalculateCupCapacityCapacityPostData = {
+  body: CapacityBody;
+  path?: never;
+  query?: never;
+  url: '/capacity';
+};
+
+export type CalculateCupCapacityCapacityPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CalculateCupCapacityCapacityPostError =
+  CalculateCupCapacityCapacityPostErrors[keyof CalculateCupCapacityCapacityPostErrors];
+
+export type CalculateCupCapacityCapacityPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: CapacityResponse;
+};
+
+export type CalculateCupCapacityCapacityPostResponse =
+  CalculateCupCapacityCapacityPostResponses[keyof CalculateCupCapacityCapacityPostResponses];
 
 export type GetClubsClubsGetData = {
   body?: never;

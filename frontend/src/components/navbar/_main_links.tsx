@@ -5,6 +5,7 @@ import {
   IconBrackets,
   IconBrandGithub,
   IconBrowser,
+  IconCalculator,
   IconCalendar,
   IconCategory,
   IconDots,
@@ -76,6 +77,7 @@ export function getBaseLinksDict() {
   return [
     { link: '/clubs', label: capitalize(t('clubs_title')), links: [], icon: IconUsers },
     { link: '/', label: capitalize(t('tournaments_title')), links: [], icon: IconHome },
+    { link: '/capacity', label: t('capacity_title'), links: [], icon: IconCalculator },
     {
       link: '/user',
       label: t('user_title'),

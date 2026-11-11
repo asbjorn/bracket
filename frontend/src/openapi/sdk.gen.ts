@@ -17,6 +17,9 @@ import type {
   ApplyMatchScheduleTournamentsTournamentIdScheduleApplyPostData,
   ApplyMatchScheduleTournamentsTournamentIdScheduleApplyPostErrors,
   ApplyMatchScheduleTournamentsTournamentIdScheduleApplyPostResponses,
+  CalculateCupCapacityCapacityPostData,
+  CalculateCupCapacityCapacityPostErrors,
+  CalculateCupCapacityCapacityPostResponses,
   ChangeStatusTournamentsTournamentIdChangeStatusPostData,
   ChangeStatusTournamentsTournamentIdChangeStatusPostErrors,
   ChangeStatusTournamentsTournamentIdChangeStatusPostResponses,
@@ -245,6 +248,34 @@ export type Options<
    */
   meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
+
+/**
+ * Calculate Cup Capacity
+ *
+ * What-if for a cup that doesn't exist yet: do these classes fit on these courts within these
+ * playing hours? Plans the resulting matches with the real scheduler and tells what's missing.
+ */
+export const calculateCupCapacityCapacityPost = <ThrowOnError extends boolean = false>(
+  options: Options<CalculateCupCapacityCapacityPostData, ThrowOnError>,
+): RequestResult<
+  CalculateCupCapacityCapacityPostResponses,
+  CalculateCupCapacityCapacityPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    CalculateCupCapacityCapacityPostResponses,
+    CalculateCupCapacityCapacityPostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/capacity',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
 
 /**
  * Get Clubs

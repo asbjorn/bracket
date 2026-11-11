@@ -106,6 +106,282 @@
         "title": "Body_upload_logo_tournaments__tournament_id__logo_post",
         "type": "object"
       },
+      "CapacityBody": {
+        "properties": {
+          "classes": {
+            "items": {
+              "$ref": "#/components/schemas/CapacityClass"
+            },
+            "maxItems": 40,
+            "minItems": 1,
+            "title": "Classes",
+            "type": "array"
+          },
+          "courts": {
+            "items": {
+              "$ref": "#/components/schemas/CapacityCourts"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "title": "Courts",
+            "type": "array"
+          },
+          "stage_buffer_minutes": {
+            "default": 10,
+            "maximum": 600.0,
+            "minimum": 0.0,
+            "title": "Stage Buffer Minutes",
+            "type": "integer"
+          },
+          "time_windows": {
+            "items": {
+              "$ref": "#/components/schemas/TimeWindowBody"
+            },
+            "maxItems": 60,
+            "minItems": 1,
+            "title": "Time Windows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "classes",
+          "courts",
+          "time_windows",
+          "stage_buffer_minutes"
+        ],
+        "title": "CapacityBody",
+        "type": "object"
+      },
+      "CapacityClass": {
+        "properties": {
+          "age": {
+            "anyOf": [
+              {
+                "maximum": 99.0,
+                "minimum": 4.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "duration_minutes": {
+            "maximum": 240.0,
+            "minimum": 1.0,
+            "title": "Duration Minutes",
+            "type": "integer"
+          },
+          "game_format": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GameFormat"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "group_size": {
+            "maximum": 10.0,
+            "minimum": 2.0,
+            "title": "Group Size",
+            "type": "integer"
+          },
+          "margin_minutes": {
+            "default": 0,
+            "maximum": 120.0,
+            "minimum": 0.0,
+            "title": "Margin Minutes",
+            "type": "integer"
+          },
+          "min_rest_minutes": {
+            "default": 0,
+            "maximum": 600.0,
+            "minimum": 0.0,
+            "title": "Min Rest Minutes",
+            "type": "integer"
+          },
+          "name": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "playoff_placings": {
+            "anyOf": [
+              {
+                "items": {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Playoff Placings"
+          },
+          "playoffs": {
+            "$ref": "#/components/schemas/PlayoffPreset",
+            "default": "NONE"
+          },
+          "team_count": {
+            "maximum": 128.0,
+            "minimum": 2.0,
+            "title": "Team Count",
+            "type": "integer"
+          },
+          "third_place_match": {
+            "default": false,
+            "title": "Third Place Match",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "age",
+          "team_count",
+          "group_size",
+          "playoffs",
+          "playoff_placings",
+          "third_place_match",
+          "duration_minutes",
+          "margin_minutes",
+          "min_rest_minutes",
+          "game_format"
+        ],
+        "title": "CapacityClass",
+        "type": "object"
+      },
+      "CapacityClassResult": {
+        "properties": {
+          "group_matches": {
+            "title": "Group Matches",
+            "type": "integer"
+          },
+          "group_sizes": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Group Sizes",
+            "type": "array"
+          },
+          "max_matches_per_team": {
+            "title": "Max Matches Per Team",
+            "type": "integer"
+          },
+          "min_matches_per_team": {
+            "title": "Min Matches Per Team",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "playoff_matches": {
+            "title": "Playoff Matches",
+            "type": "integer"
+          },
+          "playoff_team_counts": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Playoff Team Counts",
+            "type": "array"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/CapacityWarning"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "group_sizes",
+          "group_matches",
+          "playoff_team_counts",
+          "playoff_matches",
+          "min_matches_per_team",
+          "max_matches_per_team",
+          "warnings"
+        ],
+        "title": "CapacityClassResult",
+        "type": "object"
+      },
+      "CapacityCourts": {
+        "properties": {
+          "count": {
+            "maximum": 64.0,
+            "minimum": 1.0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "game_format": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GameFormat"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "count",
+          "game_format"
+        ],
+        "title": "CapacityCourts",
+        "type": "object"
+      },
+      "CapacityResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CapacityResult"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "CapacityResponse",
+        "type": "object"
+      },
+      "CapacityResult": {
+        "properties": {
+          "classes": {
+            "items": {
+              "$ref": "#/components/schemas/CapacityClassResult"
+            },
+            "title": "Classes",
+            "type": "array"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/ScheduleProposal"
+          }
+        },
+        "required": [
+          "classes",
+          "schedule"
+        ],
+        "title": "CapacityResult",
+        "type": "object"
+      },
+      "CapacityWarning": {
+        "enum": [
+          "TOO_FEW_MATCHES",
+          "TOO_MANY_MATCHES_PER_DAY",
+          "PLAYOFFS_IN_CHILDRENS_FOOTBALL"
+        ],
+        "title": "CapacityWarning",
+        "type": "string"
+      },
       "CategoriesResponse": {
         "properties": {
           "data": {
@@ -2075,6 +2351,17 @@
         ],
         "title": "PlayoffBody",
         "type": "object"
+      },
+      "PlayoffPreset": {
+        "description": "No playoffs, one playoff for everyone, or A/B (/C) playoffs split by placing.",
+        "enum": [
+          "NONE",
+          "A",
+          "AB",
+          "ABC"
+        ],
+        "title": "PlayoffPreset",
+        "type": "string"
       },
       "PlayoffsCreateBody": {
         "description": "Creates a new stage after `group_stage_id` with a knockout bracket per playoff.",
@@ -4439,7 +4726,7 @@
     }
   },
   "info": {
-    "description": "\n### Description\nThis API allows you to do everything the frontend of [Bracket](https://github.com/evroon/bracket)\nallows you to do (the frontend uses this API as well).\n\nFore more information, see the [documentation](https://docs.bracketapp.nl).\n\n### Table of Contents\n*(links only work for [ReDoc](https://api.bracketapp.nl/redoc), not for Swagger UI)*\n\n- [Auth](#tag/Auth)\n\n- [Categories](#tag/Categories)\n\n- [Clubs](#tag/Clubs)\n\n- [Courts](#tag/Courts)\n\n- [Internals](#tag/Internals)\n\n- [Matches](#tag/Matches)\n\n- [Players](#tag/Players)\n\n- [Rankings](#tag/Rankings)\n\n- [Rounds](#tag/Rounds)\n\n- [Stage Items](#tag/Stage-Items)\n\n- [Stage Item Inputs](#tag/Stage-Item-Inputs)\n\n- [Stages](#tag/Stages)\n\n- [Teams](#tag/Teams)\n\n- [Tournaments](#tag/Tournaments)\n\n- [Users](#tag/Users)\n\n### Links\nGitHub: <https://github.com/evroon/bracket>\n\nDocs: <https://docs.bracketapp.nl>\n\nDemo: <https://www.bracketapp.nl/demo>\n\nAPI docs (Redoc): <https://api.bracketapp.nl/redoc>\n\nAPI docs (Swagger UI): <https://api.bracketapp.nl/docs>\n",
+    "description": "\n### Description\nThis API allows you to do everything the frontend of [Bracket](https://github.com/evroon/bracket)\nallows you to do (the frontend uses this API as well).\n\nFore more information, see the [documentation](https://docs.bracketapp.nl).\n\n### Table of Contents\n*(links only work for [ReDoc](https://api.bracketapp.nl/redoc), not for Swagger UI)*\n\n- [Auth](#tag/Auth)\n\n- [Capacity](#tag/Capacity)\n\n- [Categories](#tag/Categories)\n\n- [Clubs](#tag/Clubs)\n\n- [Courts](#tag/Courts)\n\n- [Internals](#tag/Internals)\n\n- [Matches](#tag/Matches)\n\n- [Players](#tag/Players)\n\n- [Rankings](#tag/Rankings)\n\n- [Rounds](#tag/Rounds)\n\n- [Stage Items](#tag/Stage-Items)\n\n- [Stage Item Inputs](#tag/Stage-Item-Inputs)\n\n- [Stages](#tag/Stages)\n\n- [Teams](#tag/Teams)\n\n- [Tournaments](#tag/Tournaments)\n\n- [Users](#tag/Users)\n\n### Links\nGitHub: <https://github.com/evroon/bracket>\n\nDocs: <https://docs.bracketapp.nl>\n\nDemo: <https://www.bracketapp.nl/demo>\n\nAPI docs (Redoc): <https://api.bracketapp.nl/redoc>\n\nAPI docs (Swagger UI): <https://api.bracketapp.nl/docs>\n",
     "license": {
       "name": "AGPL-3.0",
       "url": "https://www.gnu.org/licenses/agpl-3.0.en.html"
@@ -4450,6 +4737,53 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/capacity": {
+      "post": {
+        "description": "What-if for a cup that doesn't exist yet: do these classes fit on these courts within these\nplaying hours? Plans the resulting matches with the real scheduler and tells what's missing.",
+        "operationId": "calculate_cup_capacity_capacity_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CapacityBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapacityResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Calculate Cup Capacity",
+        "tags": [
+          "Capacity"
+        ]
+      }
+    },
     "/clubs": {
       "get": {
         "operationId": "get_clubs_clubs_get",

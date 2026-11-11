@@ -84,7 +84,7 @@ function AddCourtsForm({
   );
 }
 
-function ProposalReport({ proposal }: { proposal: ScheduleProposal }) {
+export function ProposalReport({ proposal }: { proposal: ScheduleProposal }) {
   const { t } = useTranslation();
   const scheduled = proposal.matches_total - proposal.unscheduled_match_ids.length;
   const utilisation =

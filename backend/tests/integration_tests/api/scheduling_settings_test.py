@@ -9,7 +9,12 @@ from bracket.sql.stages import get_full_tournament_details
 from bracket.utils.dummy_records import DUMMY_MOCK_TIME, DUMMY_STAGE1
 from bracket.utils.http import HTTPMethod
 from bracket.utils.types import assert_some
-from tests.integration_tests.api.shared import SUCCESS_RESPONSE, send_tournament_request
+from tests.integration_tests.api.shared import (
+    SUCCESS_RESPONSE,
+    send_auth_request,
+    send_request,
+    send_tournament_request,
+)
 from tests.integration_tests.models import AuthContext
 from tests.integration_tests.sql import inserted_category, inserted_stage
 
@@ -333,3 +338,34 @@ async def test_delay_and_plan_issues(
             await sql_delete_stage_item_with_foreign_keys(group.id)
             await database.execute(courts.delete())
             await database.execute(time_windows.delete())
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_capacity_endpoint(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    body = {
+        "classes": [
+            {
+                "name": "G12",
+                "age": 12,
+                "team_count": 8,
+                "group_size": 4,
+                "duration_minutes": 8,
+                "margin_minutes": 3,
+            }
+        ],
+        "courts": [{"count": 1}],
+        "time_windows": [
+            {"start_time": "2026-06-13T14:00:00Z", "end_time": "2026-06-13T15:00:00Z"}
+        ],
+    }
+    response = await send_auth_request(HTTPMethod.POST, "capacity", auth_context, json=body)
+    schedule = response["data"]["schedule"]
+    # 12 matches of 11 minutes don't fit in an hour on one court
+    assert len(schedule["unscheduled_match_ids"]) > 0
+    assert schedule["extra_courts"] == [{"game_format": None, "count": 2}]
+    assert response["data"]["classes"][0]["group_matches"] == 12
+
+    unauthorized = await send_request(HTTPMethod.POST, "capacity", json=body)
+    assert unauthorized == {"detail": "Not authenticated"}
