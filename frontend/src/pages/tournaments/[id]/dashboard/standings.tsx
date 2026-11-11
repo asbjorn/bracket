@@ -40,22 +40,24 @@ function KnockoutMatches({
     .sort((a, b) => a.id - b.id)
     .flatMap((round) => [...round.matches].sort((a, b) => a.id - b.id));
   return (
-    <Stack gap={4}>
+    <Stack gap="sm">
       {matches.map((match) => (
-        <Group key={match.id} justify="space-between" wrap="nowrap" gap="xs">
-          <Text inherit size="sm" c="dimmed" w="9rem" style={{ flexShrink: 0 }}>
+        <Stack key={match.id} gap={0}>
+          <Text inherit size="sm" c="dimmed">
             {capitalize(knockoutMatchName(t, matchesLookup, match.id))}
           </Text>
-          <Text inherit style={{ flex: 1, minWidth: 0 }} truncate>
-            {formatMatchInput1(t, stageItemsLookup, matchesLookup, match)} –{' '}
-            {formatMatchInput2(t, stageItemsLookup, matchesLookup, match)}
-          </Text>
-          <Text inherit fw={700} style={{ flexShrink: 0 }}>
-            {match.played
-              ? `${match.stage_item_input1_score}–${match.stage_item_input2_score}`
-              : ''}
-          </Text>
-        </Group>
+          <Group justify="space-between" wrap="nowrap" gap="xs">
+            <Text inherit style={{ flex: 1, minWidth: 0 }}>
+              {formatMatchInput1(t, stageItemsLookup, matchesLookup, match)} –{' '}
+              {formatMatchInput2(t, stageItemsLookup, matchesLookup, match)}
+            </Text>
+            <Text inherit fw={700} style={{ flexShrink: 0 }}>
+              {match.played
+                ? `${match.stage_item_input1_score}–${match.stage_item_input2_score}`
+                : ''}
+            </Text>
+          </Group>
+        </Stack>
       ))}
     </Stack>
   );

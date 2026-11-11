@@ -440,7 +440,7 @@ function StageColumn({
     ));
 
   return (
-    <Stack miw="24rem" align="top" key={stage.id}>
+    <Stack w={{ base: '100%', xs: '24rem' }} align="top" key={stage.id}>
       <UpdateStageModal
         swrStagesResponse={swrStagesResponse}
         stage={stage}
@@ -535,7 +535,7 @@ export default function Builder({
     ));
 
   const button = (
-    <Stack miw="24rem" align="top" key={-1}>
+    <Stack w={{ base: '100%', xs: '24rem' }} align="top" key={-1}>
       <h4 style={{ marginTop: '0rem' }}>
         <CreateStageButton
           tournament={tournament}

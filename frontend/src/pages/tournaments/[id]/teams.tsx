@@ -76,22 +76,22 @@ export default function TeamsPage() {
         <Grid.Col span="auto">
           <Title>{capitalize(t('teams_title'))}</Title>
         </Grid.Col>
-        <Grid.Col span="content">
+        <Grid.Col span={{ base: 12, md: 'content' }}>
           <Grid align="flex-end">
-            <Grid.Col span="auto">
+            <Grid.Col span={{ base: 12, xs: 'auto' }}>
               <CategoryFilterSelect
                 categories={categories}
                 value={filterValue}
                 setValue={setFilterValue}
               />
             </Grid.Col>
-            <Grid.Col span="auto">
+            <Grid.Col span={{ base: 12, xs: 'auto' }}>
               <StageItemSelect
                 groupStageItems={Object.values(stageItemInputLookup)}
                 setFilteredStageItemId={setFilteredStageItemId}
               />
             </Grid.Col>
-            <Grid.Col span="auto">
+            <Grid.Col span={{ base: 12, xs: 'auto' }}>
               <TeamCreateModal
                 swrTeamsResponse={swrTeamsResponse}
                 tournament_id={tournamentData.id}

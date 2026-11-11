@@ -56,7 +56,7 @@ function ScheduleRow({
   const resultNote = formatResultNote(t, data.match);
 
   return (
-    <UnstyledButton style={{ width: '48rem' }}>
+    <UnstyledButton style={{ width: '100%', maxWidth: '48rem' }}>
       <Card
         shadow="sm"
         radius="md"
@@ -225,7 +225,7 @@ function Schedule({
 
   return (
     <Group wrap="nowrap" align="top">
-      <div style={{ width: '48rem' }}>
+      <div style={{ width: '100%', maxWidth: '48rem' }}>
         {rows}
         {noItemsAlert}
       </div>

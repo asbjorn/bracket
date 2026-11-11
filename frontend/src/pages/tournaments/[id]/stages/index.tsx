@@ -154,7 +154,7 @@ export default function StagesPage() {
             />
           </Group>
         ) : null}
-        <Group mt="1rem" align="top">
+        <Group mt="1rem" align="top" wrap="wrap">
           <Builder
             tournament={tournamentDataFull}
             categoryId={categoryId}
