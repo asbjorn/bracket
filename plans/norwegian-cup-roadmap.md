@@ -124,6 +124,23 @@ Each item is tagged **[Fix]**, **[Core]**, **[Feature]** or **[Nice]**, and **�
 
 ### Phase 3 — Scheduling engine
 
+**Status (2026-11-11): core done** (commits 3a–3d on branch `phase-0-norwegian`).
+
+- **Playing hours:** time windows per day; a lunch break is a gap between windows; multi-day cups work.
+- **Courts:** courts can be created in bulk, and courts and classes have a game format. Classes have their own match duration, margin and rest.
+- **Buffer between stages:** this is the "block buffer".
+- **Greedy scheduler:**
+  - respects time windows, formats, rest and knockout order, and keeps played and live matches in place
+  - is checked against AreaCopa's timeline and Cup Manager's math
+- **Feasibility report:** gives exact extra courts per format or extra minutes, found by binary search over simulations.
+- **Independent checker:** includes a property test.
+- **Delay tool:** moves the remaining matches.
+- **Not done yet:**
+  - item 18: split pitches (a full pitch split into 2×7v7) blocking the full pitch
+  - item 22: "shorten remaining matches"
+  - final reserve before awards (can be modelled by ending the last window earlier)
+  - item 20 step 2: OR-Tools optimisation, not needed so far (300 matches are planned in 0.07 s)
+
 The target workflow:
 - **Input:** start and stop date/time, daily playing hours, number of courts, and the classes with their structure.
 - **Output:** the proposed match plan with all time slots, plus a feasibility report.
