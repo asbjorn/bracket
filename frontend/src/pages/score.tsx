@@ -26,6 +26,7 @@ import {
   IconPlus,
   IconUser,
   IconUserCheck,
+  IconUserShield,
 } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -110,6 +111,12 @@ function MatchHeader({ match }: { match: ScoreEntryMatch }) {
       <Badge variant="outline" color="gray">
         {match.stage_item_name}
       </Badge>
+      {match.referee_name != null ? (
+        <Badge variant="light" color="yellow" leftSection={<IconUserShield size={12} />}>
+          {match.referee_name}
+          {match.assistant_names.length > 0 ? ` + ${match.assistant_names.join(', ')}` : ''}
+        </Badge>
+      ) : null}
     </Group>
   );
 }

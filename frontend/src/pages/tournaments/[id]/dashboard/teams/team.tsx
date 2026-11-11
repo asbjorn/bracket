@@ -31,6 +31,7 @@ import { getCategories, getStagesLive } from '@services/adapter';
 import { getTournamentResponseByEndpointName } from '@services/dashboard';
 import { getMatchLookup, getStageItemLookup } from '@services/lookups';
 import { teamCalendarUrl } from '@services/public_info';
+import { getMatchOfficials, refereeNamesByMatch } from '@services/officials';
 
 export default function DashboardTeamPage() {
   const { t } = useTranslation();
@@ -38,6 +39,9 @@ export default function DashboardTeamPage() {
   const tournamentDataFull = getTournamentResponseByEndpointName();
   const tournamentValid = !React.isValidElement(tournamentDataFull);
   const swrStagesResponse = getStagesLive(tournamentValid ? tournamentDataFull.id : null);
+  const referees = refereeNamesByMatch(
+    getMatchOfficials(tournamentValid ? tournamentDataFull.id : null).data?.data ?? [],
+  );
   const categories = getCategories(tournamentValid ? tournamentDataFull.id : null).data?.data ?? [];
 
   if (!tournamentValid) return tournamentDataFull;
@@ -128,6 +132,7 @@ export default function DashboardTeamPage() {
           ) : (
             <Schedule
               t={t}
+              referees={referees}
               matchesLookup={matchesLookup}
               stageItemsLookup={stageItemsLookup}
               stageItemIdsWithHiddenResults={hiddenStageItemIds}

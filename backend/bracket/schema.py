@@ -1,4 +1,14 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, Table, UniqueConstraint, func, text
+from sqlalchemy import (
+    Column,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Table,
+    UniqueConstraint,
+    func,
+    text,
+)
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import declarative_base  # type: ignore[attr-defined]
 from sqlalchemy.sql.sqltypes import BigInteger, Boolean, DateTime, Enum, Float, Text
@@ -412,4 +422,83 @@ match_day_notices = Table(
     Column("message", Text, nullable=False, server_default=""),
     Column("created", DateTimeTZ, nullable=False, server_default=func.now()),
     Column("resolved", Boolean, nullable=False, server_default="f"),
+)
+
+# Referees and match hosts (kampverter). Phone and email are personal data: organiser only.
+officials = Table(
+    "officials",
+    metadata,
+    Column("id", BigInteger, primary_key=True, index=True),
+    Column(
+        "tournament_id",
+        BigInteger,
+        ForeignKey("tournaments.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    ),
+    Column("name", Text, nullable=False),
+    Column("age", Integer, nullable=True),
+    Column("level", Text, nullable=True),
+    Column("club_name", Text, nullable=True),
+    Column("phone", Text, nullable=True),
+    Column("email", Text, nullable=True),
+    # REFEREE or HOST
+    Column("role", Text, nullable=False, server_default="REFEREE"),
+    Column("fee_per_match", Integer, nullable=False, server_default="0"),
+    Column("fee_per_day", Integer, nullable=False, server_default="0"),
+    Column("active", Boolean, nullable=False, server_default="t"),
+    Column("created", DateTimeTZ, nullable=False, server_default=func.now()),
+)
+
+# Who refs a match: one REFEREE and any number of ASSISTANTs
+match_officials = Table(
+    "match_officials",
+    metadata,
+    Column("id", BigInteger, primary_key=True, index=True),
+    Column(
+        "match_id",
+        BigInteger,
+        ForeignKey("matches.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    ),
+    Column(
+        "official_id",
+        BigInteger,
+        ForeignKey("officials.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    ),
+    Column("role", Text, nullable=False, server_default="REFEREE"),
+    UniqueConstraint("match_id", "official_id"),
+    Index(
+        "ix_match_officials_one_referee",
+        "match_id",
+        unique=True,
+        postgresql_where=text("role = 'REFEREE'"),
+    ),
+)
+
+# Match host (kampvert) of a court during a period
+court_hosts = Table(
+    "court_hosts",
+    metadata,
+    Column("id", BigInteger, primary_key=True, index=True),
+    Column(
+        "tournament_id",
+        BigInteger,
+        ForeignKey("tournaments.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    ),
+    Column("court_id", BigInteger, ForeignKey("courts.id", ondelete="CASCADE"), nullable=False),
+    Column(
+        "official_id",
+        BigInteger,
+        ForeignKey("officials.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    ),
+    Column("start_time", DateTimeTZ, nullable=False),
+    Column("end_time", DateTimeTZ, nullable=False),
 )

@@ -65,6 +65,9 @@ class ScoreEntryMatch(BaseModel):
     penalties2: int | None
     played: bool
     result_type: MatchResultType
+    # Names only, never contact details
+    referee_name: str | None = None
+    assistant_names: list[str] = []
 
 
 class ScoreEntryView(BaseModel):

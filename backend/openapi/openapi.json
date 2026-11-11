@@ -82,6 +82,37 @@
         "title": "AnnouncementResponse",
         "type": "object"
       },
+      "BlockAssignmentBody": {
+        "description": "All scheduled matches on a court that start in [start_time, end_time) get this referee.",
+        "properties": {
+          "court_id": {
+            "title": "Court Id",
+            "type": "integer"
+          },
+          "end_time": {
+            "format": "date-time",
+            "title": "End Time",
+            "type": "string"
+          },
+          "official_id": {
+            "title": "Official Id",
+            "type": "integer"
+          },
+          "start_time": {
+            "format": "date-time",
+            "title": "Start Time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "official_id",
+          "court_id",
+          "start_time",
+          "end_time"
+        ],
+        "title": "BlockAssignmentBody",
+        "type": "object"
+      },
       "Body_login_for_access_token_token_post": {
         "properties": {
           "client_id": {
@@ -945,6 +976,76 @@
           "game_format"
         ],
         "title": "CourtBody",
+        "type": "object"
+      },
+      "CourtHost": {
+        "properties": {
+          "court_id": {
+            "title": "Court Id",
+            "type": "integer"
+          },
+          "end_time": {
+            "format": "date-time",
+            "title": "End Time",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "official_id": {
+            "title": "Official Id",
+            "type": "integer"
+          },
+          "start_time": {
+            "format": "date-time",
+            "title": "Start Time",
+            "type": "string"
+          },
+          "tournament_id": {
+            "title": "Tournament Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "official_id",
+          "court_id",
+          "start_time",
+          "end_time",
+          "id",
+          "tournament_id"
+        ],
+        "title": "CourtHost",
+        "type": "object"
+      },
+      "CourtHostBody": {
+        "properties": {
+          "court_id": {
+            "title": "Court Id",
+            "type": "integer"
+          },
+          "end_time": {
+            "format": "date-time",
+            "title": "End Time",
+            "type": "string"
+          },
+          "official_id": {
+            "title": "Official Id",
+            "type": "integer"
+          },
+          "start_time": {
+            "format": "date-time",
+            "title": "Start Time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "official_id",
+          "court_id",
+          "start_time",
+          "end_time"
+        ],
+        "title": "CourtHostBody",
         "type": "object"
       },
       "CourtsMultiBody": {
@@ -2116,6 +2217,67 @@
         "title": "MatchDayNoticesResponse",
         "type": "object"
       },
+      "MatchOfficial": {
+        "properties": {
+          "match_id": {
+            "title": "Match Id",
+            "type": "integer"
+          },
+          "official_id": {
+            "title": "Official Id",
+            "type": "integer"
+          },
+          "role": {
+            "$ref": "#/components/schemas/MatchOfficialRole"
+          }
+        },
+        "required": [
+          "match_id",
+          "official_id",
+          "role"
+        ],
+        "title": "MatchOfficial",
+        "type": "object"
+      },
+      "MatchOfficialRole": {
+        "enum": [
+          "REFEREE",
+          "ASSISTANT"
+        ],
+        "title": "MatchOfficialRole",
+        "type": "string"
+      },
+      "MatchOfficialsBody": {
+        "description": "Replaces who refs the match.",
+        "properties": {
+          "assistant_ids": {
+            "default": [],
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 4,
+            "title": "Assistant Ids",
+            "type": "array"
+          },
+          "referee_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referee Id"
+          }
+        },
+        "required": [
+          "referee_id",
+          "assistant_ids"
+        ],
+        "title": "MatchOfficialsBody",
+        "type": "object"
+      },
       "MatchRescheduleBody": {
         "properties": {
           "new_court_id": {
@@ -2699,6 +2861,424 @@
         "title": "MatchWithDetailsDefinitive",
         "type": "object"
       },
+      "Official": {
+        "description": "Only for the organiser: it has phone and email.",
+        "properties": {
+          "active": {
+            "default": true,
+            "title": "Active",
+            "type": "boolean"
+          },
+          "age": {
+            "anyOf": [
+              {
+                "maximum": 99.0,
+                "minimum": 8.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "club_name": {
+            "anyOf": [
+              {
+                "maxLength": 50,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Club Name"
+          },
+          "created": {
+            "format": "date-time",
+            "title": "Created",
+            "type": "string"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "fee_per_day": {
+            "default": 0,
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Fee Per Day",
+            "type": "integer"
+          },
+          "fee_per_match": {
+            "default": 0,
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Fee Per Match",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "maxLength": 50,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          },
+          "name": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "maxLength": 30,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "role": {
+            "$ref": "#/components/schemas/OfficialRole",
+            "default": "REFEREE"
+          },
+          "tournament_id": {
+            "title": "Tournament Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "age",
+          "level",
+          "club_name",
+          "phone",
+          "email",
+          "role",
+          "fee_per_match",
+          "fee_per_day",
+          "active",
+          "id",
+          "tournament_id",
+          "created"
+        ],
+        "title": "Official",
+        "type": "object"
+      },
+      "OfficialBody": {
+        "properties": {
+          "active": {
+            "default": true,
+            "title": "Active",
+            "type": "boolean"
+          },
+          "age": {
+            "anyOf": [
+              {
+                "maximum": 99.0,
+                "minimum": 8.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "club_name": {
+            "anyOf": [
+              {
+                "maxLength": 50,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Club Name"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "format": "email",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "fee_per_day": {
+            "default": 0,
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Fee Per Day",
+            "type": "integer"
+          },
+          "fee_per_match": {
+            "default": 0,
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Fee Per Match",
+            "type": "integer"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "maxLength": 50,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          },
+          "name": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "maxLength": 30,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "role": {
+            "$ref": "#/components/schemas/OfficialRole",
+            "default": "REFEREE"
+          }
+        },
+        "required": [
+          "name",
+          "age",
+          "level",
+          "club_name",
+          "phone",
+          "email",
+          "role",
+          "fee_per_match",
+          "fee_per_day",
+          "active"
+        ],
+        "title": "OfficialBody",
+        "type": "object"
+      },
+      "OfficialConflict": {
+        "properties": {
+          "court_host_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Court Host Id"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/OfficialConflictKind"
+          },
+          "match_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Id"
+          },
+          "official_id": {
+            "title": "Official Id",
+            "type": "integer"
+          },
+          "other_match_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Other Match Id"
+          }
+        },
+        "required": [
+          "official_id",
+          "kind",
+          "match_id",
+          "other_match_id",
+          "court_host_id"
+        ],
+        "title": "OfficialConflict",
+        "type": "object"
+      },
+      "OfficialConflictKind": {
+        "enum": [
+          "DOUBLE_BOOKED",
+          "OWN_CLUB",
+          "INACTIVE"
+        ],
+        "title": "OfficialConflictKind",
+        "type": "string"
+      },
+      "OfficialFee": {
+        "properties": {
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "host_days": {
+            "title": "Host Days",
+            "type": "integer"
+          },
+          "matches": {
+            "title": "Matches",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "official_id": {
+            "title": "Official Id",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "official_id",
+          "name",
+          "matches",
+          "days",
+          "host_days",
+          "total"
+        ],
+        "title": "OfficialFee",
+        "type": "object"
+      },
+      "OfficialResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Official"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "OfficialResponse",
+        "type": "object"
+      },
+      "OfficialRole": {
+        "enum": [
+          "REFEREE",
+          "HOST"
+        ],
+        "title": "OfficialRole",
+        "type": "string"
+      },
+      "OfficialsOverview": {
+        "properties": {
+          "assignments": {
+            "items": {
+              "$ref": "#/components/schemas/MatchOfficial"
+            },
+            "title": "Assignments",
+            "type": "array"
+          },
+          "conflicts": {
+            "items": {
+              "$ref": "#/components/schemas/OfficialConflict"
+            },
+            "title": "Conflicts",
+            "type": "array"
+          },
+          "fees": {
+            "items": {
+              "$ref": "#/components/schemas/OfficialFee"
+            },
+            "title": "Fees",
+            "type": "array"
+          },
+          "hosts": {
+            "items": {
+              "$ref": "#/components/schemas/CourtHost"
+            },
+            "title": "Hosts",
+            "type": "array"
+          },
+          "officials": {
+            "items": {
+              "$ref": "#/components/schemas/Official"
+            },
+            "title": "Officials",
+            "type": "array"
+          }
+        },
+        "required": [
+          "officials",
+          "assignments",
+          "hosts",
+          "conflicts",
+          "fees"
+        ],
+        "title": "OfficialsOverview",
+        "type": "object"
+      },
+      "OfficialsOverviewResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/OfficialsOverview"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "OfficialsOverviewResponse",
+        "type": "object"
+      },
       "PaginatedPlayers": {
         "properties": {
           "count": {
@@ -3054,6 +3634,45 @@
           "created"
         ],
         "title": "PublicDelay",
+        "type": "object"
+      },
+      "PublicMatchOfficial": {
+        "description": "What the public, the pitch and printed cards may see: the name only.",
+        "properties": {
+          "match_id": {
+            "title": "Match Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/MatchOfficialRole"
+          }
+        },
+        "required": [
+          "match_id",
+          "name",
+          "role"
+        ],
+        "title": "PublicMatchOfficial",
+        "type": "object"
+      },
+      "PublicMatchOfficialsResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PublicMatchOfficial"
+            },
+            "title": "Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "PublicMatchOfficialsResponse",
         "type": "object"
       },
       "PublicNotices": {
@@ -4101,6 +4720,14 @@
       "ScoreEntryMatch": {
         "description": "A match as the score keeper sees it.",
         "properties": {
+          "assistant_names": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Assistant Names",
+            "type": "array"
+          },
           "category_name": {
             "anyOf": [
               {
@@ -4167,6 +4794,17 @@
           "played": {
             "title": "Played",
             "type": "boolean"
+          },
+          "referee_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referee Name"
           },
           "result_type": {
             "$ref": "#/components/schemas/MatchResultType"
@@ -4272,7 +4910,9 @@
           "penalties1",
           "penalties2",
           "played",
-          "result_type"
+          "result_type",
+          "referee_name",
+          "assistant_names"
         ],
         "title": "ScoreEntryMatch",
         "type": "object"
@@ -6461,7 +7101,7 @@
     }
   },
   "info": {
-    "description": "\n### Description\nThis API allows you to do everything the frontend of [Bracket](https://github.com/evroon/bracket)\nallows you to do (the frontend uses this API as well).\n\nFore more information, see the [documentation](https://docs.bracketapp.nl).\n\n### Table of Contents\n*(links only work for [ReDoc](https://api.bracketapp.nl/redoc), not for Swagger UI)*\n\n- [Auth](#tag/Auth)\n\n- [Capacity](#tag/Capacity)\n\n- [Cup setup](#tag/Cup-setup)\n\n- [Draw](#tag/Draw)\n\n- [Public info](#tag/Public-info)\n\n- [Registrations](#tag/Registrations)\n\n- [Score links](#tag/Score-links)\n\n- [Categories](#tag/Categories)\n\n- [Clubs](#tag/Clubs)\n\n- [Courts](#tag/Courts)\n\n- [Internals](#tag/Internals)\n\n- [Matches](#tag/Matches)\n\n- [Players](#tag/Players)\n\n- [Rankings](#tag/Rankings)\n\n- [Rounds](#tag/Rounds)\n\n- [Stage Items](#tag/Stage-Items)\n\n- [Stage Item Inputs](#tag/Stage-Item-Inputs)\n\n- [Stages](#tag/Stages)\n\n- [Teams](#tag/Teams)\n\n- [Tournaments](#tag/Tournaments)\n\n- [Users](#tag/Users)\n\n### Links\nGitHub: <https://github.com/evroon/bracket>\n\nDocs: <https://docs.bracketapp.nl>\n\nDemo: <https://www.bracketapp.nl/demo>\n\nAPI docs (Redoc): <https://api.bracketapp.nl/redoc>\n\nAPI docs (Swagger UI): <https://api.bracketapp.nl/docs>\n",
+    "description": "\n### Description\nThis API allows you to do everything the frontend of [Bracket](https://github.com/evroon/bracket)\nallows you to do (the frontend uses this API as well).\n\nFore more information, see the [documentation](https://docs.bracketapp.nl).\n\n### Table of Contents\n*(links only work for [ReDoc](https://api.bracketapp.nl/redoc), not for Swagger UI)*\n\n- [Auth](#tag/Auth)\n\n- [Capacity](#tag/Capacity)\n\n- [Cup setup](#tag/Cup-setup)\n\n- [Draw](#tag/Draw)\n\n- [Officials](#tag/Officials)\n\n- [Public info](#tag/Public-info)\n\n- [Registrations](#tag/Registrations)\n\n- [Score links](#tag/Score-links)\n\n- [Categories](#tag/Categories)\n\n- [Clubs](#tag/Clubs)\n\n- [Courts](#tag/Courts)\n\n- [Internals](#tag/Internals)\n\n- [Matches](#tag/Matches)\n\n- [Players](#tag/Players)\n\n- [Rankings](#tag/Rankings)\n\n- [Rounds](#tag/Rounds)\n\n- [Stage Items](#tag/Stage-Items)\n\n- [Stage Item Inputs](#tag/Stage-Item-Inputs)\n\n- [Stages](#tag/Stages)\n\n- [Teams](#tag/Teams)\n\n- [Tournaments](#tag/Tournaments)\n\n- [Users](#tag/Users)\n\n### Links\nGitHub: <https://github.com/evroon/bracket>\n\nDocs: <https://docs.bracketapp.nl>\n\nDemo: <https://www.bracketapp.nl/demo>\n\nAPI docs (Redoc): <https://api.bracketapp.nl/redoc>\n\nAPI docs (Swagger UI): <https://api.bracketapp.nl/docs>\n",
     "license": {
       "name": "AGPL-3.0",
       "url": "https://www.gnu.org/licenses/agpl-3.0.en.html"
@@ -7905,6 +8545,120 @@
         ]
       }
     },
+    "/tournaments/{tournament_id}/court_hosts": {
+      "post": {
+        "description": "A match host (kampvert) for a court during a period.",
+        "operationId": "create_court_host_tournaments__tournament_id__court_hosts_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CourtHostBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Court Host",
+        "tags": [
+          "Officials"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/court_hosts/{court_host_id}": {
+      "delete": {
+        "operationId": "delete_court_host_tournaments__tournament_id__court_hosts__court_host_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "court_host_id",
+            "required": true,
+            "schema": {
+              "title": "Court Host Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Delete Court Host",
+        "tags": [
+          "Officials"
+        ]
+      }
+    },
     "/tournaments/{tournament_id}/courts": {
       "get": {
         "operationId": "get_courts_tournaments__tournament_id__courts_get",
@@ -8351,6 +9105,49 @@
         ]
       }
     },
+    "/tournaments/{tournament_id}/match_officials": {
+      "get": {
+        "description": "Who refs which match, by name only (no contact details): also for public pages.",
+        "operationId": "get_referees_of_matches_tournaments__tournament_id__match_officials_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicMatchOfficialsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Referees Of Matches",
+        "tags": [
+          "Officials"
+        ]
+      }
+    },
     "/tournaments/{tournament_id}/matches": {
       "post": {
         "operationId": "create_match_tournaments__tournament_id__matches_post",
@@ -8525,6 +9322,73 @@
         "summary": "Update Match By Id",
         "tags": [
           "Matches"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/matches/{match_id}/officials": {
+      "put": {
+        "description": "Sets the referee and assistants of a match (replacing the current ones).",
+        "operationId": "set_match_officials_tournaments__tournament_id__matches__match_id__officials_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "match_id",
+            "required": true,
+            "schema": {
+              "title": "Match Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MatchOfficialsBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Set Match Officials",
+        "tags": [
+          "Officials"
         ]
       }
     },
@@ -8825,6 +9689,343 @@
         "summary": "Resolve Match Day Notice",
         "tags": [
           "Score links"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/officials": {
+      "get": {
+        "description": "Officials with contact details, their matches and host blocks, conflicts and fees.",
+        "operationId": "get_tournament_officials_tournaments__tournament_id__officials_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfficialsOverviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Tournament Officials",
+        "tags": [
+          "Officials"
+        ]
+      },
+      "post": {
+        "operationId": "create_official_tournaments__tournament_id__officials_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OfficialBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfficialResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Official",
+        "tags": [
+          "Officials"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/officials/assign_block": {
+      "post": {
+        "description": "The official referees every match on the court that starts in the period.",
+        "operationId": "assign_referee_to_block_tournaments__tournament_id__officials_assign_block_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlockAssignmentBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Assign Referee To Block",
+        "tags": [
+          "Officials"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/officials/{official_id}": {
+      "delete": {
+        "description": "Also removes the official from their matches and host blocks.",
+        "operationId": "delete_official_tournaments__tournament_id__officials__official_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "official_id",
+            "required": true,
+            "schema": {
+              "title": "Official Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Delete Official",
+        "tags": [
+          "Officials"
+        ]
+      },
+      "put": {
+        "operationId": "update_official_tournaments__tournament_id__officials__official_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "official_id",
+            "required": true,
+            "schema": {
+              "title": "Official Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OfficialBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Official",
+        "tags": [
+          "Officials"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/officials_fees.csv": {
+      "get": {
+        "operationId": "export_official_fees_tournaments__tournament_id__officials_fees_csv_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "language",
+            "required": false,
+            "schema": {
+              "default": "en",
+              "title": "Language",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Export Official Fees",
+        "tags": [
+          "Officials"
         ]
       }
     },

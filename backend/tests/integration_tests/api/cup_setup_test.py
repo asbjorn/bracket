@@ -4,7 +4,7 @@ from bracket.database import database
 from bracket.logic.scheduling.cup_setup import group_letter
 from bracket.models.db.stage_item import StageType
 from bracket.models.db.stage_item_inputs import StageItemInputTentative
-from bracket.schema import categories, courts, teams, time_windows
+from bracket.schema import categories, courts, officials, teams, time_windows
 from bracket.sql.categories import get_category_by_id
 from bracket.sql.courts import get_all_courts_in_tournament
 from bracket.sql.shared import sql_delete_stage_item_with_foreign_keys
@@ -47,6 +47,7 @@ async def delete_cup(auth_context: AuthContext) -> None:
         )
     )
     await database.execute(categories.delete().where(categories.c.tournament_id == tournament_id))
+    await database.execute(officials.delete().where(officials.c.tournament_id == tournament_id))
     await database.execute(courts.delete().where(courts.c.tournament_id == tournament_id))
     await database.execute(
         time_windows.delete().where(time_windows.c.tournament_id == tournament_id)

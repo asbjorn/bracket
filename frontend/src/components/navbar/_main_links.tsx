@@ -18,6 +18,7 @@ import {
   IconUser,
   IconUsers,
   IconWand,
+  IconUserShield,
 } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
@@ -158,6 +159,11 @@ export function TournamentLinks({ tournament_id }: any) {
       icon: IconCalendar,
       label: capitalize(t('planning_title')),
       link: `${tm_prefix}/schedule`,
+    },
+    {
+      icon: IconUserShield,
+      label: t('officials_title'),
+      link: `${tm_prefix}/officials`,
     },
     {
       icon: IconBrackets,

@@ -9,6 +9,7 @@ from bracket.models.db.category import Category
 from bracket.models.db.club import Club
 from bracket.models.db.court import Court
 from bracket.models.db.match import Match, SuggestedMatch
+from bracket.models.db.official import Official, OfficialsOverview, PublicMatchOfficial
 from bracket.models.db.player import Player
 from bracket.models.db.public_info import Announcement, PublicNotices, Rules
 from bracket.models.db.ranking import Ranking
@@ -123,6 +124,18 @@ class ScheduleProposalResponse(DataResponse[ScheduleProposal]):
 
 
 class PlanIssuesResponse(DataResponse[list[PlanIssueOut]]):
+    pass
+
+
+class OfficialResponse(DataResponse[Official]):
+    pass
+
+
+class OfficialsOverviewResponse(DataResponse[OfficialsOverview]):
+    pass
+
+
+class PublicMatchOfficialsResponse(DataResponse[list[PublicMatchOfficial]]):
     pass
 
 

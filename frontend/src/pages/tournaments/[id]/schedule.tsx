@@ -32,6 +32,7 @@ import { Court, CourtsResponse, MatchWithDetails } from '@openapi';
 import TournamentLayout from '@pages/tournaments/_tournament_layout';
 import { getCourts, getStages } from '@services/adapter';
 import { deleteCourt } from '@services/court';
+import { getMatchOfficials, refereeNamesByMatch } from '@services/officials';
 import {
   getMatchLookup,
   getMatchLookupByCourt,
@@ -57,6 +58,11 @@ function ScheduleRow({
   multipleDays: boolean;
 }) {
   const { t } = useTranslation();
+  const { tournamentData } = getTournamentIdFromRouter();
+  // SWR shares one request between all rows
+  const referee = refereeNamesByMatch(getMatchOfficials(tournamentData.id).data?.data ?? [])[
+    match.id
+  ];
   return (
     <Draggable key={match.id} index={index} draggableId={`${match.id}`}>
       {(provided) => (
@@ -86,6 +92,11 @@ function ScheduleRow({
                     {formatMatchInput2(t, stageItemsLookup, matchesLookup, match)}
                   </Text>
                 </Group>
+                {referee != null ? (
+                  <Text size="xs" c="dimmed" mt={4}>
+                    {t('referee_label')}: {referee}
+                  </Text>
+                ) : null}
               </Grid.Col>
               <Grid.Col span="content">
                 <Stack gap="xs" align="end">

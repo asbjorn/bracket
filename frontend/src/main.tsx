@@ -45,6 +45,7 @@ import SettingsPage from './pages/tournaments/[id]/settings';
 import CupSetupPage from './pages/tournaments/[id]/setup';
 import DrawPage from './pages/tournaments/[id]/draw';
 import RegistrationsPage from './pages/tournaments/[id]/registrations';
+import OfficialsPage from './pages/tournaments/[id]/officials';
 import MatchCardsPage from './pages/tournaments/[id]/print/match_cards';
 import StagesPage from './pages/tournaments/[id]/stages';
 import SwissTournamentPage from './pages/tournaments/[id]/stages/swiss/[stage_item_id]';
@@ -112,6 +113,7 @@ createRoot(document.getElementById('root')!).render(
                     <Route path="setup" element={<CupSetupPage />} />
                     <Route path="draw" element={<DrawPage />} />
                     <Route path="registrations" element={<RegistrationsPage />} />
+                    <Route path="officials" element={<OfficialsPage />} />
                     <Route path="print/match_cards" element={<MatchCardsPage />} />
                     <Route path="results" element={<ResultsPage />} />
                     <Route path="stages">

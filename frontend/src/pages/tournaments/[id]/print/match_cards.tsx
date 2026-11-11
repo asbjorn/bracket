@@ -15,6 +15,7 @@ import { getTournamentIdFromRouter } from '@components/utils/util';
 import { MatchWithDetails, StageItemWithRounds } from '@openapi';
 import TournamentLayout from '@pages/tournaments/_tournament_layout';
 import { getCategories, getCourts, getStages } from '@services/adapter';
+import { getMatchOfficials, refereeNamesByMatch } from '@services/officials';
 import { getMatchLookup, getStageItemLookup } from '@services/lookups';
 
 function ScoreBox() {
@@ -43,12 +44,14 @@ function MatchCard({
   categoryName,
   team1,
   team2,
+  referee,
 }: {
   match: MatchWithDetails;
   stageItem: StageItemWithRounds;
   categoryName: string | null;
   team1: string;
   team2: string;
+  referee: string | null;
 }) {
   const { t } = useTranslation();
   return (
@@ -77,6 +80,11 @@ function MatchCard({
             <ScoreBox />
           </Group>
         ))}
+        {referee != null ? (
+          <Text size="sm" c="dark">
+            {t('referee_label')}: <b>{referee}</b>
+          </Text>
+        ) : null}
         <Text size="xs" c="dark">
           #{match.id} · {t('match_card_notes_label')}
         </Text>
@@ -95,6 +103,7 @@ export default function MatchCardsPage() {
   const { tournamentData } = getTournamentIdFromRouter();
   const swrStagesResponse = getStages(tournamentData.id);
   const courts = getCourts(tournamentData.id).data?.data ?? [];
+  const referees = refereeNamesByMatch(getMatchOfficials(tournamentData.id).data?.data ?? []);
   const categories = getCategories(tournamentData.id).data?.data ?? [];
   const { filterValue, setFilterValue, filterCategoryId } = useCategoryFilter(categories);
   const [courtId, setCourtId] = useState<string | null>(null);
@@ -178,6 +187,7 @@ export default function MatchCardsPage() {
                 categoryName={categories.find((c) => c.id === categoryId)?.name ?? null}
                 team1={formatMatchInput1(t, stageItemsLookup, matchesLookup, data.match)}
                 team2={formatMatchInput2(t, stageItemsLookup, matchesLookup, data.match)}
+                referee={referees[data.match.id] ?? null}
               />
             );
           })}

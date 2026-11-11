@@ -42,6 +42,7 @@ import { MatchWithDetails } from '@openapi';
 import { getCategories, getCourtsLive, getStagesLive } from '@services/adapter';
 import { getTournamentResponseByEndpointName } from '@services/dashboard';
 import { getMatchLookup, getStageItemLookup, stringToColour } from '@services/lookups';
+import { getMatchOfficials, refereeNamesByMatch } from '@services/officials';
 
 function ScoreBox({ score, color }: { score: number; color: string }) {
   return (
@@ -65,6 +66,7 @@ function ScheduleRow({
   matchesLookup,
   resultsHidden,
   highlighted = false,
+  referee = null,
 }: {
   data: any;
   stageItemsLookup: any;
@@ -73,6 +75,7 @@ function ScheduleRow({
   resultsHidden: boolean;
   // E.g. the next match of a team
   highlighted?: boolean;
+  referee?: string | null;
 }) {
   const { t } = useTranslation();
   const winColor = '#2a8f37';
@@ -101,6 +104,11 @@ function ScheduleRow({
             <Text pl="sm" mt="sm" fw={800}>
               {data.match.court?.name}
             </Text>
+            {referee != null ? (
+              <Text pl="sm" size="xs" c="dimmed">
+                {t('referee_label')}: {referee}
+              </Text>
+            ) : null}
             {highlighted ? (
               <Badge color="indigo" ml="sm" size="sm">
                 {t('next_match_badge')}
@@ -183,6 +191,7 @@ export function Schedule({
   includeStageItem,
   includeMatch = () => true,
   highlightMatchId = null,
+  referees = {},
 }: {
   t: Translator;
   stageItemsLookup: any;
@@ -191,6 +200,8 @@ export function Schedule({
   includeStageItem: (stageItemId: number) => boolean;
   includeMatch?: (match: MatchWithDetails) => boolean;
   highlightMatchId?: number | null;
+  // Referee names per match id
+  referees?: Record<number, string>;
 }) {
   const matches: any[] = Object.values(matchesLookup);
   const sortedMatches = matches
@@ -226,6 +237,7 @@ export function Schedule({
         matchesLookup={matchesLookup}
         resultsHidden={stageItemIdsWithHiddenResults.has(data.stageItem.id)}
         highlighted={data.match.id === highlightMatchId}
+        referee={referees[data.match.id] ?? null}
       />,
     );
   }
@@ -261,6 +273,9 @@ export default function DashboardSchedulePage() {
   const tournamentValid = !React.isValidElement(tournamentDataFull);
 
   const swrStagesResponse = getStagesLive(tournamentValid ? tournamentDataFull.id : null);
+  const referees = refereeNamesByMatch(
+    getMatchOfficials(tournamentValid ? tournamentDataFull.id : null).data?.data ?? [],
+  );
   const swrCourtsResponse = getCourtsLive(tournamentValid ? tournamentDataFull.id : null);
   const categories = getCategories(tournamentValid ? tournamentDataFull.id : null).data?.data ?? [];
   const { filterValue, setFilterValue, filterCategoryId } = useCategoryFilter(categories);
@@ -316,6 +331,7 @@ export default function DashboardSchedulePage() {
             ) : null}
             <Schedule
               t={t}
+              referees={referees}
               matchesLookup={matchesLookup}
               stageItemsLookup={stageItemsLookup}
               stageItemIdsWithHiddenResults={getStageItemIdsWithHiddenResults(stages, categories)}

@@ -9,6 +9,7 @@ from starlette import status
 from bracket.logic.match_results import save_match
 from bracket.logic.walkovers import record_walkover, set_team_flag, team_of
 from bracket.models.db.match import MatchWithDetails, MatchWithDetailsDefinitive
+from bracket.models.db.official import MatchOfficialRole
 from bracket.models.db.score_link import (
     ScoreEntryBody,
     ScoreEntryMatch,
@@ -19,6 +20,7 @@ from bracket.models.db.stage_item_inputs import StageItemInputFinal
 from bracket.models.db.tournament import TournamentStatus
 from bracket.sql.categories import get_all_categories_in_tournament
 from bracket.sql.courts import get_all_courts_in_tournament
+from bracket.sql.officials import get_public_match_officials
 from bracket.sql.score_links import get_valid_score_link
 from bracket.sql.stages import get_full_tournament_details
 from bracket.sql.tournaments import sql_get_tournament
@@ -53,6 +55,7 @@ async def get_link_matches(
     stages = await get_full_tournament_details(link.tournament_id)
     categories = {c.id: c.name for c in await get_all_categories_in_tournament(link.tournament_id)}
     courts = {c.id: c.name for c in await get_all_courts_in_tournament(link.tournament_id)}
+    officials = await get_public_match_officials(link.tournament_id)
 
     result = []
     for stage in stages:
@@ -95,6 +98,19 @@ async def get_link_matches(
                         penalties2=match.stage_item_input2_penalties,
                         played=match.played,
                         result_type=match.result_type,
+                        referee_name=next(
+                            (
+                                o.name
+                                for o in officials
+                                if o.match_id == match.id and o.role is MatchOfficialRole.REFEREE
+                            ),
+                            None,
+                        ),
+                        assistant_names=[
+                            o.name
+                            for o in officials
+                            if o.match_id == match.id and o.role is MatchOfficialRole.ASSISTANT
+                        ],
                     )
                     result.append((entry, match))
     result.sort(key=lambda pair: (pair[0].start_time, pair[0].court_name or "", pair[0].id))

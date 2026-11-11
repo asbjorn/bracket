@@ -33,6 +33,7 @@ import { Schedule } from '@pages/tournaments/[id]/dashboard';
 import { getCategories, getCourtsLive, getStagesLive } from '@services/adapter';
 import { getTournamentResponseByEndpointName } from '@services/dashboard';
 import { getMatchLookup, getStageItemLookup } from '@services/lookups';
+import { getMatchOfficials, refereeNamesByMatch } from '@services/officials';
 
 function MatchLine({
   label,
@@ -77,6 +78,9 @@ export default function DashboardCourtsPage() {
   const tournamentDataFull = getTournamentResponseByEndpointName();
   const tournamentValid = !React.isValidElement(tournamentDataFull);
   const swrStagesResponse = getStagesLive(tournamentValid ? tournamentDataFull.id : null);
+  const referees = refereeNamesByMatch(
+    getMatchOfficials(tournamentValid ? tournamentDataFull.id : null).data?.data ?? [],
+  );
   const swrCourtsResponse = getCourtsLive(tournamentValid ? tournamentDataFull.id : null);
   const categories = getCategories(tournamentValid ? tournamentDataFull.id : null).data?.data ?? [];
   const [courtId, setCourtId] = useQueryState('court', parseAsInteger);
@@ -117,6 +121,7 @@ export default function DashboardCourtsPage() {
             <Title>{selectedCourt.name}</Title>
             <Schedule
               t={t}
+              referees={referees}
               matchesLookup={matchesLookup}
               stageItemsLookup={stageItemsLookup}
               stageItemIdsWithHiddenResults={getStageItemIdsWithHiddenResults(
