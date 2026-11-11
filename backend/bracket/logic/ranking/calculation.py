@@ -9,6 +9,7 @@ from bracket.models.db.discipline import CardType, MatchCard
 from bracket.models.db.match import MatchWithDetailsDefinitive
 from bracket.models.db.ranking import Ranking
 from bracket.models.db.stage_item import StageType
+from bracket.models.db.stage_item_inputs import StageItemInputEmpty
 from bracket.models.db.util import StageItemWithRounds
 from bracket.sql.discipline import get_cards
 from bracket.sql.rankings import get_ranking_for_stage_item
@@ -150,7 +151,12 @@ def determine_team_ranking_for_stage_item(
     the order of their slots.
     """
     stats = determine_ranking_for_stage_item(stage_item, ranking)
-    input_ids = [input_.id for input_ in sorted(stage_item.inputs, key=lambda i: i.slot)]
+    # A place without a team (fewer teams than places) is not ranked: it has no placing
+    input_ids = [
+        input_.id
+        for input_ in sorted(stage_item.inputs, key=lambda i: i.slot)
+        if not isinstance(input_, StageItemInputEmpty)
+    ]
     ordered = order_by_ranking(
         input_ids,
         stats,

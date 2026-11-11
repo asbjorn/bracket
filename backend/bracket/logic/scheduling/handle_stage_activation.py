@@ -42,7 +42,7 @@ def determine_team_id(
     winner_from_stage_item_id: StageItemId,
     winner_position: int,
     stage_item_x_team_rankings: StageItemXTeamRanking,
-) -> StageItemInputId:
+) -> StageItemInputId | None:
     """
     Determine the team ID for a stage item input that didn't have a team assigned yet.
 
@@ -50,11 +50,9 @@ def determine_team_id(
     """
 
     team_ranking = stage_item_x_team_rankings[winner_from_stage_item_id]
-    msg = (
-        "Winner position is out of range of ranking of previous stage item. "
-        f"Ranking has size: {len(team_ranking)}, winner position: {winner_position}"
-    )
-    assert len(team_ranking) >= winner_position, msg
+    # E.g. "4. Pulje A" when the group has only 3 teams: no team for this slot
+    if len(team_ranking) < winner_position:
+        return None
     return team_ranking[winner_position - 1][0]
 
 
@@ -62,7 +60,7 @@ def determine_best_of_team_id(
     stage_item_input: StageItemInputBestOf,
     stages: list[StageWithStageItems],
     stage_item_x_team_rankings: StageItemXTeamRanking,
-) -> StageItemInputId:
+) -> StageItemInputId | None:
     """
     E.g. the 2nd best of all teams that finished third in the groups of the previous stage.
     """
@@ -70,11 +68,9 @@ def determine_best_of_team_id(
     ranked = rank_teams_at_placing(
         stage, stage_item_input.winner_position, stage_item_x_team_rankings
     )
-    msg = (
-        f"Only {len(ranked)} teams finished at position {stage_item_input.winner_position}, "
-        f"so there is no number {stage_item_input.best_rank} among them"
-    )
-    assert len(ranked) >= stage_item_input.best_rank, msg
+    # Fewer teams finished at that position than the slot asks for: no team for it
+    if len(ranked) < stage_item_input.best_rank:
+        return None
     return ranked[stage_item_input.best_rank - 1]
 
 
@@ -83,7 +79,7 @@ async def get_team_update_for_input(
     stage_item_input: StageItemInputTentative | StageItemInputBestOf,
     stages: list[StageWithStageItems],
     stage_item_x_team_rankings: StageItemXTeamRanking,
-) -> StageItemInputUpdate:
+) -> StageItemInputUpdate | None:
     if isinstance(stage_item_input, StageItemInputBestOf):
         target_stage_item_input_id = determine_best_of_team_id(
             stage_item_input, stages, stage_item_x_team_rankings
@@ -94,6 +90,8 @@ async def get_team_update_for_input(
             stage_item_input.winner_position,
             stage_item_x_team_rankings,
         )
+    if target_stage_item_input_id is None:
+        return None  # The placing doesn't exist; the slot stays without a team
     target_stage_item_input = await get_stage_item_input_by_id(
         tournament_id, target_stage_item_input_id
     )
@@ -146,11 +144,11 @@ async def get_updates_to_inputs_in_activated_stage(
     for stage_item in activated_stage.stage_items:
         for stage_item_input in stage_item.inputs:
             if isinstance(stage_item_input, StageItemInputTentative | StageItemInputBestOf):
-                result[stage_item.id].append(
-                    await get_team_update_for_input(
-                        tournament_id, stage_item_input, stages, team_rankings_per_stage_item
-                    )
+                update = await get_team_update_for_input(
+                    tournament_id, stage_item_input, stages, team_rankings_per_stage_item
                 )
+                if update is not None:
+                    result[stage_item.id].append(update)
 
     return dict(result)
 
