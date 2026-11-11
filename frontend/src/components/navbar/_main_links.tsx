@@ -9,6 +9,7 @@ import {
   IconCalculator,
   IconCalendar,
   IconCategory,
+  IconClipboardList,
   IconDots,
   IconHome,
   IconScoreboard,
@@ -142,6 +143,11 @@ export function TournamentLinks({ tournament_id }: any) {
       icon: IconUsers,
       label: capitalize(t('teams_title')),
       link: `${tm_prefix}/teams`,
+    },
+    {
+      icon: IconClipboardList,
+      label: t('registrations_title'),
+      link: `${tm_prefix}/registrations`,
     },
     {
       icon: IconArrowsShuffle,

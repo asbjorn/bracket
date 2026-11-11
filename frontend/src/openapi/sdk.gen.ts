@@ -125,6 +125,9 @@ import type {
   EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutData,
   EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutErrors,
   EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutResponses,
+  ExportTournamentRegistrationsTournamentsTournamentIdRegistrationsCsvGetData,
+  ExportTournamentRegistrationsTournamentsTournamentIdRegistrationsCsvGetErrors,
+  ExportTournamentRegistrationsTournamentsTournamentIdRegistrationsCsvGetResponses,
   GetAvailableInputsTournamentsTournamentIdAvailableInputsGetData,
   GetAvailableInputsTournamentsTournamentIdAvailableInputsGetErrors,
   GetAvailableInputsTournamentsTournamentIdAvailableInputsGetResponses,
@@ -134,6 +137,9 @@ import type {
   GetCategoryWarningsTournamentsTournamentIdCategoryWarningsGetData,
   GetCategoryWarningsTournamentsTournamentIdCategoryWarningsGetErrors,
   GetCategoryWarningsTournamentsTournamentIdCategoryWarningsGetResponses,
+  GetClassesOpenForRegistrationTournamentsTournamentIdRegistrationClassesGetData,
+  GetClassesOpenForRegistrationTournamentsTournamentIdRegistrationClassesGetErrors,
+  GetClassesOpenForRegistrationTournamentsTournamentIdRegistrationClassesGetResponses,
   GetClubsClubsGetData,
   GetClubsClubsGetResponses,
   GetCourtsTournamentsTournamentIdCourtsGetData,
@@ -180,6 +186,9 @@ import type {
   GetTournamentPublicNoticesTournamentsTournamentIdPublicNoticesGetData,
   GetTournamentPublicNoticesTournamentsTournamentIdPublicNoticesGetErrors,
   GetTournamentPublicNoticesTournamentsTournamentIdPublicNoticesGetResponses,
+  GetTournamentRegistrationsTournamentsTournamentIdRegistrationsGetData,
+  GetTournamentRegistrationsTournamentsTournamentIdRegistrationsGetErrors,
+  GetTournamentRegistrationsTournamentsTournamentIdRegistrationsGetResponses,
   GetTournamentRulesTournamentsTournamentIdRulesGetData,
   GetTournamentRulesTournamentsTournamentIdRulesGetErrors,
   GetTournamentRulesTournamentsTournamentIdRulesGetResponses,
@@ -205,6 +214,9 @@ import type {
   LoginForAccessTokenTokenPostResponses,
   PingPingGetData,
   PingPingGetResponses,
+  PromoteFirstOnWaitlistTournamentsTournamentIdCategoriesCategoryIdWaitlistPromotePostData,
+  PromoteFirstOnWaitlistTournamentsTournamentIdCategoriesCategoryIdWaitlistPromotePostErrors,
+  PromoteFirstOnWaitlistTournamentsTournamentIdCategoriesCategoryIdWaitlistPromotePostResponses,
   ProposeMatchScheduleTournamentsTournamentIdScheduleProposePostData,
   ProposeMatchScheduleTournamentsTournamentIdScheduleProposePostErrors,
   ProposeMatchScheduleTournamentsTournamentIdScheduleProposePostResponses,
@@ -214,6 +226,9 @@ import type {
   RegisterDemoUserUsersRegisterDemoPostData,
   RegisterDemoUserUsersRegisterDemoPostErrors,
   RegisterDemoUserUsersRegisterDemoPostResponses,
+  RegisterTeamPubliclyTournamentsTournamentIdRegistrationPostData,
+  RegisterTeamPubliclyTournamentsTournamentIdRegistrationPostErrors,
+  RegisterTeamPubliclyTournamentsTournamentIdRegistrationPostResponses,
   RegisterUserUsersRegisterPostData,
   RegisterUserUsersRegisterPostErrors,
   RegisterUserUsersRegisterPostResponses,
@@ -250,6 +265,9 @@ import type {
   UpdateCourtByIdTournamentsTournamentIdCourtsCourtIdPutData,
   UpdateCourtByIdTournamentsTournamentIdCourtsCourtIdPutErrors,
   UpdateCourtByIdTournamentsTournamentIdCourtsCourtIdPutResponses,
+  UpdateEntryFeesTournamentsTournamentIdEntryFeesPutData,
+  UpdateEntryFeesTournamentsTournamentIdEntryFeesPutErrors,
+  UpdateEntryFeesTournamentsTournamentIdEntryFeesPutResponses,
   UpdateMatchByIdTournamentsTournamentIdMatchesMatchIdPutData,
   UpdateMatchByIdTournamentsTournamentIdMatchesMatchIdPutErrors,
   UpdateMatchByIdTournamentsTournamentIdMatchesMatchIdPutResponses,
@@ -259,6 +277,9 @@ import type {
   UpdateRankingByIdTournamentsTournamentIdRankingsRankingIdPutData,
   UpdateRankingByIdTournamentsTournamentIdRankingsRankingIdPutErrors,
   UpdateRankingByIdTournamentsTournamentIdRankingsRankingIdPutResponses,
+  UpdateRegistrationSettingsTournamentsTournamentIdCategoriesCategoryIdRegistrationPutData,
+  UpdateRegistrationSettingsTournamentsTournamentIdCategoriesCategoryIdRegistrationPutErrors,
+  UpdateRegistrationSettingsTournamentsTournamentIdCategoriesCategoryIdRegistrationPutResponses,
   UpdateRoundByIdTournamentsTournamentIdRoundsRoundIdPutData,
   UpdateRoundByIdTournamentsTournamentIdRoundsRoundIdPutErrors,
   UpdateRoundByIdTournamentsTournamentIdRoundsRoundIdPutResponses,
@@ -277,6 +298,9 @@ import type {
   UpdateTeamLogoTournamentsTournamentIdTeamsTeamIdLogoPostData,
   UpdateTeamLogoTournamentsTournamentIdTeamsTeamIdLogoPostErrors,
   UpdateTeamLogoTournamentsTournamentIdTeamsTeamIdLogoPostResponses,
+  UpdateTeamRegistrationTournamentsTournamentIdRegistrationsTeamIdPutData,
+  UpdateTeamRegistrationTournamentsTournamentIdRegistrationsTeamIdPutErrors,
+  UpdateTeamRegistrationTournamentsTournamentIdRegistrationsTeamIdPutResponses,
   UpdateTournamentAnnouncementTournamentsTournamentIdAnnouncementPutData,
   UpdateTournamentAnnouncementTournamentsTournamentIdAnnouncementPutErrors,
   UpdateTournamentAnnouncementTournamentsTournamentIdAnnouncementPutResponses,
@@ -892,6 +916,60 @@ export const updateCategoryTournamentsTournamentIdCategoriesCategoryIdPut = <
   });
 
 /**
+ * Update Registration Settings
+ */
+export const updateRegistrationSettingsTournamentsTournamentIdCategoriesCategoryIdRegistrationPut =
+  <ThrowOnError extends boolean = false>(
+    options: Options<
+      UpdateRegistrationSettingsTournamentsTournamentIdCategoriesCategoryIdRegistrationPutData,
+      ThrowOnError
+    >,
+  ): RequestResult<
+    UpdateRegistrationSettingsTournamentsTournamentIdCategoriesCategoryIdRegistrationPutResponses,
+    UpdateRegistrationSettingsTournamentsTournamentIdCategoriesCategoryIdRegistrationPutErrors,
+    ThrowOnError
+  > =>
+    (options.client ?? client).put<
+      UpdateRegistrationSettingsTournamentsTournamentIdCategoriesCategoryIdRegistrationPutResponses,
+      UpdateRegistrationSettingsTournamentsTournamentIdCategoriesCategoryIdRegistrationPutErrors,
+      ThrowOnError
+    >({
+      responseType: 'json',
+      security: [{ scheme: 'bearer', type: 'http' }],
+      url: '/tournaments/{tournament_id}/categories/{category_id}/registration',
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
+
+/**
+ * Promote First On Waitlist
+ */
+export const promoteFirstOnWaitlistTournamentsTournamentIdCategoriesCategoryIdWaitlistPromotePost =
+  <ThrowOnError extends boolean = false>(
+    options: Options<
+      PromoteFirstOnWaitlistTournamentsTournamentIdCategoriesCategoryIdWaitlistPromotePostData,
+      ThrowOnError
+    >,
+  ): RequestResult<
+    PromoteFirstOnWaitlistTournamentsTournamentIdCategoriesCategoryIdWaitlistPromotePostResponses,
+    PromoteFirstOnWaitlistTournamentsTournamentIdCategoriesCategoryIdWaitlistPromotePostErrors,
+    ThrowOnError
+  > =>
+    (options.client ?? client).post<
+      PromoteFirstOnWaitlistTournamentsTournamentIdCategoriesCategoryIdWaitlistPromotePostResponses,
+      PromoteFirstOnWaitlistTournamentsTournamentIdCategoriesCategoryIdWaitlistPromotePostErrors,
+      ThrowOnError
+    >({
+      responseType: 'json',
+      security: [{ scheme: 'bearer', type: 'http' }],
+      url: '/tournaments/{tournament_id}/categories/{category_id}/waitlist/promote',
+      ...options,
+    });
+
+/**
  * Get Category Warnings
  *
  * Checks every age class against the NFF rules, e.g. at least 3 matches per team for the
@@ -1093,6 +1171,33 @@ export const createCupStructureTournamentsTournamentIdCupSetupPost = <
     responseType: 'json',
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/tournaments/{tournament_id}/cup_setup',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Update Entry Fees
+ */
+export const updateEntryFeesTournamentsTournamentIdEntryFeesPut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<UpdateEntryFeesTournamentsTournamentIdEntryFeesPutData, ThrowOnError>,
+): RequestResult<
+  UpdateEntryFeesTournamentsTournamentIdEntryFeesPutResponses,
+  UpdateEntryFeesTournamentsTournamentIdEntryFeesPutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    UpdateEntryFeesTournamentsTournamentIdEntryFeesPutResponses,
+    UpdateEntryFeesTournamentsTournamentIdEntryFeesPutErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/entry_fees',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -1612,6 +1717,146 @@ export const updateRankingByIdTournamentsTournamentIdRankingsRankingIdPut = <
     responseType: 'json',
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/tournaments/{tournament_id}/rankings/{ranking_id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Register Team Publicly
+ *
+ * Public sign-up of a team (only for a public cup, an open class and before the deadline).
+ * When the class is full, the team goes to the waitlist.
+ */
+export const registerTeamPubliclyTournamentsTournamentIdRegistrationPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<RegisterTeamPubliclyTournamentsTournamentIdRegistrationPostData, ThrowOnError>,
+): RequestResult<
+  RegisterTeamPubliclyTournamentsTournamentIdRegistrationPostResponses,
+  RegisterTeamPubliclyTournamentsTournamentIdRegistrationPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    RegisterTeamPubliclyTournamentsTournamentIdRegistrationPostResponses,
+    RegisterTeamPubliclyTournamentsTournamentIdRegistrationPostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    url: '/tournaments/{tournament_id}/registration',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get Classes Open For Registration
+ *
+ * The classes that teams can sign up for now, with the spots left.
+ */
+export const getClassesOpenForRegistrationTournamentsTournamentIdRegistrationClassesGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    GetClassesOpenForRegistrationTournamentsTournamentIdRegistrationClassesGetData,
+    ThrowOnError
+  >,
+): RequestResult<
+  GetClassesOpenForRegistrationTournamentsTournamentIdRegistrationClassesGetResponses,
+  GetClassesOpenForRegistrationTournamentsTournamentIdRegistrationClassesGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetClassesOpenForRegistrationTournamentsTournamentIdRegistrationClassesGetResponses,
+    GetClassesOpenForRegistrationTournamentsTournamentIdRegistrationClassesGetErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    url: '/tournaments/{tournament_id}/registration/classes',
+    ...options,
+  });
+
+/**
+ * Get Tournament Registrations
+ *
+ * All teams with their registration, including contact details (organiser only).
+ */
+export const getTournamentRegistrationsTournamentsTournamentIdRegistrationsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    GetTournamentRegistrationsTournamentsTournamentIdRegistrationsGetData,
+    ThrowOnError
+  >,
+): RequestResult<
+  GetTournamentRegistrationsTournamentsTournamentIdRegistrationsGetResponses,
+  GetTournamentRegistrationsTournamentsTournamentIdRegistrationsGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetTournamentRegistrationsTournamentsTournamentIdRegistrationsGetResponses,
+    GetTournamentRegistrationsTournamentsTournamentIdRegistrationsGetErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/registrations',
+    ...options,
+  });
+
+/**
+ * Export Tournament Registrations
+ */
+export const exportTournamentRegistrationsTournamentsTournamentIdRegistrationsCsvGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    ExportTournamentRegistrationsTournamentsTournamentIdRegistrationsCsvGetData,
+    ThrowOnError
+  >,
+): RequestResult<
+  ExportTournamentRegistrationsTournamentsTournamentIdRegistrationsCsvGetResponses,
+  ExportTournamentRegistrationsTournamentsTournamentIdRegistrationsCsvGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    ExportTournamentRegistrationsTournamentsTournamentIdRegistrationsCsvGetResponses,
+    ExportTournamentRegistrationsTournamentsTournamentIdRegistrationsCsvGetErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/registrations.csv',
+    ...options,
+  });
+
+/**
+ * Update Team Registration
+ */
+export const updateTeamRegistrationTournamentsTournamentIdRegistrationsTeamIdPut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    UpdateTeamRegistrationTournamentsTournamentIdRegistrationsTeamIdPutData,
+    ThrowOnError
+  >,
+): RequestResult<
+  UpdateTeamRegistrationTournamentsTournamentIdRegistrationsTeamIdPutResponses,
+  UpdateTeamRegistrationTournamentsTournamentIdRegistrationsTeamIdPutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    UpdateTeamRegistrationTournamentsTournamentIdRegistrationsTeamIdPutResponses,
+    UpdateTeamRegistrationTournamentsTournamentIdRegistrationsTeamIdPutErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/registrations/{team_id}',
     ...options,
     headers: {
       'Content-Type': 'application/json',

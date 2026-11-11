@@ -92,6 +92,11 @@ async def validate_stage_item_update(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="This team belongs to another class than this stage",
             )
+        if not team.registration_status.participates:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This team is on the waitlist or rejected, so it doesn't take part",
+            )
 
 
 @router.put(

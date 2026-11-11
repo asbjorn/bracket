@@ -87,6 +87,8 @@ async def check_teams(
         raise bad_request("Some of the teams don't exist in this tournament")
     if any(team.category_id != stage.category_id for team in teams):
         raise bad_request("All teams must belong to the class of the stage")
+    if any(not team.registration_status.participates for team in teams):
+        raise bad_request("Teams on the waitlist or rejected teams can't be drawn")
     placed = {
         input_.team_id
         for item in stage.stage_items

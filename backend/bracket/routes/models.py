@@ -12,6 +12,11 @@ from bracket.models.db.match import Match, SuggestedMatch
 from bracket.models.db.player import Player
 from bracket.models.db.public_info import Announcement, PublicNotices, Rules
 from bracket.models.db.ranking import Ranking
+from bracket.models.db.registration import (
+    PublicRegistrationClass,
+    PublicRegistrationResult,
+    Registration,
+)
 from bracket.models.db.score_link import (
     MatchDayNotice,
     ScoreEntryView,
@@ -188,4 +193,16 @@ class StageItemInputOptionsResponse(
 
 
 class StageRankingResponse(DataResponse[dict[StageItemId, list[StageItemInputUpdate]]]):
+    pass
+
+
+class PublicRegistrationClassesResponse(DataResponse[list[PublicRegistrationClass]]):
+    pass
+
+
+class PublicRegistrationResponse(DataResponse[PublicRegistrationResult]):
+    pass
+
+
+class RegistrationsResponse(DataResponse[list[Registration]]):
     pass

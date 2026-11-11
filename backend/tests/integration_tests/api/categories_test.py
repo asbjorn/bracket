@@ -122,6 +122,10 @@ async def test_update_category(
         "margin_minutes": None,
         "min_rest_minutes": None,
         "game_format": None,
+        "registration_open": False,
+        "registration_deadline": None,
+        "max_teams": None,
+        "entry_fee": None,
         "created": None,
     }
 

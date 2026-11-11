@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from decimal import Decimal
+from enum import StrEnum
 from typing import Annotated
 
 from heliclockter import datetime_utc
@@ -11,6 +12,25 @@ from bracket.logic.ranking.statistics import START_ELO
 from bracket.models.db.player import Player
 from bracket.models.db.shared import BaseModelORM
 from bracket.utils.id_types import CategoryId, PlayerId, TeamId, TournamentId
+
+
+class RegistrationStatus(StrEnum):
+    """
+    Teams created by the organiser are APPROVED. Teams that sign up themselves are REGISTERED,
+    or on the WAITLIST when their class is full. Both APPROVED and REGISTERED teams take part.
+    """
+
+    APPROVED = "APPROVED"
+    REGISTERED = "REGISTERED"
+    WAITLIST = "WAITLIST"
+    REJECTED = "REJECTED"
+
+    @property
+    def participates(self) -> bool:
+        return self in PARTICIPATING_STATUSES
+
+
+PARTICIPATING_STATUSES = frozenset({RegistrationStatus.APPROVED, RegistrationStatus.REGISTERED})
 
 
 class TeamInsertable(BaseModelORM):
@@ -28,6 +48,7 @@ class TeamInsertable(BaseModelORM):
     club_name: str | None = None
     withdrawn: bool = False
     checked_in: bool = False
+    registration_status: RegistrationStatus = RegistrationStatus.APPROVED
 
 
 class Team(TeamInsertable):
@@ -48,6 +69,7 @@ class TeamWithPlayers(BaseModel):
     club_name: str | None = None
     withdrawn: bool = False
     checked_in: bool = False
+    registration_status: RegistrationStatus = RegistrationStatus.APPROVED
 
     @property
     def player_ids(self) -> list[PlayerId]:

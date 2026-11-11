@@ -48,6 +48,7 @@ async def test_teams_endpoint(
                         "club_name": None,
                         "withdrawn": False,
                         "checked_in": False,
+                        "registration_status": "APPROVED",
                     }
                 ],
                 "count": 1,

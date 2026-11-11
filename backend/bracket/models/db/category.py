@@ -27,6 +27,11 @@ class CategoryInsertable(BaseModelORM):
     margin_minutes: int | None = None
     min_rest_minutes: int | None = None
     game_format: GameFormat | None = None
+    # Public sign-up
+    registration_open: bool = False
+    registration_deadline: datetime_utc | None = None
+    max_teams: int | None = None
+    entry_fee: int | None = None
 
 
 class Category(CategoryInsertable):

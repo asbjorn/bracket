@@ -508,6 +508,17 @@
             ],
             "title": "Duration Minutes"
           },
+          "entry_fee": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Fee"
+          },
           "game_format": {
             "anyOf": [
               {
@@ -533,6 +544,17 @@
             ],
             "title": "Margin Minutes"
           },
+          "max_teams": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Teams"
+          },
           "min_rest_minutes": {
             "anyOf": [
               {
@@ -547,6 +569,23 @@
           "name": {
             "title": "Name",
             "type": "string"
+          },
+          "registration_deadline": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registration Deadline"
+          },
+          "registration_open": {
+            "default": false,
+            "title": "Registration Open",
+            "type": "boolean"
           },
           "results_public": {
             "default": true,
@@ -568,6 +607,10 @@
           "margin_minutes",
           "min_rest_minutes",
           "game_format",
+          "registration_open",
+          "registration_deadline",
+          "max_teams",
+          "entry_fee",
           "id"
         ],
         "title": "Category",
@@ -1282,6 +1325,39 @@
         "title": "DrawResponse",
         "type": "object"
       },
+      "EntryFeeBody": {
+        "description": "Sets the entry fee (NOK per team) of several classes at once.",
+        "properties": {
+          "category_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Category Ids",
+            "type": "array"
+          },
+          "entry_fee": {
+            "anyOf": [
+              {
+                "maximum": 100000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Fee"
+          }
+        },
+        "required": [
+          "category_ids",
+          "entry_fee"
+        ],
+        "title": "EntryFeeBody",
+        "type": "object"
+      },
       "ExtraCourts": {
         "properties": {
           "count": {
@@ -1386,6 +1462,10 @@
             "title": "Players",
             "type": "array"
           },
+          "registration_status": {
+            "$ref": "#/components/schemas/RegistrationStatus",
+            "default": "APPROVED"
+          },
           "swiss_score": {
             "default": "0.0",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
@@ -1422,6 +1502,7 @@
           "club_name",
           "withdrawn",
           "checked_in",
+          "registration_status",
           "id",
           "players"
         ],
@@ -3014,6 +3095,212 @@
         "title": "PublicNoticesResponse",
         "type": "object"
       },
+      "PublicRegistrationBody": {
+        "properties": {
+          "category_id": {
+            "title": "Category Id",
+            "type": "integer"
+          },
+          "club_name": {
+            "anyOf": [
+              {
+                "maxLength": 50,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Club Name"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          },
+          "consent": {
+            "const": true,
+            "title": "Consent",
+            "type": "boolean"
+          },
+          "contact_email": {
+            "format": "email",
+            "maxLength": 254,
+            "title": "Contact Email",
+            "type": "string"
+          },
+          "contact_name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Contact Name",
+            "type": "string"
+          },
+          "contact_phone": {
+            "maxLength": 21,
+            "pattern": "^\\+?[0-9 ]{5,20}$",
+            "title": "Contact Phone",
+            "type": "string"
+          },
+          "team_name": {
+            "maxLength": 30,
+            "minLength": 1,
+            "title": "Team Name",
+            "type": "string"
+          },
+          "website": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Website",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category_id",
+          "team_name",
+          "club_name",
+          "contact_name",
+          "contact_email",
+          "contact_phone",
+          "comment",
+          "consent",
+          "website"
+        ],
+        "title": "PublicRegistrationBody",
+        "type": "object"
+      },
+      "PublicRegistrationClass": {
+        "description": "A class open for sign-up, as shown on the public form (no personal data).",
+        "properties": {
+          "age": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "entry_fee": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Fee"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "registration_deadline": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registration Deadline"
+          },
+          "spots_left": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spots Left"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "age",
+          "registration_deadline",
+          "entry_fee",
+          "spots_left"
+        ],
+        "title": "PublicRegistrationClass",
+        "type": "object"
+      },
+      "PublicRegistrationClassesResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PublicRegistrationClass"
+            },
+            "title": "Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "PublicRegistrationClassesResponse",
+        "type": "object"
+      },
+      "PublicRegistrationResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PublicRegistrationResult"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "PublicRegistrationResponse",
+        "type": "object"
+      },
+      "PublicRegistrationResult": {
+        "properties": {
+          "registration_status": {
+            "$ref": "#/components/schemas/RegistrationStatus"
+          },
+          "team_name": {
+            "title": "Team Name",
+            "type": "string"
+          },
+          "waitlist_place": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Waitlist Place"
+          }
+        },
+        "required": [
+          "team_name",
+          "registration_status",
+          "waitlist_place"
+        ],
+        "title": "PublicRegistrationResult",
+        "type": "object"
+      },
       "Ranking": {
         "properties": {
           "add_score_points": {
@@ -3227,6 +3514,300 @@
           "data"
         ],
         "title": "RankingsResponse",
+        "type": "object"
+      },
+      "Registration": {
+        "description": "A team with its registration, for the organiser only: contains personal data.",
+        "properties": {
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "club_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Club Name"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          },
+          "contact_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Email"
+          },
+          "contact_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Name"
+          },
+          "contact_phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Phone"
+          },
+          "paid": {
+            "title": "Paid",
+            "type": "boolean"
+          },
+          "registered_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registered At"
+          },
+          "registration_status": {
+            "$ref": "#/components/schemas/RegistrationStatus"
+          },
+          "squad_reported": {
+            "title": "Squad Reported",
+            "type": "boolean"
+          },
+          "team_id": {
+            "title": "Team Id",
+            "type": "integer"
+          },
+          "team_name": {
+            "title": "Team Name",
+            "type": "string"
+          },
+          "waitlist_place": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Waitlist Place"
+          },
+          "withdrawn": {
+            "title": "Withdrawn",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "team_id",
+          "team_name",
+          "club_name",
+          "category_id",
+          "registration_status",
+          "withdrawn",
+          "contact_name",
+          "contact_email",
+          "contact_phone",
+          "comment",
+          "registered_at",
+          "paid",
+          "squad_reported",
+          "waitlist_place"
+        ],
+        "title": "Registration",
+        "type": "object"
+      },
+      "RegistrationSettingsBody": {
+        "description": "Public sign-up for one class. Beyond `max_teams` teams, new teams go to the waitlist.",
+        "properties": {
+          "entry_fee": {
+            "anyOf": [
+              {
+                "maximum": 100000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Fee"
+          },
+          "max_teams": {
+            "anyOf": [
+              {
+                "maximum": 256.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Teams"
+          },
+          "registration_deadline": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registration Deadline"
+          },
+          "registration_open": {
+            "title": "Registration Open",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "registration_open",
+          "registration_deadline",
+          "max_teams",
+          "entry_fee"
+        ],
+        "title": "RegistrationSettingsBody",
+        "type": "object"
+      },
+      "RegistrationStatus": {
+        "description": "Teams created by the organiser are APPROVED. Teams that sign up themselves are REGISTERED,\nor on the WAITLIST when their class is full. Both APPROVED and REGISTERED teams take part.",
+        "enum": [
+          "APPROVED",
+          "REGISTERED",
+          "WAITLIST",
+          "REJECTED"
+        ],
+        "title": "RegistrationStatus",
+        "type": "string"
+      },
+      "RegistrationUpdateBody": {
+        "properties": {
+          "comment": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          },
+          "contact_email": {
+            "anyOf": [
+              {
+                "format": "email",
+                "maxLength": 254,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Email"
+          },
+          "contact_name": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Name"
+          },
+          "contact_phone": {
+            "anyOf": [
+              {
+                "maxLength": 21,
+                "pattern": "^\\+?[0-9 ]{5,20}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Phone"
+          },
+          "paid": {
+            "title": "Paid",
+            "type": "boolean"
+          },
+          "registration_status": {
+            "$ref": "#/components/schemas/RegistrationStatus"
+          },
+          "squad_reported": {
+            "title": "Squad Reported",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "registration_status",
+          "paid",
+          "squad_reported",
+          "contact_name",
+          "contact_email",
+          "contact_phone",
+          "comment"
+        ],
+        "title": "RegistrationUpdateBody",
+        "type": "object"
+      },
+      "RegistrationsResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/Registration"
+            },
+            "title": "Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "RegistrationsResponse",
         "type": "object"
       },
       "RoundCreateBody": {
@@ -5085,6 +5666,10 @@
             "title": "Name",
             "type": "string"
           },
+          "registration_status": {
+            "$ref": "#/components/schemas/RegistrationStatus",
+            "default": "APPROVED"
+          },
           "swiss_score": {
             "default": "0.0",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
@@ -5121,6 +5706,7 @@
           "club_name",
           "withdrawn",
           "checked_in",
+          "registration_status",
           "id"
         ],
         "title": "Team",
@@ -5875,7 +6461,7 @@
     }
   },
   "info": {
-    "description": "\n### Description\nThis API allows you to do everything the frontend of [Bracket](https://github.com/evroon/bracket)\nallows you to do (the frontend uses this API as well).\n\nFore more information, see the [documentation](https://docs.bracketapp.nl).\n\n### Table of Contents\n*(links only work for [ReDoc](https://api.bracketapp.nl/redoc), not for Swagger UI)*\n\n- [Auth](#tag/Auth)\n\n- [Capacity](#tag/Capacity)\n\n- [Cup setup](#tag/Cup-setup)\n\n- [Draw](#tag/Draw)\n\n- [Public info](#tag/Public-info)\n\n- [Score links](#tag/Score-links)\n\n- [Categories](#tag/Categories)\n\n- [Clubs](#tag/Clubs)\n\n- [Courts](#tag/Courts)\n\n- [Internals](#tag/Internals)\n\n- [Matches](#tag/Matches)\n\n- [Players](#tag/Players)\n\n- [Rankings](#tag/Rankings)\n\n- [Rounds](#tag/Rounds)\n\n- [Stage Items](#tag/Stage-Items)\n\n- [Stage Item Inputs](#tag/Stage-Item-Inputs)\n\n- [Stages](#tag/Stages)\n\n- [Teams](#tag/Teams)\n\n- [Tournaments](#tag/Tournaments)\n\n- [Users](#tag/Users)\n\n### Links\nGitHub: <https://github.com/evroon/bracket>\n\nDocs: <https://docs.bracketapp.nl>\n\nDemo: <https://www.bracketapp.nl/demo>\n\nAPI docs (Redoc): <https://api.bracketapp.nl/redoc>\n\nAPI docs (Swagger UI): <https://api.bracketapp.nl/docs>\n",
+    "description": "\n### Description\nThis API allows you to do everything the frontend of [Bracket](https://github.com/evroon/bracket)\nallows you to do (the frontend uses this API as well).\n\nFore more information, see the [documentation](https://docs.bracketapp.nl).\n\n### Table of Contents\n*(links only work for [ReDoc](https://api.bracketapp.nl/redoc), not for Swagger UI)*\n\n- [Auth](#tag/Auth)\n\n- [Capacity](#tag/Capacity)\n\n- [Cup setup](#tag/Cup-setup)\n\n- [Draw](#tag/Draw)\n\n- [Public info](#tag/Public-info)\n\n- [Registrations](#tag/Registrations)\n\n- [Score links](#tag/Score-links)\n\n- [Categories](#tag/Categories)\n\n- [Clubs](#tag/Clubs)\n\n- [Courts](#tag/Courts)\n\n- [Internals](#tag/Internals)\n\n- [Matches](#tag/Matches)\n\n- [Players](#tag/Players)\n\n- [Rankings](#tag/Rankings)\n\n- [Rounds](#tag/Rounds)\n\n- [Stage Items](#tag/Stage-Items)\n\n- [Stage Item Inputs](#tag/Stage-Item-Inputs)\n\n- [Stages](#tag/Stages)\n\n- [Teams](#tag/Teams)\n\n- [Tournaments](#tag/Tournaments)\n\n- [Users](#tag/Users)\n\n### Links\nGitHub: <https://github.com/evroon/bracket>\n\nDocs: <https://docs.bracketapp.nl>\n\nDemo: <https://www.bracketapp.nl/demo>\n\nAPI docs (Redoc): <https://api.bracketapp.nl/redoc>\n\nAPI docs (Swagger UI): <https://api.bracketapp.nl/docs>\n",
     "license": {
       "name": "AGPL-3.0",
       "url": "https://www.gnu.org/licenses/agpl-3.0.en.html"
@@ -7091,6 +7677,128 @@
         ]
       }
     },
+    "/tournaments/{tournament_id}/categories/{category_id}/registration": {
+      "put": {
+        "operationId": "update_registration_settings_tournaments__tournament_id__categories__category_id__registration_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "category_id",
+            "required": true,
+            "schema": {
+              "title": "Category Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrationSettingsBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Registration Settings",
+        "tags": [
+          "Registrations"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/categories/{category_id}/waitlist/promote": {
+      "post": {
+        "operationId": "promote_first_on_waitlist_tournaments__tournament_id__categories__category_id__waitlist_promote_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "category_id",
+            "required": true,
+            "schema": {
+              "title": "Category Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Promote First On Waitlist",
+        "tags": [
+          "Registrations"
+        ]
+      }
+    },
     "/tournaments/{tournament_id}/category_warnings": {
       "get": {
         "description": "Checks every age class against the NFF rules, e.g. at least 3 matches per team for the\n13-year class and younger.",
@@ -7527,6 +8235,63 @@
         "summary": "Create Cup Structure",
         "tags": [
           "Cup setup"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/entry_fees": {
+      "put": {
+        "operationId": "update_entry_fees_tournaments__tournament_id__entry_fees_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntryFeeBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Entry Fees",
+        "tags": [
+          "Registrations"
         ]
       }
     },
@@ -8728,6 +9493,271 @@
         "summary": "Update Ranking By Id",
         "tags": [
           "Rankings"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/registration": {
+      "post": {
+        "description": "Public sign-up of a team (only for a public cup, an open class and before the deadline).\nWhen the class is full, the team goes to the waitlist.",
+        "operationId": "register_team_publicly_tournaments__tournament_id__registration_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicRegistrationBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicRegistrationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Register Team Publicly",
+        "tags": [
+          "Registrations"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/registration/classes": {
+      "get": {
+        "description": "The classes that teams can sign up for now, with the spots left.",
+        "operationId": "get_classes_open_for_registration_tournaments__tournament_id__registration_classes_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicRegistrationClassesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Classes Open For Registration",
+        "tags": [
+          "Registrations"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/registrations": {
+      "get": {
+        "description": "All teams with their registration, including contact details (organiser only).",
+        "operationId": "get_tournament_registrations_tournaments__tournament_id__registrations_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Tournament Registrations",
+        "tags": [
+          "Registrations"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/registrations.csv": {
+      "get": {
+        "operationId": "export_tournament_registrations_tournaments__tournament_id__registrations_csv_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "language",
+            "required": false,
+            "schema": {
+              "default": "en",
+              "title": "Language",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Export Tournament Registrations",
+        "tags": [
+          "Registrations"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/registrations/{team_id}": {
+      "put": {
+        "operationId": "update_team_registration_tournaments__tournament_id__registrations__team_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "team_id",
+            "required": true,
+            "schema": {
+              "title": "Team Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrationUpdateBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Team Registration",
+        "tags": [
+          "Registrations"
         ]
       }
     },

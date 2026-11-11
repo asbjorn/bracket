@@ -33,6 +33,7 @@ import DashboardCourtsPage from './pages/tournaments/[id]/dashboard/courts';
 import DashboardPosterPage from './pages/tournaments/[id]/dashboard/poster';
 import RotationPresentPage from './pages/tournaments/[id]/dashboard/present/rotation';
 import DashboardRulesPage from './pages/tournaments/[id]/dashboard/rules';
+import DashboardRegisterPage from './pages/tournaments/[id]/dashboard/register';
 import DashboardTeamsPage from './pages/tournaments/[id]/dashboard/teams';
 import DashboardTeamPage from './pages/tournaments/[id]/dashboard/teams/team';
 import PlayersPage from './pages/tournaments/[id]/players';
@@ -43,6 +44,7 @@ import SchedulePage from './pages/tournaments/[id]/schedule';
 import SettingsPage from './pages/tournaments/[id]/settings';
 import CupSetupPage from './pages/tournaments/[id]/setup';
 import DrawPage from './pages/tournaments/[id]/draw';
+import RegistrationsPage from './pages/tournaments/[id]/registrations';
 import MatchCardsPage from './pages/tournaments/[id]/print/match_cards';
 import StagesPage from './pages/tournaments/[id]/stages';
 import SwissTournamentPage from './pages/tournaments/[id]/stages/swiss/[stage_item_id]';
@@ -109,6 +111,7 @@ createRoot(document.getElementById('root')!).render(
                     <Route path="settings" element={<SettingsPage />} />
                     <Route path="setup" element={<CupSetupPage />} />
                     <Route path="draw" element={<DrawPage />} />
+                    <Route path="registrations" element={<RegistrationsPage />} />
                     <Route path="print/match_cards" element={<MatchCardsPage />} />
                     <Route path="results" element={<ResultsPage />} />
                     <Route path="stages">
@@ -124,6 +127,7 @@ createRoot(document.getElementById('root')!).render(
                       </Route>
                       <Route path="courts" element={<DashboardCourtsPage />} />
                       <Route path="rules" element={<DashboardRulesPage />} />
+                      <Route path="register" element={<DashboardRegisterPage />} />
                       <Route path="poster" element={<DashboardPosterPage />} />
                       <Route path="present">
                         <Route path="courts" element={<CourtsPresentPage />} />

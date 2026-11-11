@@ -268,7 +268,7 @@ async def create_team(
 ) -> SingleTeamResponse:
     await check_foreign_keys_belong_to_tournament(team_to_insert, tournament_id)
 
-    existing_teams = await get_teams_with_members(tournament_id)
+    existing_teams = await get_teams_with_members(tournament_id, only_participating=False)
     check_requirement(existing_teams, user, "max_teams")
 
     last_record_id = await database.execute(
@@ -302,7 +302,7 @@ async def create_multiple_teams(
     ]
     players = [player for row in teams_and_players for player in row[1]]
 
-    existing_teams = await get_teams_with_members(tournament_id)
+    existing_teams = await get_teams_with_members(tournament_id, only_participating=False)
     existing_players = await get_all_players_in_tournament(tournament_id)
 
     check_requirement(existing_teams, user, "max_teams", additions=len(reader))

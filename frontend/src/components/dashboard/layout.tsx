@@ -14,6 +14,7 @@ import { useLocation } from 'react-router';
 
 import { PublicNoticesBanner } from '@components/dashboard/public_notices';
 import PreloadLink from '@components/utils/link';
+import { getOpenClasses } from '@services/registration';
 import { getBaseURL } from '@components/utils/util';
 import { Tournament } from '@openapi';
 import { getBaseApiUrl } from '@services/adapter';
@@ -83,6 +84,7 @@ export function DoubleHeader({ tournamentData }: { tournamentData: Tournament })
   const pathName = navigate.pathname.replace('[id]', endpoint).replace(/\/+$/, '');
 
   const base = `/tournaments/${endpoint}/dashboard`;
+  const openClasses = getOpenClasses(tournamentData.id);
   const mainLinks = [
     { link: base, label: t('dashboard_matches_tab') },
     { link: `${base}/teams`, label: t('dashboard_teams_tab') },
@@ -90,6 +92,10 @@ export function DoubleHeader({ tournamentData }: { tournamentData: Tournament })
     { link: `${base}/standings`, label: t('dashboard_standings_tab') },
     { link: `${base}/rules`, label: t('dashboard_rules_tab') },
   ];
+  // The sign-up form only while a class is open for registration
+  if ((openClasses.data?.data ?? []).length > 0 || pathName === `${base}/register`) {
+    mainLinks.push({ link: `${base}/register`, label: t('dashboard_register_tab') });
+  }
 
   const mainItems = mainLinks.map((item) => (
     <PreloadLink

@@ -2,10 +2,13 @@ from typing import cast
 
 from bracket.database import database
 from bracket.logic.ranking.statistics import TeamStatistics
-from bracket.models.db.team import FullTeamWithPlayers, Team
+from bracket.models.db.team import PARTICIPATING_STATUSES, FullTeamWithPlayers, Team
 from bracket.utils.id_types import CategoryId, StageItemInputId, TeamId, TournamentId
 from bracket.utils.pagination import PaginationTeams
 from bracket.utils.types import dict_without_none
+
+PARTICIPATING_VALUES = ", ".join(f"'{status.value}'" for status in sorted(PARTICIPATING_STATUSES))
+PARTICIPATING_FILTER = f"teams.registration_status IN ({PARTICIPATING_VALUES})"
 
 
 async def get_teams_by_id(team_ids: set[TeamId], tournament_id: TournamentId) -> list[Team]:
@@ -36,8 +39,15 @@ async def get_teams_with_members(
     team_id: TeamId | None = None,
     pagination: PaginationTeams | None = None,
     category_id: CategoryId | None = None,
+    only_participating: bool = True,
 ) -> list[FullTeamWithPlayers]:
+    """
+    Lists leave out teams that don't take part (on the waitlist or rejected), unless
+    `only_participating` is false; a single team (`team_id`) is always found.
+    """
     active_team_filter = "AND teams.active IS TRUE" if only_active_teams else ""
+    if only_participating and team_id is None:
+        active_team_filter += f" AND {PARTICIPATING_FILTER}"
     team_id_filter = "AND teams.id = :team_id" if team_id is not None else ""
     category_filter = "AND teams.category_id = :category_id" if category_id is not None else ""
     limit_filter = "LIMIT :limit" if pagination is not None and pagination.limit is not None else ""
@@ -83,8 +93,11 @@ async def get_team_count(
     *,
     only_active_teams: bool = False,
     category_id: CategoryId | None = None,
+    only_participating: bool = True,
 ) -> int:
     active_team_filter = "AND teams.active IS TRUE" if only_active_teams else ""
+    if only_participating:
+        active_team_filter += f" AND {PARTICIPATING_FILTER}"
     category_filter = "AND teams.category_id = :category_id" if category_id is not None else ""
     query = f"""
         SELECT count(*)

@@ -1,0 +1,379 @@
+"""
+Registration of teams: public sign-up per class (until the deadline, then a waitlist when the
+class is full) and the organiser's overview with contact details, payment and export.
+
+Contact details live in `team_registrations`, which is only read by the organiser's endpoints.
+"""
+
+import csv
+import io
+
+from fastapi import HTTPException
+from heliclockter import datetime_utc
+from starlette import status
+
+from bracket.database import database
+from bracket.models.db.category import Category
+from bracket.models.db.registration import (
+    EntryFeeBody,
+    PublicRegistrationBody,
+    PublicRegistrationClass,
+    PublicRegistrationResult,
+    Registration,
+    RegistrationSettingsBody,
+    RegistrationUpdateBody,
+)
+from bracket.models.db.team import PARTICIPATING_STATUSES, RegistrationStatus
+from bracket.sql.categories import get_all_categories_in_tournament
+from bracket.sql.stages import get_full_tournament_details
+from bracket.utils.id_types import CategoryId, TeamId, TournamentId
+
+# Sign-ups waiting for the organiser (registered or on the waitlist) per tournament
+MAX_PENDING_REGISTRATIONS = 500
+
+PARTICIPATING = tuple(sorted(status.value for status in PARTICIPATING_STATUSES))
+
+
+def bad_request(detail: str) -> HTTPException:
+    return HTTPException(status.HTTP_400_BAD_REQUEST, detail)
+
+
+def is_open(category: Category, now: datetime_utc) -> bool:
+    return category.registration_open and (
+        category.registration_deadline is None or now < category.registration_deadline
+    )
+
+
+async def participating_count(category_id: CategoryId) -> int:
+    count = await database.fetch_val(
+        """
+        SELECT count(*) FROM teams
+        WHERE category_id = :category_id AND registration_status = any(:statuses)
+        """,
+        values={"category_id": category_id, "statuses": list(PARTICIPATING)},
+    )
+    return int(count)
+
+
+async def get_open_classes(
+    tournament_id: TournamentId, now: datetime_utc
+) -> list[PublicRegistrationClass]:
+    classes = []
+    for category in await get_all_categories_in_tournament(tournament_id):
+        if not is_open(category, now):
+            continue
+        spots_left = (
+            None
+            if category.max_teams is None
+            else max(0, category.max_teams - await participating_count(category.id))
+        )
+        classes.append(
+            PublicRegistrationClass(
+                id=category.id,
+                name=category.name,
+                age=category.age,
+                registration_deadline=category.registration_deadline,
+                entry_fee=category.entry_fee,
+                spots_left=spots_left,
+            )
+        )
+    return classes
+
+
+async def waitlist_place(category_id: CategoryId, team_id: TeamId) -> int | None:
+    """Place on the waitlist (1 = first to move up), in order of registration."""
+    rows = await database.fetch_all(
+        """
+        SELECT teams.id
+        FROM teams
+        LEFT JOIN team_registrations r ON r.team_id = teams.id
+        WHERE teams.category_id = :category_id AND teams.registration_status = 'WAITLIST'
+        ORDER BY r.registered_at NULLS LAST, teams.id
+        """,
+        values={"category_id": category_id},
+    )
+    ids = [row._mapping["id"] for row in rows]
+    return ids.index(team_id) + 1 if team_id in ids else None
+
+
+async def register_team(
+    tournament_id: TournamentId, body: PublicRegistrationBody, now: datetime_utc
+) -> PublicRegistrationResult:
+    async with database.transaction():
+        # One sign-up at a time per class, so two teams can't take the last spot
+        row = await database.fetch_one(
+            "SELECT * FROM categories WHERE id = :id AND tournament_id = :tournament_id FOR UPDATE",
+            values={"id": body.category_id, "tournament_id": tournament_id},
+        )
+        if row is None:
+            raise bad_request("This class doesn't exist")
+        category = Category.model_validate(dict(row._mapping))
+        if not is_open(category, now):
+            raise bad_request("Registration for this class is closed")
+
+        pending = await database.fetch_val(
+            """
+            SELECT count(*) FROM teams
+            JOIN team_registrations r ON r.team_id = teams.id
+            WHERE teams.tournament_id = :tournament_id
+            AND teams.registration_status IN ('REGISTERED', 'WAITLIST')
+            """,
+            values={"tournament_id": tournament_id},
+        )
+        if int(pending) >= MAX_PENDING_REGISTRATIONS:
+            raise bad_request("Too many registrations are waiting, please contact the organiser")
+
+        duplicate = await database.fetch_val(
+            """
+            SELECT count(*) FROM teams
+            WHERE category_id = :category_id AND lower(name) = lower(:name)
+            AND registration_status != 'REJECTED'
+            """,
+            values={"category_id": category.id, "name": body.team_name},
+        )
+        if int(duplicate) > 0:
+            raise bad_request("A team with this name is already registered in this class")
+
+        full = (
+            category.max_teams is not None
+            and await participating_count(category.id) >= category.max_teams
+        )
+        registration_status = RegistrationStatus.WAITLIST if full else RegistrationStatus.REGISTERED
+        team_id = await database.fetch_val(
+            """
+            INSERT INTO teams (
+                name, created, tournament_id, active, elo_score, swiss_score, wins, draws,
+                losses, category_id, club_name, registration_status
+            )
+            VALUES (
+                :name, :now, :tournament_id, true, 1200, 0, 0, 0, 0, :category_id, :club_name,
+                :registration_status
+            )
+            RETURNING id
+            """,
+            values={
+                "name": body.team_name,
+                "now": now,
+                "tournament_id": tournament_id,
+                "category_id": category.id,
+                "club_name": body.club_name,
+                "registration_status": registration_status.value,
+            },
+        )
+        await database.execute(
+            """
+            INSERT INTO team_registrations (
+                team_id, tournament_id, contact_name, contact_email, contact_phone, comment,
+                registered_at
+            )
+            VALUES (
+                :team_id, :tournament_id, :contact_name, :contact_email, :contact_phone,
+                :comment, :now
+            )
+            """,
+            values={
+                "team_id": team_id,
+                "tournament_id": tournament_id,
+                "contact_name": body.contact_name,
+                "contact_email": str(body.contact_email),
+                "contact_phone": body.contact_phone,
+                "comment": body.comment or None,
+                "now": now,
+            },
+        )
+        place = await waitlist_place(category.id, team_id) if full else None
+
+    return PublicRegistrationResult(
+        team_name=body.team_name, registration_status=registration_status, waitlist_place=place
+    )
+
+
+async def get_registrations(tournament_id: TournamentId) -> list[Registration]:
+    rows = await database.fetch_all(
+        """
+        SELECT
+            teams.id AS team_id, teams.name AS team_name, teams.club_name, teams.category_id,
+            teams.registration_status, teams.withdrawn,
+            r.contact_name, r.contact_email, r.contact_phone, r.comment, r.registered_at,
+            coalesce(r.paid, false) AS paid, coalesce(r.squad_reported, false) AS squad_reported
+        FROM teams
+        LEFT JOIN team_registrations r ON r.team_id = teams.id
+        WHERE teams.tournament_id = :tournament_id
+        ORDER BY teams.category_id NULLS LAST, r.registered_at NULLS LAST, teams.id
+        """,
+        values={"tournament_id": tournament_id},
+    )
+    places: dict[CategoryId | None, int] = {}
+    registrations = []
+    for row in rows:
+        values = dict(row._mapping)
+        place = None
+        if values["registration_status"] == RegistrationStatus.WAITLIST.value:
+            category_id = values["category_id"]
+            place = places[category_id] = places.get(category_id, 0) + 1
+        registrations.append(Registration.model_validate({**values, "waitlist_place": place}))
+    return registrations
+
+
+async def check_not_placed(tournament_id: TournamentId, team_id: TeamId) -> None:
+    stages = await get_full_tournament_details(tournament_id)
+    if any(
+        input_.team_id == team_id
+        for stage in stages
+        for item in stage.stage_items
+        for input_ in item.inputs
+    ):
+        raise bad_request("The team is placed in a group; remove it there before it leaves the cup")
+
+
+async def update_registration(
+    tournament_id: TournamentId, team_id: TeamId, body: RegistrationUpdateBody
+) -> None:
+    current = await database.fetch_val(
+        "SELECT registration_status FROM teams WHERE id = :id AND tournament_id = :tournament_id",
+        values={"id": team_id, "tournament_id": tournament_id},
+    )
+    if current is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Could not find the team")
+    if not body.registration_status.participates and RegistrationStatus(current).participates:
+        await check_not_placed(tournament_id, team_id)
+
+    async with database.transaction():
+        await database.execute(
+            "UPDATE teams SET registration_status = :status WHERE id = :id",
+            values={"status": body.registration_status.value, "id": team_id},
+        )
+        await database.execute(
+            """
+            INSERT INTO team_registrations (
+                team_id, tournament_id, contact_name, contact_email, contact_phone, comment,
+                paid, squad_reported
+            )
+            VALUES (
+                :team_id, :tournament_id, :contact_name, :contact_email, :contact_phone,
+                :comment, :paid, :squad_reported
+            )
+            ON CONFLICT (team_id) DO UPDATE SET
+                contact_name = excluded.contact_name, contact_email = excluded.contact_email,
+                contact_phone = excluded.contact_phone, comment = excluded.comment,
+                paid = excluded.paid, squad_reported = excluded.squad_reported
+            """,
+            values={
+                "team_id": team_id,
+                "tournament_id": tournament_id,
+                "contact_name": body.contact_name,
+                "contact_email": None if body.contact_email is None else str(body.contact_email),
+                "contact_phone": body.contact_phone,
+                "comment": body.comment or None,
+                "paid": body.paid,
+                "squad_reported": body.squad_reported,
+            },
+        )
+
+
+async def promote_from_waitlist(tournament_id: TournamentId, category_id: CategoryId) -> TeamId:
+    """Moves the first team on the waitlist of the class up: it takes part (approved)."""
+    async with database.transaction():
+        team_id = await database.fetch_val(
+            """
+            SELECT teams.id
+            FROM teams
+            LEFT JOIN team_registrations r ON r.team_id = teams.id
+            WHERE teams.tournament_id = :tournament_id AND teams.category_id = :category_id
+            AND teams.registration_status = 'WAITLIST'
+            ORDER BY r.registered_at NULLS LAST, teams.id
+            LIMIT 1
+            FOR UPDATE OF teams
+            """,
+            values={"tournament_id": tournament_id, "category_id": category_id},
+        )
+        if team_id is None:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "There are no teams on the waitlist")
+        await database.execute(
+            "UPDATE teams SET registration_status = 'APPROVED' WHERE id = :id",
+            values={"id": team_id},
+        )
+    return TeamId(team_id)
+
+
+async def set_registration_settings(
+    tournament_id: TournamentId, category_id: CategoryId, body: RegistrationSettingsBody
+) -> bool:
+    updated = await database.fetch_val(
+        """
+        UPDATE categories
+        SET registration_open = :registration_open,
+            registration_deadline = :registration_deadline,
+            max_teams = :max_teams, entry_fee = :entry_fee
+        WHERE id = :id AND tournament_id = :tournament_id
+        RETURNING id
+        """,
+        values={**body.model_dump(), "id": category_id, "tournament_id": tournament_id},
+    )
+    return updated is not None
+
+
+async def set_entry_fees(tournament_id: TournamentId, body: EntryFeeBody) -> None:
+    await database.execute(
+        """
+        UPDATE categories SET entry_fee = :entry_fee
+        WHERE tournament_id = :tournament_id AND id = any(:ids)
+        """,
+        values={
+            "entry_fee": body.entry_fee,
+            "tournament_id": tournament_id,
+            "ids": list(body.category_ids),
+        },
+    )
+
+
+CSV_HEADERS = {
+    "en": [
+        "Class", "Team", "Club", "Status", "Waitlist place", "Contact person", "Email",
+        "Phone", "Comment", "Registered", "Paid", "Squad reported", "Withdrawn",
+    ],
+    "nb": [
+        "Klasse", "Lag", "Klubb", "Status", "Plass på venteliste", "Kontaktperson", "E-post",
+        "Telefon", "Kommentar", "Påmeldt", "Betalt", "Tropp meldt", "Trukket",
+    ],
+}  # fmt: skip
+YES_NO = {"en": ("Yes", "No"), "nb": ("Ja", "Nei")}
+# Spreadsheets run cells starting with these as formulas (CSV injection)
+FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+
+def csv_cell(value: object) -> str:
+    text = "" if value is None else str(value)
+    return "'" + text if text.startswith(FORMULA_PREFIXES) else text
+
+
+def registrations_csv(
+    registrations: list[Registration], categories: list[Category], language: str
+) -> str:
+    """For Excel in Norway: UTF-8 with BOM and `;` between the columns."""
+    language = language if language in CSV_HEADERS else "en"
+    yes, no = YES_NO[language]
+    names = {category.id: category.name for category in categories}
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=";", lineterminator="\r\n")
+    writer.writerow(CSV_HEADERS[language])
+    for r in registrations:
+        writer.writerow(
+            csv_cell(value)
+            for value in (
+                names.get(r.category_id) if r.category_id is not None else "",
+                r.team_name,
+                r.club_name,
+                r.registration_status.value,
+                r.waitlist_place,
+                r.contact_name,
+                r.contact_email,
+                r.contact_phone,
+                r.comment,
+                r.registered_at.strftime("%Y-%m-%d %H:%M UTC") if r.registered_at else "",
+                yes if r.paid else no,
+                yes if r.squad_reported else no,
+                yes if r.withdrawn else no,
+            )
+        )
+    return "﻿" + output.getvalue()

@@ -75,6 +75,11 @@ categories = Table(
     Column("min_rest_minutes", Integer, nullable=True),
     # e.g. "7v7": matches of this class are only scheduled on courts of this format
     Column("game_format", Text, nullable=True),
+    # Public sign-up: open until the deadline; beyond `max_teams` teams go to the waitlist
+    Column("registration_open", Boolean, nullable=False, server_default="f"),
+    Column("registration_deadline", DateTimeTZ, nullable=True),
+    Column("max_teams", Integer, nullable=True),
+    Column("entry_fee", Integer, nullable=True),  # NOK per team
     UniqueConstraint("tournament_id", "name"),
 )
 
@@ -245,6 +250,29 @@ teams = Table(
     # A withdrawn team loses its remaining matches by walkover
     Column("withdrawn", Boolean, nullable=False, server_default="f"),
     Column("checked_in", Boolean, nullable=False, server_default="f"),
+    # APPROVED / REGISTERED teams take part; WAITLIST and REJECTED teams don't
+    Column("registration_status", Text, nullable=False, index=True, server_default="APPROVED"),
+)
+
+# Contact details of a registered team: personal data, only for the organiser
+team_registrations = Table(
+    "team_registrations",
+    metadata,
+    Column("team_id", BigInteger, ForeignKey("teams.id", ondelete="CASCADE"), primary_key=True),
+    Column(
+        "tournament_id",
+        BigInteger,
+        ForeignKey("tournaments.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    ),
+    Column("contact_name", Text, nullable=True),
+    Column("contact_email", Text, nullable=True),
+    Column("contact_phone", Text, nullable=True),
+    Column("comment", Text, nullable=True),
+    Column("registered_at", DateTimeTZ, nullable=True),
+    Column("paid", Boolean, nullable=False, server_default="f"),
+    Column("squad_reported", Boolean, nullable=False, server_default="f"),
 )
 
 players = Table(
