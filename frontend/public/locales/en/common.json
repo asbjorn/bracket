@@ -790,5 +790,17 @@
     "schedule_notice_confirm": "{{count}} teams get an email with their next matches.",
     "schedule_notice_sent": "Emails to {{count}} teams are on their way",
     "announcement_also_email_label": "Also email it to the teams ({{count}} contacts)",
-    "announcement_emailed": "Emailed to {{count}} teams"
+    "announcement_emailed": "Emailed to {{count}} teams",
+    "open_tournament_button": "Open",
+    "setup_start_button": "Set up the cup with the wizard",
+    "results_public_short_label": "Show results",
+    "setup_hidden_results_note": "Classes without shown results (NFF: age 12 and younger) play groups only: playoffs are placed by results.",
+    "schedule_extra_courts_one": "{{count}} more court ({{format}}), or",
+    "schedule_extra_courts_other": "{{count}} more courts ({{format}}), or",
+    "entry_fee_teams_placeholder": "Number of teams",
+    "entry_fee_needs_teams": "Enter the expected number of teams",
+    "draw_empty_places_alert": "{{count}} places will stay empty: their matches have no opponent. To avoid that, change the groups on the stages page before the draw (fewer or smaller groups).",
+    "check_in_question": "Tap a team when it has arrived",
+    "score_next_badge": "Next",
+    "score_no_team_yet": "no team yet"
 }

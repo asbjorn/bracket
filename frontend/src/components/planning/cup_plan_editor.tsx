@@ -8,6 +8,7 @@ import {
   Select,
   Stack,
   Table,
+  Text,
   TextInput,
 } from '@mantine/core';
 import { DatePickerInput, TimeInput } from '@mantine/dates';
@@ -92,9 +93,15 @@ function ClassRow({
               update({ age: null, results_public: null });
               return;
             }
-            // Follow the NFF suggestions for the new age
-            const preset = nffPreset(Number(input));
-            update({ age: Number(input), results_public: null, ...preset });
+            // Follow the NFF suggestions for the new age, playoffs included
+            const age = Number(input);
+            update({
+              age,
+              results_public: null,
+              playoffs: age >= YOUTH_FOOTBALL_MIN_AGE ? 'AB' : 'NONE',
+              playoff_placings: null,
+              ...nffPreset(age),
+            });
           }}
         />
       </Table.Td>
@@ -205,7 +212,7 @@ export function ClassesEditor({
             <Table.Tr>
               <Table.Th>{t('name_input_label')}</Table.Th>
               <Table.Th>{t('category_age_input_label')}</Table.Th>
-              {withResultsPublic ? <Table.Th>{t('results_public_badge')}</Table.Th> : null}
+              {withResultsPublic ? <Table.Th>{t('results_public_short_label')}</Table.Th> : null}
               <Table.Th>{t('capacity_teams_header')}</Table.Th>
               <Table.Th>{t('capacity_group_size_header')}</Table.Th>
               <Table.Th>{t('capacity_playoffs_header')}</Table.Th>
@@ -230,6 +237,11 @@ export function ClassesEditor({
           </Table.Tbody>
         </Table>
       </Table.ScrollContainer>
+      {withResultsPublic && value.some((item) => !resultsPublic(item)) ? (
+        <Text size="sm" c="dimmed">
+          {t('setup_hidden_results_note')}
+        </Text>
+      ) : null}
       <Group>
         <Button
           variant="light"

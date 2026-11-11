@@ -76,8 +76,8 @@ function MatchCard({
             {match.court?.name ?? t('no_court_label')}
           </Text>
         </Group>
-        {[team1, team2].map((team) => (
-          <Group key={team} justify="space-between" wrap="nowrap">
+        {[team1, team2].map((team, index) => (
+          <Group key={index} justify="space-between" wrap="nowrap">
             <Text size="xl" fw={600}>
               {team}
             </Text>

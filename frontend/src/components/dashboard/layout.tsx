@@ -38,9 +38,10 @@ export function TournamentQRCode({ tournamentDataFull }: { tournamentDataFull: T
     >
       <Center>
         <QRCode
-          style={{ margin: '24px' }}
-          // @ts-ignore
-          size="auto"
+          // Scales with its container: a fixed size plus a viewBox, then width 100%
+          style={{ margin: '24px', height: 'auto', maxWidth: '100%', width: '100%' }}
+          size={256}
+          viewBox="0 0 256 256"
           value={`${getBaseURL()}/tournaments/${tournamentDataFull.dashboard_endpoint}/dashboard`}
         />
       </Center>

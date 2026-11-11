@@ -146,28 +146,38 @@ function CheckInRow({
     { id: match.team1_id, name: match.team1_name, checkedIn: match.team1_checked_in },
     { id: match.team2_id, name: match.team2_name, checkedIn: match.team2_checked_in },
   ];
+  // The team name is the button: grey = not here yet, green with a check = checked in
   return (
-    <Group grow>
-      {teams.map((team) =>
-        team.id != null ? (
-          <Button
-            key={team.id}
-            variant={team.checkedIn ? 'light' : 'default'}
-            color={team.checkedIn ? 'green' : 'gray'}
-            leftSection={team.checkedIn ? <IconUserCheck size={18} /> : <IconUser size={18} />}
-            onClick={async () => {
-              const teamId = team.id as number;
-              await checkInAtPitch(token, teamId, !team.checkedIn);
-              await onChanged();
-            }}
-          >
-            <Text size="sm" truncate>
-              {team.checkedIn ? t('checked_in_label') : t('check_in_button', { team: team.name })}
-            </Text>
-          </Button>
-        ) : null,
-      )}
-    </Group>
+    <Stack gap={4}>
+      <Text size="xs" c="dimmed">
+        {t('check_in_question')}
+      </Text>
+      <Group grow>
+        {teams.map((team) =>
+          team.id != null ? (
+            <Button
+              key={team.id}
+              variant={team.checkedIn ? 'light' : 'default'}
+              color={team.checkedIn ? 'green' : 'gray'}
+              leftSection={team.checkedIn ? <IconUserCheck size={18} /> : <IconUser size={18} />}
+              aria-pressed={team.checkedIn}
+              title={
+                team.checkedIn ? t('checked_in_label') : t('check_in_button', { team: team.name })
+              }
+              onClick={async () => {
+                const teamId = team.id as number;
+                await checkInAtPitch(token, teamId, !team.checkedIn);
+                await onChanged();
+              }}
+            >
+              <Text size="sm" truncate>
+                {team.name}
+              </Text>
+            </Button>
+          ) : null,
+        )}
+      </Group>
+    </Stack>
   );
 }
 
@@ -325,6 +335,7 @@ function MatchRow({
   selected: boolean;
   onClick: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <UnstyledButton onClick={onClick} w="100%">
       <Card withBorder padding="sm" bg={selected ? 'var(--mantine-color-indigo-light)' : undefined}>
@@ -335,8 +346,9 @@ function MatchRow({
               {match.court_name != null ? ` · ${match.court_name}` : ''}
               {match.category_name != null ? ` · ${match.category_name}` : ''}
             </Text>
-            <Text fw={500} truncate>
-              {match.team1_name ?? '?'} – {match.team2_name ?? '?'}
+            <Text fw={500} truncate c={canBeEntered(match) ? undefined : 'dimmed'}>
+              {match.team1_name ?? t('score_no_team_yet')} –{' '}
+              {match.team2_name ?? t('score_no_team_yet')}
             </Text>
           </Stack>
           {match.played ? (
@@ -478,7 +490,11 @@ export default function ScoreEntryPage() {
               <Group justify="space-between">
                 <MatchHeader match={selected} />
                 {selected.id === current?.id ? (
-                  <Badge color="green">{t('score_now_badge')}</Badge>
+                  selected.start_time != null && new Date(selected.start_time) > new Date() ? (
+                    <Badge color="blue">{t('score_next_badge')}</Badge>
+                  ) : (
+                    <Badge color="green">{t('score_now_badge')}</Badge>
+                  )
                 ) : null}
               </Group>
               {canBeEntered(selected) ? (

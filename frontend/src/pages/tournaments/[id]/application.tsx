@@ -21,6 +21,7 @@ import useSWR from 'swr';
 
 import { PrintButton } from '@components/print/print_button';
 import { getTournamentIdFromRouter } from '@components/utils/util';
+import { contentLanguage } from '@components/utils/language';
 import { DistrictApplication, DistrictApplicationResponse, TournamentDetails } from '@openapi';
 import TournamentLayout from '@pages/tournaments/_tournament_layout';
 import { createAxios, requestSucceeded } from '@services/adapter';
@@ -190,7 +191,7 @@ export default function DistrictApplicationPage() {
             Object.entries(form.values).map(([key, value]) => [key, value.trim() || null]),
           ) as TournamentDetails,
         };
-  const text = preview != null ? applicationText(preview, t, i18n.language) : '';
+  const text = preview != null ? applicationText(preview, t, contentLanguage(i18n)) : '';
   const missing = preview != null ? missingItems(preview, t) : [];
 
   return (

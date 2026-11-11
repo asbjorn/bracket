@@ -42,11 +42,22 @@ export function normalizeForSearch(text: string) {
     .toLowerCase();
 }
 
-/** The first match of a team that hasn't been played yet, in order of time. */
+/** A group place without a team (fewer teams than places): such a match is never played. */
+function hasEmptyPlace(match: MatchWithDetails) {
+  return [match.stage_item_input1, match.stage_item_input2].some(
+    (input) =>
+      input != null &&
+      input.team_id == null &&
+      input.winner_from_stage_item_id == null &&
+      input.best_rank == null,
+  );
+}
+
+/** The first match of a team that hasn't been played yet and has an opponent, by time. */
 export function nextMatchOf(matches: MatchWithDetails[]): MatchWithDetails | null {
   return (
     matches
-      .filter((match) => !match.played && match.start_time != null)
+      .filter((match) => !match.played && match.start_time != null && !hasEmptyPlace(match))
       .sort((a, b) => (a.start_time ?? '').localeCompare(b.start_time ?? ''))[0] ?? null
   );
 }

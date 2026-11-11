@@ -16,7 +16,7 @@ import {
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { IconCircleCheck, IconHourglass } from '@tabler/icons-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { DashboardFooter } from '@components/dashboard/footer';
@@ -125,6 +125,16 @@ export default function DashboardRegisterPage() {
       consent: (value) => (value ? null : t('registration_consent_validation')),
     },
   });
+
+  // Only one class open: choose it already
+  const openClasses = swrClassesResponse.data?.data;
+  const onlyClassId = openClasses != null && openClasses.length === 1 ? openClasses[0].id : null;
+  useEffect(() => {
+    if (onlyClassId != null && form.values.category_id === '') {
+      form.setFieldValue('category_id', `${onlyClassId}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onlyClassId, form.values.category_id]);
 
   if (!tournamentValid) return tournamentDataFull;
   setTitle(getTournamentHeadTitle(tournamentDataFull));

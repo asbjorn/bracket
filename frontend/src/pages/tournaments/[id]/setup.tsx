@@ -16,7 +16,7 @@ import {
   withAllowedPlayoffs,
 } from '@components/planning/cup_plan_editor';
 import { ProposalReport } from '@components/scheduling/match_plan_panel';
-import { getTournamentIdFromRouter } from '@components/utils/util';
+import { capitalize, getTournamentIdFromRouter } from '@components/utils/util';
 import { CapacityCourts, CapacityResult, CupSetupClass } from '@openapi';
 import TournamentLayout from '@pages/tournaments/_tournament_layout';
 import { getCategories, getStages, getTournamentById, requestSucceeded } from '@services/adapter';
@@ -103,7 +103,7 @@ export default function CupSetupPage() {
           <Alert color="orange">{t('setup_not_empty_alert')}</Alert>
         ) : (
           <Stepper active={step} onStepClick={setStep} allowNextStepsSelect={false}>
-            <Stepper.Step label={t('categories_title')}>
+            <Stepper.Step label={capitalize(t('categories_title'))}>
               <Stack>
                 <ClassesEditor value={classes} onChange={setClasses} withResultsPublic />
                 <Group justify="right">{next(classes.length < 1)}</Group>

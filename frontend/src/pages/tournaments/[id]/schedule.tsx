@@ -248,7 +248,7 @@ function Schedule({
   ));
 
   columns.push(
-    <div style={{ width: '25rem' }}>
+    <div key="add-court" style={{ width: '25rem' }}>
       <CourtModal
         swrCourtsResponse={swrCourtsResponse}
         tournamentId={tournament.id}

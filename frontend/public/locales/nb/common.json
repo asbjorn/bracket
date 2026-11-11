@@ -790,5 +790,17 @@
     "schedule_notice_confirm": "{{count}} lag får en e-post med de neste kampene sine.",
     "schedule_notice_sent": "E-post til {{count}} lag er på vei",
     "announcement_also_email_label": "Send den også på e-post til lagene ({{count}} kontaktpersoner)",
-    "announcement_emailed": "Sendt på e-post til {{count}} lag"
+    "announcement_emailed": "Sendt på e-post til {{count}} lag",
+    "open_tournament_button": "Åpne",
+    "setup_start_button": "Sett opp cupen med veiviseren",
+    "results_public_short_label": "Vis resultater",
+    "setup_hidden_results_note": "Klasser uten viste resultater (NFF: 12 år og yngre) spiller bare gruppespill, siden sluttspill avgjøres av resultater.",
+    "schedule_extra_courts_one": "{{count}} bane til ({{format}}), eller",
+    "schedule_extra_courts_other": "{{count}} baner til ({{format}}), eller",
+    "entry_fee_teams_placeholder": "Antall lag",
+    "entry_fee_needs_teams": "Fyll inn forventet antall lag",
+    "draw_empty_places_alert": "{{count}} plasser blir stående tomme, og kampene der får ingen motstander. Vil du unngå det, endre gruppene på siden for spill før trekningen (færre eller mindre grupper).",
+    "check_in_question": "Trykk på laget når det har kommet",
+    "score_next_badge": "Neste",
+    "score_no_team_yet": "ingen lag ennå"
 }

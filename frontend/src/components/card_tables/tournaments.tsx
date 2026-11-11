@@ -88,14 +88,9 @@ export default function TournamentsCardTable({
                 >
                   {t('archived_label')}
                 </Badge>
-                <Button
-                  component={PreloadLink}
-                  color="blue"
-                  fullWidth
-                  radius="md"
-                  href={`/tournaments/${tournament.id}/stages`}
-                >
-                  OPEN
+                {/* The whole card is the link: no link inside a link */}
+                <Button component="div" color="blue" fullWidth radius="md">
+                  {t('open_tournament_button')}
                 </Button>
               </Group>
             </Card.Section>

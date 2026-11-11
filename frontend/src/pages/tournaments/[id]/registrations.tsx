@@ -37,6 +37,7 @@ import { useTranslation } from 'react-i18next';
 
 import { NoContent } from '@components/no_content/empty_table_info';
 import { getBaseURL, getTournamentIdFromRouter } from '@components/utils/util';
+import { contentLanguage } from '@components/utils/language';
 import { Category, Registration, RegistrationStatus, Tournament } from '@openapi';
 import TournamentLayout from '@pages/tournaments/_tournament_layout';
 import { getCategories, getTournamentById, requestSucceeded } from '@services/adapter';
@@ -285,9 +286,16 @@ function EntryFeeCalculator({
   const [fixed, setFixed] = useState<number | string>(20000);
   const [perTeam, setPerTeam] = useState<number | string>(300);
   const [margin, setMargin] = useState<number | string>(15);
-  const [teams, setTeams] = useState<number | string>(Math.max(participating.length, 1));
+  // Empty: use the teams taking part, or else the maximum number of teams of the classes
+  const [teams, setTeams] = useState<number | string>('');
   const [classIds, setClassIds] = useState<string[]>([]);
-  const fee = suggestedEntryFee(Number(fixed), Number(perTeam), Number(margin), Number(teams));
+  const maxTeamsSum = categories.reduce((sum, c) => sum + (c.max_teams ?? 0), 0);
+  const autoTeams = participating.length > 0 ? participating.length : maxTeamsSum;
+  const expectedTeams = teams === '' ? autoTeams : Number(teams);
+  const fee =
+    expectedTeams > 0
+      ? suggestedEntryFee(Number(fixed), Number(perTeam), Number(margin), expectedTeams)
+      : null;
 
   const feeOf = (r: Registration) => categories.find((c) => c.id === r.category_id)?.entry_fee ?? 0;
   const paid = participating.filter((r) => r.paid).reduce((sum, r) => sum + feeOf(r), 0);
@@ -330,6 +338,7 @@ function EntryFeeCalculator({
             value={teams}
             onChange={setTeams}
             min={1}
+            placeholder={autoTeams > 0 ? `${autoTeams}` : t('entry_fee_teams_placeholder')}
           />
         </SimpleGrid>
         <Group align="end">
@@ -337,7 +346,11 @@ function EntryFeeCalculator({
             <Text size="sm" c="dimmed">
               {t('entry_fee_suggested_label')}
             </Text>
-            <Title order={2}>{formatNok(fee)}</Title>
+            {fee != null ? (
+              <Title order={2}>{formatNok(fee)}</Title>
+            ) : (
+              <Text c="dimmed">{t('entry_fee_needs_teams')}</Text>
+            )}
           </Stack>
           <Select
             data={categories.map((c) => ({ value: `${c.id}`, label: c.name }))}
@@ -365,8 +378,9 @@ function EntryFeeCalculator({
             </Badge>
           ))}
           <Button
-            disabled={classIds.length < 1}
+            disabled={classIds.length < 1 || fee == null}
             onClick={async () => {
+              if (fee == null) return;
               const result = await saveEntryFees(tournamentId, {
                 category_ids: classIds.map(Number),
                 entry_fee: fee,
@@ -476,9 +490,7 @@ export default function RegistrationsPage() {
             variant="default"
             leftSection={<IconDownload size={18} />}
             disabled={registrations.length < 1}
-            onClick={() =>
-              downloadRegistrationsCsv(tournamentData.id, i18n.language === 'nb' ? 'nb' : 'en')
-            }
+            onClick={() => downloadRegistrationsCsv(tournamentData.id, contentLanguage(i18n))}
           >
             {t('registrations_export_button')}
           </Button>
@@ -529,7 +541,9 @@ export default function RegistrationsPage() {
         </Group>
 
         {shown.length < 1 ? (
-          <NoContent title={t('registrations_empty_title')} description="" />
+          <Text c="dimmed" ta="center" py="xl">
+            {t('registrations_empty_title')}
+          </Text>
         ) : (
           <Table.ScrollContainer minWidth={1000}>
             <Table striped highlightOnHover>

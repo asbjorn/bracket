@@ -206,6 +206,11 @@ export default function DrawPage() {
             {toDraw.length > free ? (
               <Alert color="orange">{t('draw_too_many_teams_alert')}</Alert>
             ) : null}
+            {toDraw.length < free ? (
+              <Alert color="yellow">
+                {t('draw_empty_places_alert', { count: free - toDraw.length })}
+              </Alert>
+            ) : null}
             <Group>
               <Button
                 size="md"

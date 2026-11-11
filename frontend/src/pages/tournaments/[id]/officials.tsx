@@ -36,6 +36,7 @@ import { NoContent } from '@components/no_content/empty_table_info';
 import { Time } from '@components/utils/datetime';
 import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
 import { getTournamentIdFromRouter } from '@components/utils/util';
+import { contentLanguage } from '@components/utils/language';
 import {
   Court,
   MatchWithDetails,
@@ -667,7 +668,7 @@ function FeesTab({
         <Button
           variant="light"
           leftSection={<IconDownload size={18} />}
-          onClick={() => downloadFeesCsv(tournamentId, i18n.language === 'nb' ? 'nb' : 'en')}
+          onClick={() => downloadFeesCsv(tournamentId, contentLanguage(i18n))}
         >
           {t('registrations_export_button')}
         </Button>

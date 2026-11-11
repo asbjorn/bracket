@@ -1,4 +1,5 @@
-import { Group, Stack } from '@mantine/core';
+import { Button, Group, Stack } from '@mantine/core';
+import { IconWand } from '@tabler/icons-react';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -10,6 +11,7 @@ import ActivatePreviousStageModal from '@components/modals/activate_previous_sta
 import CreatePlayoffsModal from '@components/modals/create_playoffs_modal';
 import { NoContent } from '@components/no_content/empty_table_info';
 import { CategorySelector, useSelectedCategory } from '@components/utils/category';
+import PreloadLink from '@components/utils/link';
 import { TableSkeletonTwoColumnsSmall } from '@components/utils/skeletons';
 import { getTournamentIdFromRouter } from '@components/utils/util';
 import { StageWithStageItems } from '@openapi';
@@ -93,6 +95,18 @@ export default function StagesPage() {
         {categorySelector}
         <Stack align="center">
           <NoContent title={t('no_matches_title')} description={t('no_matches_description')} />
+          {(swrStagesResponse.data?.data ?? []).length < 1 ? (
+            // A new cup: the wizard sets up classes, groups, playoffs and courts at once
+            <Button
+              component={PreloadLink}
+              href={`/tournaments/${tournamentData.id}/setup`}
+              size="lg"
+              color="indigo"
+              leftSection={<IconWand size={22} />}
+            >
+              {t('setup_start_button')}
+            </Button>
+          ) : null}
           <CreateStageButtonLarge
             tournament={tournamentDataFull}
             categoryId={categoryId}

@@ -167,6 +167,7 @@ function RankingForm({
     .sort((s1: Ranking, s2: Ranking) => s1.position - s2.position)
     .map((ranking) => (
       <EditRankingForm
+        key={ranking.id}
         t={t}
         tournament={tournament}
         ranking={ranking}
