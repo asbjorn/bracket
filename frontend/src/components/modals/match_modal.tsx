@@ -7,6 +7,7 @@ import {
   Modal,
   NumberInput,
   Select,
+  Switch,
   Text,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
@@ -24,7 +25,7 @@ import {
   RoundWithMatches,
   StagesWithStageItemsResponse,
 } from '@openapi';
-import { getCategories } from '@services/adapter';
+import { getCategories, requestSucceeded } from '@services/adapter';
 import {
   categoryOfStageItem,
   createCard,
@@ -34,6 +35,7 @@ import {
 } from '@services/discipline';
 import { getMatchLookup, getStageItemLookup } from '@services/lookups';
 import { deleteMatch, giveWalkover, updateMatch } from '@services/match';
+import { setMatchStarted } from '@services/planning';
 
 const RESULT_TYPES: MatchResultType[] = ['NORMAL', 'EXTRA_TIME', 'PENALTIES', 'WALKOVER'];
 
@@ -117,6 +119,8 @@ function MatchModalForm({
     },
   });
 
+  // The match passed in is a snapshot: keep the kick-off state here
+  const [started, setStarted] = useState(match.started_at != null);
   const [customDurationEnabled, setCustomDurationEnabled] = useState(
     match.custom_duration_minutes != null,
   );
@@ -238,6 +242,22 @@ function MatchModalForm({
               />
             </Grid.Col>
           </Grid>
+        ) : null}
+        {!match.played ? (
+          <Switch
+            mt="lg"
+            label={t('match_started_label')}
+            description={t('match_started_description')}
+            checked={started}
+            onChange={async (event) => {
+              const checked = event.currentTarget.checked;
+              const result = await setMatchStarted(tournamentData.id, match.id, checked);
+              if (requestSucceeded(result)) {
+                setStarted(checked);
+                await swrStagesResponse.mutate();
+              }
+            }}
+          />
         ) : null}
         {canGiveWalkover ? (
           <>

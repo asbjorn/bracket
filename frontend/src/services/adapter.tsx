@@ -20,6 +20,7 @@ import {
   FullTeamWithPlayers,
   ParticipatingClubsResponse,
   TeamsWithPlayersResponse,
+  PlanningHoursResponse,
   TimeWindowsResponse,
   PlanIssuesResponse,
   TournamentResponse,
@@ -264,6 +265,11 @@ export function getPlanIssues(tournament_id: number): SWRResponse<PlanIssuesResp
 
 export function getTimeWindows(tournament_id: number): SWRResponse<TimeWindowsResponse> {
   return useSWR(`tournaments/${tournament_id}/time_windows`, fetcher);
+}
+
+/** The opening hours of pitches and the days/hours of classes that have their own. */
+export function getPlanningHours(tournament_id: number): SWRResponse<PlanningHoursResponse> {
+  return useSWR(`tournaments/${tournament_id}/planning_hours`, fetcher);
 }
 
 export function getCategoryWarnings(tournament_id: number): SWRResponse<CategoryWarningsResponse> {

@@ -11,13 +11,23 @@ import {
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { IconInfoCircle } from '@tabler/icons-react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SWRResponse } from 'swr';
 
+import {
+  ALL_DAYS,
+  DaysHours,
+  DaysHoursFields,
+  fromWindows,
+  toWindows,
+} from '@components/scheduling/days_hours_editor';
 import { GAME_FORMATS } from '@components/scheduling/match_plan_panel';
+import { defaultMaxMatchesPerDay } from '@components/utils/nff_presets';
 import { CategoriesResponse, Category, GameFormat } from '@openapi';
-import { requestSucceeded } from '@services/adapter';
+import { getPlanningHours, getTimeWindows, requestSucceeded } from '@services/adapter';
 import { CategoryValues, createCategory, updateCategory } from '@services/category';
+import { saveCategoryHours } from '@services/planning';
 
 // NFF: results and tables may only be published from the 13-year class (youth football)
 const YOUTH_FOOTBALL_MIN_AGE = 13;
@@ -57,6 +67,7 @@ export default function CategoryModal({
     margin_minutes: number | string;
     min_rest_minutes: number | string;
     game_format: string | null;
+    max_matches_per_day: number | string;
   }>({
     initialValues: {
       name: category?.name ?? '',
@@ -66,11 +77,24 @@ export default function CategoryModal({
       margin_minutes: category?.margin_minutes ?? '',
       min_rest_minutes: category?.min_rest_minutes ?? '',
       game_format: category?.game_format ?? null,
+      max_matches_per_day: category?.max_matches_per_day ?? '',
     },
     validate: {
       name: (value) => (value.trim().length > 0 ? null : t('too_short_name_validation')),
     },
   });
+
+  const cupWindows = getTimeWindows(tournamentId).data?.data ?? [];
+  const swrPlanningHours = getPlanningHours(tournamentId);
+  const savedWindows =
+    category != null ? (swrPlanningHours.data?.data.categories[`${category.id}`] ?? []) : [];
+  const [hours, setHours] = useState<DaysHours>(ALL_DAYS);
+  // Start from the saved days/hours whenever the modal opens
+  useEffect(() => {
+    if (opened) setHours(fromWindows(cupWindows, savedWindows));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [opened, swrPlanningHours.data, cupWindows.length]);
+  const ageValue = form.getValues().age === '' ? null : Number(form.getValues().age);
 
   return (
     <Modal
@@ -88,12 +112,16 @@ export default function CategoryModal({
             margin_minutes: optionalNumber(values.margin_minutes),
             min_rest_minutes: optionalNumber(values.min_rest_minutes),
             game_format: values.game_format as GameFormat | null,
+            max_matches_per_day: optionalNumber(values.max_matches_per_day),
           };
           const result =
             category == null
               ? await createCategory(tournamentId, body)
               : await updateCategory(tournamentId, category.id, body);
-          if (requestSucceeded(result)) {
+          if (requestSucceeded(result) && 'data' in result) {
+            const categoryId = category?.id ?? result.data.data.id;
+            await saveCategoryHours(tournamentId, categoryId, toWindows(cupWindows, hours));
+            await swrPlanningHours.mutate();
             await swrCategoriesResponse.mutate();
             onSaved();
             form.reset();
@@ -174,7 +202,21 @@ export default function CategoryModal({
                 {...form.getInputProps('game_format')}
               />
             </Grid.Col>
+            <Grid.Col span={{ sm: 6 }}>
+              <NumberInput
+                label={t('max_matches_per_day_label')}
+                description={t('max_matches_per_day_description')}
+                placeholder={`${defaultMaxMatchesPerDay(ageValue) ?? t('max_matches_per_day_no_limit')}`}
+                min={1}
+                max={20}
+                allowDecimal={false}
+                {...form.getInputProps('max_matches_per_day')}
+              />
+            </Grid.Col>
           </Grid>
+        </Fieldset>
+        <Fieldset legend={t('class_hours_label')} mt="lg" radius="md">
+          <DaysHoursFields cupWindows={cupWindows} value={hours} onChange={setHours} />
         </Fieldset>
         <Button fullWidth mt="lg" color="green" type="submit">
           {t('save_button')}

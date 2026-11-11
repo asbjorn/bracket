@@ -3,16 +3,22 @@ import {
   ActionIcon,
   Alert,
   Badge,
+  Box,
+  Button,
   Card,
   Grid,
   Group,
   Menu,
+  ScrollArea,
+  SegmentedControl,
   Stack,
   Text,
   Title,
 } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import { AiFillWarning } from '@react-icons/all-files/ai/AiFillWarning';
-import { IconAlertCircle, IconDots, IconTrash } from '@tabler/icons-react';
+import { IconAlertCircle, IconDots, IconTrash, IconWand } from '@tabler/icons-react';
+import dayjs from 'dayjs';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SWRResponse } from 'swr';
@@ -23,7 +29,9 @@ import MatchPlanPanel from '@components/scheduling/match_plan_panel';
 import NoticesAlert from '@components/scheduling/notices_alert';
 import { PlanIssues } from '@components/scheduling/plan_issues';
 import { NoContent } from '@components/no_content/empty_table_info';
-import { DayAndTime, Time, spansMultipleDays } from '@components/utils/datetime';
+import { courtLabel } from '@components/scheduling/courts_panel';
+import { Day, DayAndTime, Time, spansMultipleDays } from '@components/utils/datetime';
+import PreloadLink from '@components/utils/link';
 import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
 import { TournamentMinimal } from '@components/utils/tournament';
 import { Translator } from '@components/utils/types';
@@ -143,6 +151,7 @@ function ScheduleColumn({
   multipleDays: boolean;
 }) {
   const { t } = useTranslation();
+  const allCourts = swrCourtsResponse.data?.data ?? [];
   const rows = matches.map((match: MatchWithDetails, index: number) => (
     <ScheduleRow
       index={index}
@@ -172,11 +181,21 @@ function ScheduleColumn({
     <Droppable droppableId={`${court.id}`} direction="vertical">
       {(provided) => (
         <div {...provided.droppableProps} ref={provided.innerRef}>
-          <div style={{ width: '25rem' }}>
-            <Group justify="space-between">
+          <div style={{ width: 'min(25rem, calc(100vw - 2rem))' }}>
+            <Group
+              justify="space-between"
+              wrap="nowrap"
+              style={{
+                position: 'sticky',
+                top: 0,
+                zIndex: 2,
+                background: 'var(--mantine-color-body)',
+                paddingBottom: '0.25rem',
+              }}
+            >
               <Group>
                 <h4 style={{ marginTop: '0', margin: 'auto' }}>
-                  {court.name}
+                  {courtLabel(t, court, allCourts)}
                   {court.game_format != null ? ` (${court.game_format})` : ''}
                 </h4>
               </Group>
@@ -248,7 +267,7 @@ function Schedule({
   ));
 
   columns.push(
-    <div key="add-court" style={{ width: '25rem' }}>
+    <div key="add-court" style={{ width: '12rem' }}>
       <CourtModal
         swrCourtsResponse={swrCourtsResponse}
         tournamentId={tournament.id}
@@ -269,16 +288,98 @@ function Schedule({
     );
   }
 
+  // The board scrolls inside its own box (the page never gets wider than the screen), with
+  // the pitch names staying on top while scrolling down
   return (
-    <Group wrap="nowrap" align="top">
-      {columns}
-    </Group>
+    <ScrollArea.Autosize mah="calc(100vh - 7rem)" type="auto" offsetScrollbars>
+      <Group wrap="nowrap" align="top">
+        {columns}
+      </Group>
+    </ScrollArea.Autosize>
+  );
+}
+
+/** For phones: all matches by time, per day, with the pitch as a badge. */
+function ScheduleList({
+  schedule,
+  courts,
+  stageItemsLookup,
+  matchesLookup,
+  openMatchModal,
+}: {
+  schedule: { court: Court; matches: MatchWithDetails[] }[];
+  courts: Court[];
+  stageItemsLookup: any;
+  matchesLookup: any;
+  openMatchModal: CallableFunction;
+}) {
+  const { t } = useTranslation();
+  const matches = schedule
+    .flatMap((item) => item.matches.map((match) => ({ match, court: item.court })))
+    .filter((item) => item.match.start_time != null)
+    .sort((a, b) => (a.match.start_time ?? '').localeCompare(b.match.start_time ?? ''));
+  if (matches.length < 1) {
+    return <NoContent title={t('no_matches_title')} description={t('drop_match_alert_title')} />;
+  }
+  const days = [
+    ...new Set(matches.map((item) => dayjs(item.match.start_time).format('YYYY-MM-DD'))),
+  ];
+  return (
+    <Stack gap="xs">
+      {days.map((day) => (
+        <Stack key={day} gap="xs">
+          <Title order={4} mt="sm">
+            <Day datetime={`${day}T12:00:00`} />
+          </Title>
+          {matches
+            .filter((item) => dayjs(item.match.start_time).format('YYYY-MM-DD') === day)
+            .map(({ match, court }) => (
+              <Card
+                key={match.id}
+                withBorder
+                padding="sm"
+                radius="md"
+                style={{ cursor: 'pointer' }}
+                onClick={() => openMatchModal(match)}
+              >
+                <Group justify="space-between" wrap="nowrap" align="flex-start">
+                  <Stack gap={0} style={{ minWidth: 0 }}>
+                    <Text fw={500} truncate>
+                      {formatMatchInput1(t, stageItemsLookup, matchesLookup, match)}
+                    </Text>
+                    <Text fw={500} truncate>
+                      {formatMatchInput2(t, stageItemsLookup, matchesLookup, match)}
+                    </Text>
+                  </Stack>
+                  <Stack gap={4} align="end">
+                    <Badge variant="default" size="lg">
+                      <Time datetime={match.start_time as string} />
+                    </Badge>
+                    <Badge variant="light" size="sm">
+                      {courtLabel(t, court, courts)}
+                    </Badge>
+                    {match.started_at != null && !match.played ? (
+                      <Badge color="green" size="sm">
+                        {t('match_started_badge')}
+                      </Badge>
+                    ) : null}
+                  </Stack>
+                </Group>
+              </Card>
+            ))}
+        </Stack>
+      ))}
+    </Stack>
   );
 }
 
 export default function SchedulePage() {
   const [modalOpened, modalSetOpened] = useState(false);
   const [match, setMatch] = useState<MatchWithDetails | null>(null);
+  // Phones get the list by default; the board (drag and drop) needs a wide screen
+  const isPhone = useMediaQuery('(max-width: 48em)');
+  const [chosenView, setView] = useState<'board' | 'list' | null>(null);
+  const view = chosenView ?? (isPhone ? 'list' : 'board');
 
   const { t } = useTranslation();
   const { tournamentData } = getTournamentIdFromRouter();
@@ -327,6 +428,11 @@ export default function SchedulePage() {
         onApplied={async () => {
           await swrStagesResponse.mutate();
         }}
+        matchLabel={(matchId) => {
+          const found = (matchesLookup as Record<number, any>)[matchId];
+          if (found == null) return `#${matchId}`;
+          return `${formatMatchInput1(t, stageItemsLookup, matchesLookup, found.match)} – ${formatMatchInput2(t, stageItemsLookup, matchesLookup, found.match)}`;
+        }}
       />
       <PlanIssues
         tournamentId={tournamentData.id}
@@ -334,7 +440,42 @@ export default function SchedulePage() {
         matchesLookup={matchesLookup}
         stageItemsLookup={stageItemsLookup}
       />
-      <Group grow mt="1rem">
+      {(swrStagesResponse.data?.data ?? []).length < 1 ? (
+        <Alert color="indigo" icon={<IconWand />} title={t('no_matches_title')} mt="md">
+          <Stack gap="xs" align="flex-start">
+            <Text size="sm">{t('schedule_empty_wizard_hint')}</Text>
+            <Button
+              component={PreloadLink}
+              href={`/tournaments/${tournamentData.id}/setup`}
+              leftSection={<IconWand size={18} />}
+            >
+              {t('setup_start_button')}
+            </Button>
+          </Stack>
+        </Alert>
+      ) : null}
+      <Group mt="lg" justify="flex-end">
+        <SegmentedControl
+          value={view}
+          onChange={(value) => setView(value as 'board' | 'list')}
+          data={[
+            { value: 'board', label: t('schedule_view_board') },
+            { value: 'list', label: t('schedule_view_list') },
+          ]}
+        />
+      </Group>
+      {view === 'list' ? (
+        <Box mt="md">
+          <ScheduleList
+            schedule={data}
+            courts={swrCourtsResponse.data?.data ?? []}
+            stageItemsLookup={stageItemsLookup}
+            matchesLookup={matchesLookup}
+            openMatchModal={openMatchModal}
+          />
+        </Box>
+      ) : null}
+      <Box mt="1rem" display={view === 'board' ? undefined : 'none'}>
         <DragDropContext
           onDragEnd={async ({ destination, source, draggableId: matchId }) => {
             if (destination == null || source == null) return;
@@ -357,7 +498,7 @@ export default function SchedulePage() {
             openMatchModal={openMatchModal}
           />
         </DragDropContext>
-      </Group>
+      </Box>
     </TournamentLayout>
   );
 }

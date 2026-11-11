@@ -45,9 +45,12 @@ export default function CourtsPresentPage({ showNotices = true }: { showNotices?
 
   const rows = courts.map((court: Court) => {
     const matchesForCourt = matchesByCourtId[court.id] || [];
-    const activeMatch = matchesForCourt.filter((m: MatchWithDetails) => isMatchHappening(m))[0];
+    // A finished match is neither playing now nor next (like the public courts page)
+    const activeMatch = matchesForCourt.filter(
+      (m: MatchWithDetails) => !m.played && (isMatchHappening(m) || m.started_at != null),
+    )[0];
     const futureMatch = matchesForCourt
-      .filter((m: MatchWithDetails) => isMatchInTheFuture(m))
+      .filter((m: MatchWithDetails) => !m.played && m !== activeMatch && isMatchInTheFuture(m))
       .sort((m1: MatchWithDetails, m2: MatchWithDetails) =>
         (m1.start_time || '') > (m2.start_time || '') ? 1 : -1,
       )[0];

@@ -6,6 +6,8 @@ import {
   CopyButton,
   Group,
   Modal,
+  Popover,
+  SegmentedControl,
   Select,
   Stack,
   Table,
@@ -16,27 +18,29 @@ import {
 } from '@mantine/core';
 import {
   IconCheck,
+  IconClockEdit,
   IconCopy,
   IconLink,
   IconPrinter,
   IconQrcode,
   IconTrash,
 } from '@tabler/icons-react';
+import dayjs from 'dayjs';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import QRCode from 'react-qr-code';
 
 import { DayAndTime } from '@components/utils/datetime';
+import { DateTimeField } from '@components/utils/time_fields';
 import { Court, ScoreLink } from '@openapi';
 import { requestSucceeded } from '@services/adapter';
 import {
   createScoreLink,
   getScoreLinks,
   revokeScoreLink,
+  setScoreLinkValidity,
   scoreLinkUrl,
 } from '@services/score_links';
-
-const VALIDITY_HOURS = [8, 24, 48, 72, 168];
 
 function linkStatus(link: ScoreLink): 'active' | 'expired' | 'revoked' {
   if (link.revoked_at != null) return 'revoked';
@@ -104,6 +108,94 @@ function NewLinkModal({
   );
 }
 
+/** Until the cup is over (default) or until a chosen moment. */
+function ValidityFields({
+  value,
+  onChange,
+}: {
+  value: string | null;
+  onChange: (value: string | null) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <Stack gap={4}>
+      <Text size="sm" fw={500}>
+        {t('score_link_valid_label')}
+      </Text>
+      <Group gap="xs" wrap="nowrap">
+        <SegmentedControl
+          size="xs"
+          value={value == null ? 'cup' : 'until'}
+          onChange={(choice) =>
+            onChange(choice === 'cup' ? null : dayjs().add(2, 'day').format('YYYY-MM-DD HH:mm:ss'))
+          }
+          data={[
+            { value: 'cup', label: t('score_link_valid_cup') },
+            { value: 'until', label: t('score_link_valid_until') },
+          ]}
+        />
+        {value != null ? (
+          <DateTimeField value={value} onChange={onChange} minDate={new Date()} w="11rem" />
+        ) : null}
+      </Group>
+    </Stack>
+  );
+}
+
+/** Extends (or shortens) a link; the QR codes that are already printed keep working. */
+function ExtendLinkButton({
+  tournamentId,
+  link,
+  onChanged,
+}: {
+  tournamentId: number;
+  link: ScoreLink;
+  onChanged: () => Promise<void>;
+}) {
+  const { t } = useTranslation();
+  const [opened, setOpened] = useState(false);
+  const [validUntil, setValidUntil] = useState<string | null>(null);
+  return (
+    <Popover opened={opened} onChange={setOpened} width={330} withArrow shadow="md">
+      <Popover.Target>
+        <Tooltip label={t('score_link_extend_button')}>
+          <ActionIcon
+            variant="subtle"
+            aria-label={t('score_link_extend_button')}
+            onClick={() => setOpened((o) => !o)}
+          >
+            <IconClockEdit size={18} />
+          </ActionIcon>
+        </Tooltip>
+      </Popover.Target>
+      <Popover.Dropdown>
+        <Stack>
+          <ValidityFields value={validUntil} onChange={setValidUntil} />
+          <Text size="xs" c="dimmed">
+            {t('score_link_extend_description')}
+          </Text>
+          <Button
+            size="xs"
+            onClick={async () => {
+              const result = await setScoreLinkValidity(
+                tournamentId,
+                link.id,
+                validUntil == null ? null : dayjs(validUntil).toISOString(),
+              );
+              if (requestSucceeded(result)) {
+                setOpened(false);
+                await onChanged();
+              }
+            }}
+          >
+            {t('save_button')}
+          </Button>
+        </Stack>
+      </Popover.Dropdown>
+    </Popover>
+  );
+}
+
 export default function ScoreLinksPanel({
   tournamentId,
   courts,
@@ -115,7 +207,8 @@ export default function ScoreLinksPanel({
   const swrLinks = getScoreLinks(tournamentId);
   const [courtId, setCourtId] = useState<string>('all');
   const [name, setName] = useState('');
-  const [hours, setHours] = useState('48');
+  // `null`: until the cup is over (the default); otherwise until this moment
+  const [validUntil, setValidUntil] = useState<string | null>(null);
   const [created, setCreated] = useState<{ token: string; name: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -148,17 +241,7 @@ export default function ScoreLinksPanel({
           onChange={(event) => setName(event.currentTarget.value)}
           w="12rem"
         />
-        <Select
-          label={t('score_link_valid_label')}
-          data={VALIDITY_HOURS.map((h) => ({
-            value: `${h}`,
-            label: t('score_link_valid_hours', { count: h }),
-          }))}
-          value={hours}
-          onChange={(value) => setHours(value ?? '48')}
-          allowDeselect={false}
-          w="10rem"
-        />
+        <ValidityFields value={validUntil} onChange={setValidUntil} />
         <Button
           leftSection={<IconQrcode size={18} />}
           loading={loading}
@@ -168,7 +251,7 @@ export default function ScoreLinksPanel({
             const response = await createScoreLink(tournamentId, {
               name: linkName,
               court_id: courtId === 'all' ? null : +courtId,
-              valid_hours: +hours,
+              valid_until: validUntil == null ? null : dayjs(validUntil).toISOString(),
             });
             setLoading(false);
             if (requestSucceeded(response) && 'data' in response) {
@@ -213,6 +296,15 @@ export default function ScoreLinksPanel({
                       )}
                     </Table.Td>
                     <Table.Td>
+                      {status !== 'revoked' ? (
+                        <ExtendLinkButton
+                          tournamentId={tournamentId}
+                          link={link}
+                          onChanged={async () => {
+                            await swrLinks.mutate();
+                          }}
+                        />
+                      ) : null}
                       {status === 'active' ? (
                         <Tooltip label={t('score_link_revoke_button')}>
                           <ActionIcon

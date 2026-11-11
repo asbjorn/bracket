@@ -9,15 +9,19 @@ import {
   ClassResults,
   CourtsEditor,
   DEFAULT_PLAYING_DAYS,
+  MatchesPerDay,
+  PlanClass,
   PlayingDays,
   PlayingDaysEditor,
+  defaultCourts,
+  groupSizeError,
   newClass,
+  toApiClass,
   toTimeWindows,
-  withAllowedPlayoffs,
 } from '@components/planning/cup_plan_editor';
 import { ProposalReport } from '@components/scheduling/match_plan_panel';
 import { capitalize, getTournamentIdFromRouter } from '@components/utils/util';
-import { CapacityCourts, CapacityResult, CupSetupClass } from '@openapi';
+import { CapacityCourts, CapacityResult } from '@openapi';
 import TournamentLayout from '@pages/tournaments/_tournament_layout';
 import { getCategories, getStages, getTournamentById, requestSucceeded } from '@services/adapter';
 import { calculateCapacity } from '@services/capacity';
@@ -35,8 +39,10 @@ export default function CupSetupPage() {
   const swrCategoriesResponse = getCategories(tournamentData.id);
 
   const [step, setStep] = useState(0);
-  const [classes, setClasses] = useState<CupSetupClass[]>([newClass('G10', 10)]);
-  const [courts, setCourts] = useState<CapacityCourts[]>([{ count: 2, game_format: '7v7' }]);
+  const [classes, setClasses] = useState<PlanClass[]>([newClass('G10', 10)]);
+  const [courts, setCourts] = useState<CapacityCourts[]>([]);
+  // Until the organiser changes the courts, they follow the classes (formats and amount)
+  const [courtsEdited, setCourtsEdited] = useState(false);
   const [playingDays, setPlayingDays] = useState<PlayingDays>(DEFAULT_PLAYING_DAYS);
   const [preview, setPreview] = useState<CapacityResult | null>(null);
   const [planMatches, setPlanMatches] = useState(true);
@@ -46,8 +52,14 @@ export default function CupSetupPage() {
     (swrStagesResponse.data?.data ?? []).length < 1 &&
     (swrCategoriesResponse.data?.data ?? []).length < 1;
   const loaded = swrStagesResponse.data != null && swrCategoriesResponse.data != null;
-  const allowedClasses = classes.map(withAllowedPlayoffs);
   const timeWindows = toTimeWindows(playingDays);
+  const allowedClasses = classes.map((value) => toApiClass(value, timeWindows));
+  const classesValid = classes.length > 0 && !classes.some(groupSizeError);
+
+  function goToCourts() {
+    if (!courtsEdited) setCourts(defaultCourts(classes, timeWindows));
+    setStep(2);
+  }
 
   async function showPreview() {
     setLoading(true);
@@ -103,23 +115,43 @@ export default function CupSetupPage() {
           <Alert color="orange">{t('setup_not_empty_alert')}</Alert>
         ) : (
           <Stepper active={step} onStepClick={setStep} allowNextStepsSelect={false}>
+            <Stepper.Step label={t('time_windows_title')}>
+              <Stack>
+                <PlayingDaysEditor value={playingDays} onChange={setPlayingDays} />
+                <Group justify="right">{next(timeWindows.length < 1)}</Group>
+              </Stack>
+            </Stepper.Step>
             <Stepper.Step label={capitalize(t('categories_title'))}>
               <Stack>
-                <ClassesEditor value={classes} onChange={setClasses} withResultsPublic />
-                <Group justify="right">{next(classes.length < 1)}</Group>
+                <ClassesEditor
+                  value={classes}
+                  onChange={setClasses}
+                  withResultsPublic
+                  cupWindows={timeWindows}
+                />
+                <Group justify="right">
+                  <Button disabled={!classesValid} onClick={goToCourts}>
+                    {t('setup_next_button')}
+                  </Button>
+                </Group>
               </Stack>
             </Stepper.Step>
             <Stepper.Step label={t('add_courts_title')}>
               <Stack>
-                <CourtsEditor value={courts} onChange={setCourts} />
-                <Group justify="right">{next(courts.length < 1)}</Group>
-              </Stack>
-            </Stepper.Step>
-            <Stepper.Step label={t('time_windows_title')}>
-              <Stack>
-                <PlayingDaysEditor value={playingDays} onChange={setPlayingDays} />
+                {!courtsEdited ? (
+                  <Text size="sm" c="dimmed">
+                    {t('setup_courts_suggested')}
+                  </Text>
+                ) : null}
+                <CourtsEditor
+                  value={courts}
+                  onChange={(value) => {
+                    setCourtsEdited(true);
+                    setCourts(value);
+                  }}
+                />
                 <Group justify="right">
-                  <Button loading={loading} disabled={timeWindows.length < 1} onClick={showPreview}>
+                  <Button loading={loading} disabled={courts.length < 1} onClick={showPreview}>
                     {t('setup_next_button')}
                   </Button>
                 </Group>
@@ -129,6 +161,7 @@ export default function CupSetupPage() {
               {preview != null ? (
                 <Stack>
                   <ProposalReport proposal={preview.schedule} />
+                  <MatchesPerDay result={preview} />
                   <ClassResults result={preview} />
                   <Text size="sm" c="dimmed">
                     {t('setup_review_description')}

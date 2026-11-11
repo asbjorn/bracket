@@ -18,3 +18,21 @@ export function nffPreset(age: number): ClassPreset {
   if (age <= 13) return { game_format: '9v9', duration_minutes: 15, margin_minutes: 3 };
   return { game_format: '11v11', duration_minutes: 20, margin_minutes: 5 };
 }
+
+/**
+ * Rest between two matches of a team: at least one match plus its break, so children never
+ * play back-to-back (AreaCopa).
+ */
+export function defaultRestMinutes(age: number): number {
+  const preset = nffPreset(age);
+  return preset.duration_minutes + preset.margin_minutes;
+}
+
+/** Like the backend (max_matches_per_day_for_age): the limit when a class doesn't set its own. */
+export function defaultMaxMatchesPerDay(age: number | null): number | null {
+  if (age == null) return null;
+  if (age <= 9) return 6;
+  if (age <= 13) return 5;
+  if (age <= 16) return 4;
+  return 3;
+}

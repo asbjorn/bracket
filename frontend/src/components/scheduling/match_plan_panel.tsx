@@ -1,16 +1,4 @@
-import {
-  Accordion,
-  Alert,
-  Button,
-  Group,
-  List,
-  Modal,
-  NumberInput,
-  Select,
-  Stack,
-  Text,
-  TextInput,
-} from '@mantine/core';
+import { Accordion, Alert, Button, Group, List, Modal, Stack, Text } from '@mantine/core';
 import { IconAlertTriangle, IconCalendarPlus, IconCheck, IconPrinter } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,74 +6,21 @@ import { SWRResponse } from 'swr';
 
 import { AnnouncementEditor } from '@components/public_info/public_info_editors';
 import { ScheduleNotice } from '@components/notifications/notifications_panel';
-import { DelayForm } from '@components/scheduling/plan_issues';
+import { CourtsPanel } from '@components/scheduling/courts_panel';
+import { ScheduleChangeForm } from '@components/scheduling/schedule_change';
 import ScoreLinksPanel from '@components/scheduling/score_links_panel';
 import TimeWindowsEditor from '@components/scheduling/time_windows_editor';
 import { DayAndTime } from '@components/utils/datetime';
 import PreloadLink from '@components/utils/link';
 import { CourtsResponse, GameFormat, ScheduleProposal } from '@openapi';
 import { getTimeWindows, requestSucceeded } from '@services/adapter';
-import { applySchedule, createCourts, proposeSchedule } from '@services/planning';
+import { applySchedule, proposeSchedule } from '@services/planning';
 
 export const GAME_FORMATS: GameFormat[] = ['3v3', '5v5', '7v7', '9v9', '11v11'];
 
 function formatDuration(t: any, minutes: number) {
   const hours = Math.floor(minutes / 60);
   return t('duration_hours_minutes', { hours, minutes: minutes % 60 });
-}
-
-function AddCourtsForm({
-  tournamentId,
-  swrCourtsResponse,
-}: {
-  tournamentId: number;
-  swrCourtsResponse: SWRResponse<CourtsResponse>;
-}) {
-  const { t } = useTranslation();
-  const [count, setCount] = useState<number | string>(2);
-  const [prefix, setPrefix] = useState(t('court_name_prefix_default'));
-  const [gameFormat, setGameFormat] = useState<string | null>(null);
-
-  return (
-    <Group align="end">
-      <NumberInput
-        label={t('court_count_label')}
-        min={1}
-        max={32}
-        value={count}
-        onChange={setCount}
-        w="8rem"
-      />
-      <TextInput
-        label={t('court_name_prefix_label')}
-        value={prefix}
-        onChange={(event) => setPrefix(event.currentTarget.value)}
-        w="10rem"
-      />
-      <Select
-        label={t('game_format_label')}
-        placeholder={t('game_format_any')}
-        clearable
-        data={GAME_FORMATS}
-        value={gameFormat}
-        onChange={setGameFormat}
-        w="10rem"
-      />
-      <Button
-        onClick={async () => {
-          const result = await createCourts(
-            tournamentId,
-            Number(count),
-            prefix,
-            gameFormat as GameFormat | null,
-          );
-          if (requestSucceeded(result)) await swrCourtsResponse.mutate();
-        }}
-      >
-        {t('add_courts_button')}
-      </Button>
-    </Group>
-  );
 }
 
 export function ProposalReport({ proposal }: { proposal: ScheduleProposal }) {
@@ -166,10 +101,12 @@ export default function MatchPlanPanel({
   tournamentId,
   swrCourtsResponse,
   onApplied,
+  matchLabel,
 }: {
   tournamentId: number;
   swrCourtsResponse: SWRResponse<CourtsResponse>;
   onApplied: () => Promise<void>;
+  matchLabel: (matchId: number) => string;
 }) {
   const { t } = useTranslation();
   const swrTimeWindowsResponse = getTimeWindows(tournamentId);
@@ -233,10 +170,11 @@ export default function MatchPlanPanel({
         <Accordion.Item value="delay">
           <Accordion.Control>{t('delay_title')}</Accordion.Control>
           <Accordion.Panel>
-            <DelayForm
+            <ScheduleChangeForm
               tournamentId={tournamentId}
               courts={swrCourtsResponse.data?.data ?? []}
-              onDelayed={onApplied}
+              matchLabel={matchLabel}
+              onApplied={onApplied}
             />
           </Accordion.Panel>
         </Accordion.Item>
@@ -258,7 +196,7 @@ export default function MatchPlanPanel({
         <Accordion.Item value="courts">
           <Accordion.Control>{t('add_courts_title')}</Accordion.Control>
           <Accordion.Panel>
-            <AddCourtsForm tournamentId={tournamentId} swrCourtsResponse={swrCourtsResponse} />
+            <CourtsPanel tournamentId={tournamentId} swrCourtsResponse={swrCourtsResponse} />
           </Accordion.Panel>
         </Accordion.Item>
       </Accordion>

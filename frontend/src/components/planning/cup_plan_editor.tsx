@@ -1,5 +1,6 @@
 import {
   ActionIcon,
+  Badge,
   Button,
   Checkbox,
   Group,
@@ -13,11 +14,23 @@ import {
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { IconTrash } from '@tabler/icons-react';
+import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 
 import { GAME_FORMATS } from '@components/scheduling/match_plan_panel';
 import { buildTimeWindows } from '@components/scheduling/time_windows_editor';
-import { nffPreset } from '@components/utils/nff_presets';
+import {
+  ALL_DAYS,
+  DaysHours,
+  DaysHoursButton,
+  toWindows,
+  useDayLabel,
+} from '@components/scheduling/days_hours_editor';
+import {
+  defaultMaxMatchesPerDay,
+  defaultRestMinutes,
+  nffPreset,
+} from '@components/utils/nff_presets';
 import { TimeField } from '@components/utils/time_fields';
 import { CapacityCourts, CapacityResult, CupSetupClass, GameFormat, PlayoffPreset } from '@openapi';
 import { TimeWindowValue } from '@services/planning';
@@ -29,7 +42,10 @@ const PLAYOFF_PRESETS: PlayoffPreset[] = ['NONE', 'A', 'AB', 'ABC'];
 // NFF: results and tables only from the 13-year class (youth football)
 const YOUTH_FOOTBALL_MIN_AGE = 13;
 
-export function newClass(name: string, age: number): CupSetupClass {
+/** A class as edited: its days/hours are kept as days + times and turned into windows at the end. */
+export type PlanClass = CupSetupClass & { hours: DaysHours };
+
+export function newClass(name: string, age: number): PlanClass {
   const preset = nffPreset(age);
   return {
     name,
@@ -42,9 +58,12 @@ export function newClass(name: string, age: number): CupSetupClass {
     third_place_match: false,
     duration_minutes: preset.duration_minutes,
     margin_minutes: preset.margin_minutes,
-    min_rest_minutes: 0,
+    min_rest_minutes: defaultRestMinutes(age),
     game_format: preset.game_format,
     results_public: null,
+    max_matches_per_day: null,
+    time_windows: [],
+    hours: ALL_DAYS,
   };
 }
 
@@ -57,21 +76,82 @@ export function withAllowedPlayoffs(value: CupSetupClass): CupSetupClass {
   return resultsPublic(value) ? value : { ...value, playoffs: 'NONE', playoff_placings: null };
 }
 
+/** The class for the API: days/hours as time windows within the cup's playing hours. */
+export function toApiClass(value: PlanClass, cupWindows: TimeWindowValue[]): CupSetupClass {
+  const { hours, ...rest } = value;
+  return withAllowedPlayoffs({ ...rest, time_windows: toWindows(cupWindows, hours) });
+}
+
+export function groupSizeError(value: CupSetupClass): boolean {
+  return value.group_size > value.team_count;
+}
+
+function groupSizes(teams: number, groupSize: number): number[] {
+  const groups = Math.max(1, Math.ceil(teams / groupSize));
+  const base = Math.floor(teams / groups);
+  const extra = teams % groups;
+  return Array.from({ length: groups }, (_, index) => (index < extra ? base + 1 : base));
+}
+
+/** Roughly how many matches a class plays (groups plus playoffs), for default courts. */
+export function estimateMatches(value: CupSetupClass): number {
+  const sizes = groupSizes(value.team_count, Math.min(value.group_size, value.team_count));
+  const groupMatches = sizes.reduce((sum, size) => sum + (size * (size - 1)) / 2, 0);
+  const playoffs = { NONE: 0, A: 1, AB: 2, ABC: 3 }[value.playoffs] ?? 0;
+  // Every playoff of n teams has n - 1 matches; together the playoffs hold all teams
+  const playoffMatches = playoffs > 0 ? Math.max(0, value.team_count - playoffs) : 0;
+  return groupMatches + playoffMatches;
+}
+
+/**
+ * Courts for the classes: one group per game format, enough for the playing hours with some
+ * room to spare. The overview then shows whether everything fits.
+ */
+export function defaultCourts(
+  classes: PlanClass[],
+  cupWindows: TimeWindowValue[],
+): CapacityCourts[] {
+  const cupMinutes = cupWindows.reduce(
+    (sum, w) => sum + dayjs(w.end_time).diff(dayjs(w.start_time), 'minute'),
+    0,
+  );
+  const minutesPerFormat = new Map<GameFormat | null, number>();
+  for (const value of classes) {
+    const windows = toWindows(cupWindows, value.hours);
+    const available =
+      windows.length > 0
+        ? windows.reduce((sum, w) => sum + dayjs(w.end_time).diff(dayjs(w.start_time), 'minute'), 0)
+        : cupMinutes;
+    const needed = estimateMatches(value) * (value.duration_minutes + value.margin_minutes);
+    // Courts needed if the class had the courts to itself, in its own hours
+    const share = available > 0 ? needed / available : needed;
+    minutesPerFormat.set(value.game_format, (minutesPerFormat.get(value.game_format) ?? 0) + share);
+  }
+  return [...minutesPerFormat.entries()].map(([game_format, courts]) => ({
+    count: Math.min(32, Math.max(1, Math.ceil(courts * 1.2))),
+    game_format,
+    split_into: null,
+    part_format: null,
+  }));
+}
+
 function ClassRow({
   value,
   onChange,
   onRemove,
   withResultsPublic,
+  cupWindows,
 }: {
-  value: CupSetupClass;
-  onChange: (value: CupSetupClass) => void;
+  value: PlanClass;
+  onChange: (value: PlanClass) => void;
   onRemove: () => void;
   withResultsPublic: boolean;
+  cupWindows: TimeWindowValue[] | null;
 }) {
   const { t } = useTranslation();
-  const update = (changes: Partial<CupSetupClass>) => onChange({ ...value, ...changes });
-  const number = (field: keyof CupSetupClass) => (input: number | string) =>
-    update({ [field]: input === '' ? null : Number(input) } as Partial<CupSetupClass>);
+  const update = (changes: Partial<PlanClass>) => onChange({ ...value, ...changes });
+  const number = (field: keyof PlanClass) => (input: number | string) =>
+    update({ [field]: input === '' ? null : Number(input) } as Partial<PlanClass>);
   const playoffsAllowed = !withResultsPublic || resultsPublic(value);
 
   return (
@@ -96,11 +176,16 @@ function ClassRow({
             }
             // Follow the NFF suggestions for the new age, playoffs included
             const age = Number(input);
+            // A name like "G10" follows the age ("G9"); a name of its own is kept
+            const autoName = value.name.match(/^([GJKgjk])(\d+)$/);
+            const followsAge = autoName != null && Number(autoName[2]) === value.age;
             update({
+              name: followsAge ? `${autoName[1]}${age}` : value.name,
               age,
               results_public: null,
               playoffs: age >= YOUTH_FOOTBALL_MIN_AGE ? 'AB' : 'NONE',
               playoff_placings: null,
+              min_rest_minutes: defaultRestMinutes(age),
               ...nffPreset(age),
             });
           }}
@@ -127,9 +212,10 @@ function ClassRow({
         <NumberInput
           value={value.group_size}
           min={2}
-          max={10}
+          max={Math.min(10, Math.max(2, value.team_count))}
           w="5rem"
           onChange={number('group_size')}
+          error={groupSizeError(value) ? t('group_size_too_large_error') : undefined}
         />
       </Table.Td>
       <Table.Td>
@@ -187,6 +273,25 @@ function ClassRow({
         />
       </Table.Td>
       <Table.Td>
+        <NumberInput
+          value={value.max_matches_per_day ?? ''}
+          min={1}
+          max={20}
+          w="5rem"
+          placeholder={`${defaultMaxMatchesPerDay(value.age) ?? '–'}`}
+          onChange={number('max_matches_per_day')}
+        />
+      </Table.Td>
+      {cupWindows != null ? (
+        <Table.Td>
+          <DaysHoursButton
+            cupWindows={cupWindows}
+            value={value.hours}
+            onChange={(hours) => update({ hours })}
+          />
+        </Table.Td>
+      ) : null}
+      <Table.Td>
         <ActionIcon variant="subtle" color="red" onClick={onRemove}>
           <IconTrash size={18} />
         </ActionIcon>
@@ -199,15 +304,18 @@ export function ClassesEditor({
   value,
   onChange,
   withResultsPublic = false,
+  cupWindows = null,
 }: {
-  value: CupSetupClass[];
-  onChange: (value: CupSetupClass[]) => void;
+  value: PlanClass[];
+  onChange: (value: PlanClass[]) => void;
   withResultsPublic?: boolean;
+  // The cup's playing hours, for choosing days/hours per class (`null`: not shown)
+  cupWindows?: TimeWindowValue[] | null;
 }) {
   const { t } = useTranslation();
   return (
     <Stack>
-      <Table.ScrollContainer minWidth={900}>
+      <Table.ScrollContainer minWidth={1150}>
         <Table>
           <Table.Thead>
             <Table.Tr>
@@ -222,6 +330,8 @@ export function ClassesEditor({
               <Table.Th>{t('time_between_matches_label')}</Table.Th>
               <Table.Th>{t('min_rest_label')}</Table.Th>
               <Table.Th>{t('game_format_label')}</Table.Th>
+              <Table.Th>{t('max_matches_per_day_short_label')}</Table.Th>
+              {cupWindows != null ? <Table.Th>{t('class_hours_label')}</Table.Th> : null}
               <Table.Th />
             </Table.Tr>
           </Table.Thead>
@@ -229,6 +339,7 @@ export function ClassesEditor({
             {value.map((item, index) => (
               <ClassRow
                 key={index}
+                cupWindows={cupWindows}
                 value={item}
                 withResultsPublic={withResultsPublic}
                 onChange={(changed) => onChange(value.map((c, i) => (i === index ? changed : c)))}
@@ -266,7 +377,7 @@ export function CourtsEditor({
   return (
     <Stack>
       {value.map((group, index) => (
-        <Group key={index} align="end">
+        <Group key={index} align="end" wrap="wrap">
           <NumberInput
             label={t('court_count_label')}
             value={group.count}
@@ -292,6 +403,48 @@ export function CourtsEditor({
               )
             }
           />
+          <Select
+            label={t('court_split_label')}
+            data={[
+              { value: '', label: t('court_split_none') },
+              ...[2, 3, 4].map((parts) => ({
+                value: `${parts}`,
+                label: t('court_split_parts', { count: parts }),
+              })),
+            ]}
+            value={group.split_into != null ? `${group.split_into}` : ''}
+            allowDeselect={false}
+            w="9rem"
+            onChange={(parts) =>
+              onChange(
+                value.map((c, i) =>
+                  i === index
+                    ? {
+                        ...c,
+                        split_into: parts ? Number(parts) : null,
+                        part_format: parts ? (c.part_format ?? '7v7') : null,
+                      }
+                    : c,
+                ),
+              )
+            }
+          />
+          {group.split_into != null ? (
+            <Select
+              label={t('court_part_format_label')}
+              data={GAME_FORMATS}
+              value={group.part_format}
+              allowDeselect={false}
+              w="9rem"
+              onChange={(format) =>
+                onChange(
+                  value.map((c, i) =>
+                    i === index ? { ...c, part_format: format as GameFormat | null } : c,
+                  ),
+                )
+              }
+            />
+          ) : null}
           <ActionIcon
             variant="subtle"
             color="red"
@@ -303,10 +456,18 @@ export function CourtsEditor({
           </ActionIcon>
         </Group>
       ))}
+      <Text size="xs" c="dimmed">
+        {t('court_split_description')}
+      </Text>
       <Group>
         <Button
           variant="light"
-          onClick={() => onChange([...value, { count: 1, game_format: null }])}
+          onClick={() =>
+            onChange([
+              ...value,
+              { count: 1, game_format: null, split_into: null, part_format: null },
+            ])
+          }
         >
           {t('add_courts_button')}
         </Button>
@@ -393,6 +554,25 @@ export function PlayingDaysEditor({
   );
 }
 
+/** How the planned matches are spread over the days, e.g. "fre. 20.11: 24 kamper". */
+export function MatchesPerDay({ result }: { result: CapacityResult }) {
+  const { t } = useTranslation();
+  const dayLabel = useDayLabel();
+  if (result.matches_per_day.length < 1) return null;
+  return (
+    <Group gap="xs">
+      <Text size="sm" fw={500}>
+        {t('matches_per_day_label')}
+      </Text>
+      {result.matches_per_day.map((day) => (
+        <Badge key={day.day} variant="light" size="lg">
+          {dayLabel(day.day)}: {t('matches_count', { count: day.matches })}
+        </Badge>
+      ))}
+    </Group>
+  );
+}
+
 export function ClassResults({ result }: { result: CapacityResult }) {
   const { t } = useTranslation();
   return (
@@ -421,6 +601,11 @@ export function ClassResults({ result }: { result: CapacityResult }) {
               {item.min_matches_per_team === item.max_matches_per_team
                 ? item.min_matches_per_team
                 : `${item.min_matches_per_team}–${item.max_matches_per_team}`}
+              {item.max_matches_per_team_per_day > 0 ? (
+                <Text size="xs" c="dimmed">
+                  {t('max_per_day_in_plan', { count: item.max_matches_per_team_per_day })}
+                </Text>
+              ) : null}
             </Table.Td>
             <Table.Td>
               {item.warnings.length < 1 ? (

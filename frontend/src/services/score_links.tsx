@@ -30,6 +30,19 @@ export async function createScoreLink(tournament_id: number, body: ScoreLinkBody
   );
 }
 
+/** Until a moment, or (null) until the cup is over; the link itself stays the same. */
+export async function setScoreLinkValidity(
+  tournament_id: number,
+  score_link_id: number,
+  valid_until: string | null,
+) {
+  return awaitRequestAndHandleError(async (axios) =>
+    axios.put(`tournaments/${tournament_id}/score_links/${score_link_id}/validity`, {
+      valid_until,
+    }),
+  );
+}
+
 export async function revokeScoreLink(tournament_id: number, score_link_id: number) {
   return awaitRequestAndHandleError(async (axios) =>
     axios.post(`tournaments/${tournament_id}/score_links/${score_link_id}/revoke`),
@@ -79,6 +92,13 @@ export async function reportFromPitch(token: string, body: MatchDayNoticeBody) {
 export async function enterWalkover(token: string, match_id: number, winner_team_id: number) {
   return awaitRequestAndHandleError(async (axios) =>
     axios.put(`score/${token}/matches/${match_id}/walkover`, { winner_team_id }),
+  );
+}
+
+/** Kick-off: the match keeps its place when the schedule changes. */
+export async function setStartedAtPitch(token: string, match_id: number, started: boolean) {
+  return awaitRequestAndHandleError(async (axios) =>
+    axios.put(`score/${token}/matches/${match_id}/started`, { started }),
   );
 }
 

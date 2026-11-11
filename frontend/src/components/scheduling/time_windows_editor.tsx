@@ -1,7 +1,7 @@
 import { Button, Group, Stack, Table, Text } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import dayjs from 'dayjs';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { DayAndTime } from '@components/utils/datetime';
@@ -40,6 +40,27 @@ export function buildTimeWindows(
   return windows;
 }
 
+/**
+ * Back from saved windows to the form: first/last day, the hours of the first day and its
+ * lunch break (the gap between its two windows, if any).
+ */
+export function fromSavedWindows(windows: TimeWindowValue[]) {
+  const sorted = [...windows].sort((a, b) => a.start_time.localeCompare(b.start_time));
+  const dayOf = (moment: string) => dayjs(moment).format('YYYY-MM-DD');
+  const timeOf = (moment: string) => dayjs(moment).format('HH:mm');
+  const firstDay = dayOf(sorted[0].start_time);
+  const firstDayWindows = sorted.filter((w) => dayOf(w.start_time) === firstDay);
+  const hasLunch = firstDayWindows.length === 2;
+  return {
+    firstDay,
+    lastDay: dayOf(sorted[sorted.length - 1].start_time),
+    dayStart: timeOf(firstDayWindows[0].start_time),
+    dayEnd: timeOf(firstDayWindows[firstDayWindows.length - 1].end_time),
+    lunchStart: hasLunch ? timeOf(firstDayWindows[0].end_time) : '',
+    lunchEnd: hasLunch ? timeOf(firstDayWindows[1].start_time) : '',
+  };
+}
+
 export default function TimeWindowsEditor({
   tournamentId,
   timeWindows,
@@ -55,6 +76,19 @@ export default function TimeWindowsEditor({
   const [dayEnd, setDayEnd] = useState('17:00');
   const [lunchStart, setLunchStart] = useState('');
   const [lunchEnd, setLunchEnd] = useState('');
+  const [prefilled, setPrefilled] = useState(false);
+
+  // Start from the saved playing hours (once they are loaded), so changing them is easy
+  useEffect(() => {
+    if (prefilled || timeWindows.length < 1) return;
+    const saved = fromSavedWindows(timeWindows);
+    setDays([saved.firstDay, saved.lastDay]);
+    setDayStart(saved.dayStart);
+    setDayEnd(saved.dayEnd);
+    setLunchStart(saved.lunchStart);
+    setLunchEnd(saved.lunchEnd);
+    setPrefilled(true);
+  }, [timeWindows, prefilled]);
 
   const canSave = days[0] != null && dayStart < dayEnd;
 

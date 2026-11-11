@@ -17,6 +17,9 @@ import type {
   ApplyMatchScheduleTournamentsTournamentIdScheduleApplyPostData,
   ApplyMatchScheduleTournamentsTournamentIdScheduleApplyPostErrors,
   ApplyMatchScheduleTournamentsTournamentIdScheduleApplyPostResponses,
+  ApplyScheduleChangeTournamentsTournamentIdScheduleReplanApplyPostData,
+  ApplyScheduleChangeTournamentsTournamentIdScheduleReplanApplyPostErrors,
+  ApplyScheduleChangeTournamentsTournamentIdScheduleReplanApplyPostResponses,
   AssignRefereeToBlockTournamentsTournamentIdOfficialsAssignBlockPostData,
   AssignRefereeToBlockTournamentsTournamentIdOfficialsAssignBlockPostErrors,
   AssignRefereeToBlockTournamentsTournamentIdOfficialsAssignBlockPostResponses,
@@ -98,9 +101,6 @@ import type {
   CreateTournamentTournamentsPostData,
   CreateTournamentTournamentsPostErrors,
   CreateTournamentTournamentsPostResponses,
-  DelayScheduleTournamentsTournamentIdScheduleDelayPostData,
-  DelayScheduleTournamentsTournamentIdScheduleDelayPostErrors,
-  DelayScheduleTournamentsTournamentIdScheduleDelayPostResponses,
   DeleteCardAtPitchScoreTokenCardsCardIdDeleteData,
   DeleteCardAtPitchScoreTokenCardsCardIdDeleteErrors,
   DeleteCardAtPitchScoreTokenCardsCardIdDeleteResponses,
@@ -210,6 +210,9 @@ import type {
   GetNextStageRankingsTournamentsTournamentIdNextStageRankingsGetData,
   GetNextStageRankingsTournamentsTournamentIdNextStageRankingsGetErrors,
   GetNextStageRankingsTournamentsTournamentIdNextStageRankingsGetResponses,
+  GetPlanningHoursTournamentsTournamentIdPlanningHoursGetData,
+  GetPlanningHoursTournamentsTournamentIdPlanningHoursGetErrors,
+  GetPlanningHoursTournamentsTournamentIdPlanningHoursGetResponses,
   GetPlayersTournamentsTournamentIdPlayersGetData,
   GetPlayersTournamentsTournamentIdPlayersGetErrors,
   GetPlayersTournamentsTournamentIdPlayersGetResponses,
@@ -278,8 +281,17 @@ import type {
   LoginForAccessTokenTokenPostData,
   LoginForAccessTokenTokenPostErrors,
   LoginForAccessTokenTokenPostResponses,
+  MarkMatchStartedScoreTokenMatchesMatchIdStartedPutData,
+  MarkMatchStartedScoreTokenMatchesMatchIdStartedPutErrors,
+  MarkMatchStartedScoreTokenMatchesMatchIdStartedPutResponses,
+  MarkStartedTournamentsTournamentIdMatchesMatchIdStartedPutData,
+  MarkStartedTournamentsTournamentIdMatchesMatchIdStartedPutErrors,
+  MarkStartedTournamentsTournamentIdMatchesMatchIdStartedPutResponses,
   PingPingGetData,
   PingPingGetResponses,
+  PreviewScheduleChangeTournamentsTournamentIdScheduleReplanPreviewPostData,
+  PreviewScheduleChangeTournamentsTournamentIdScheduleReplanPreviewPostErrors,
+  PreviewScheduleChangeTournamentsTournamentIdScheduleReplanPreviewPostResponses,
   PromoteFirstOnWaitlistTournamentsTournamentIdCategoriesCategoryIdWaitlistPromotePostData,
   PromoteFirstOnWaitlistTournamentsTournamentIdCategoriesCategoryIdWaitlistPromotePostErrors,
   PromoteFirstOnWaitlistTournamentsTournamentIdCategoriesCategoryIdWaitlistPromotePostResponses,
@@ -301,6 +313,12 @@ import type {
   ReinstateTeamTournamentsTournamentIdTeamsTeamIdReinstatePostData,
   ReinstateTeamTournamentsTournamentIdTeamsTeamIdReinstatePostErrors,
   ReinstateTeamTournamentsTournamentIdTeamsTeamIdReinstatePostResponses,
+  ReplaceCategoryTimeWindowsTournamentsTournamentIdCategoriesCategoryIdTimeWindowsPutData,
+  ReplaceCategoryTimeWindowsTournamentsTournamentIdCategoriesCategoryIdTimeWindowsPutErrors,
+  ReplaceCategoryTimeWindowsTournamentsTournamentIdCategoriesCategoryIdTimeWindowsPutResponses,
+  ReplaceCourtTimeWindowsTournamentsTournamentIdCourtsCourtIdTimeWindowsPutData,
+  ReplaceCourtTimeWindowsTournamentsTournamentIdCourtsCourtIdTimeWindowsPutErrors,
+  ReplaceCourtTimeWindowsTournamentsTournamentIdCourtsCourtIdTimeWindowsPutResponses,
   ReplaceTournamentTimeWindowsTournamentsTournamentIdTimeWindowsPutData,
   ReplaceTournamentTimeWindowsTournamentsTournamentIdTimeWindowsPutErrors,
   ReplaceTournamentTimeWindowsTournamentsTournamentIdTimeWindowsPutResponses,
@@ -322,6 +340,12 @@ import type {
   SetMatchOfficialsTournamentsTournamentIdMatchesMatchIdOfficialsPutData,
   SetMatchOfficialsTournamentsTournamentIdMatchesMatchIdOfficialsPutErrors,
   SetMatchOfficialsTournamentsTournamentIdMatchesMatchIdOfficialsPutResponses,
+  SetScoreLinkValidityTournamentsTournamentIdScoreLinksScoreLinkIdValidityPutData,
+  SetScoreLinkValidityTournamentsTournamentIdScoreLinksScoreLinkIdValidityPutErrors,
+  SetScoreLinkValidityTournamentsTournamentIdScoreLinksScoreLinkIdValidityPutResponses,
+  SplitCourtTournamentsTournamentIdCourtsCourtIdSplitPostData,
+  SplitCourtTournamentsTournamentIdCourtsCourtIdSplitPostErrors,
+  SplitCourtTournamentsTournamentIdCourtsCourtIdSplitPostResponses,
   StartNextRoundTournamentsTournamentIdStageItemsStageItemIdStartNextRoundPostData,
   StartNextRoundTournamentsTournamentIdStageItemsStageItemIdStartNextRoundPostErrors,
   StartNextRoundTournamentsTournamentIdStageItemsStageItemIdStartNextRoundPostResponses,
@@ -638,6 +662,34 @@ export const enterCardAtPitchScoreTokenMatchesMatchIdCardsPost = <
   >({
     responseType: 'json',
     url: '/score/{token}/matches/{match_id}/cards',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Mark Match Started
+ *
+ * Kick-off at the pitch: the match keeps its place when the schedule is changed.
+ */
+export const markMatchStartedScoreTokenMatchesMatchIdStartedPut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<MarkMatchStartedScoreTokenMatchesMatchIdStartedPutData, ThrowOnError>,
+): RequestResult<
+  MarkMatchStartedScoreTokenMatchesMatchIdStartedPutResponses,
+  MarkMatchStartedScoreTokenMatchesMatchIdStartedPutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    MarkMatchStartedScoreTokenMatchesMatchIdStartedPutResponses,
+    MarkMatchStartedScoreTokenMatchesMatchIdStartedPutErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    url: '/score/{token}/matches/{match_id}/started',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -1100,6 +1152,38 @@ export const updateRegistrationSettingsTournamentsTournamentIdCategoriesCategory
     });
 
 /**
+ * Replace Category Time Windows
+ *
+ * The days and hours a class plays; empty: whenever the cup plays.
+ */
+export const replaceCategoryTimeWindowsTournamentsTournamentIdCategoriesCategoryIdTimeWindowsPut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    ReplaceCategoryTimeWindowsTournamentsTournamentIdCategoriesCategoryIdTimeWindowsPutData,
+    ThrowOnError
+  >,
+): RequestResult<
+  ReplaceCategoryTimeWindowsTournamentsTournamentIdCategoriesCategoryIdTimeWindowsPutResponses,
+  ReplaceCategoryTimeWindowsTournamentsTournamentIdCategoriesCategoryIdTimeWindowsPutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    ReplaceCategoryTimeWindowsTournamentsTournamentIdCategoriesCategoryIdTimeWindowsPutResponses,
+    ReplaceCategoryTimeWindowsTournamentsTournamentIdCategoriesCategoryIdTimeWindowsPutErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/categories/{category_id}/time_windows',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
  * Promote First On Waitlist
  */
 export const promoteFirstOnWaitlistTournamentsTournamentIdCategoriesCategoryIdWaitlistPromotePost =
@@ -1322,6 +1406,68 @@ export const updateCourtByIdTournamentsTournamentIdCourtsCourtIdPut = <
     responseType: 'json',
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/tournaments/{tournament_id}/courts/{court_id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Split Court
+ *
+ * Splits a full pitch into 2-4 parts named after it ("Bane 1A", "Bane 1B", ...). A match on
+ * the full pitch blocks its parts and a match on a part blocks the full pitch.
+ */
+export const splitCourtTournamentsTournamentIdCourtsCourtIdSplitPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<SplitCourtTournamentsTournamentIdCourtsCourtIdSplitPostData, ThrowOnError>,
+): RequestResult<
+  SplitCourtTournamentsTournamentIdCourtsCourtIdSplitPostResponses,
+  SplitCourtTournamentsTournamentIdCourtsCourtIdSplitPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    SplitCourtTournamentsTournamentIdCourtsCourtIdSplitPostResponses,
+    SplitCourtTournamentsTournamentIdCourtsCourtIdSplitPostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/courts/{court_id}/split',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Replace Court Time Windows
+ *
+ * The opening hours of one pitch; empty: the playing hours of the cup.
+ */
+export const replaceCourtTimeWindowsTournamentsTournamentIdCourtsCourtIdTimeWindowsPut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    ReplaceCourtTimeWindowsTournamentsTournamentIdCourtsCourtIdTimeWindowsPutData,
+    ThrowOnError
+  >,
+): RequestResult<
+  ReplaceCourtTimeWindowsTournamentsTournamentIdCourtsCourtIdTimeWindowsPutResponses,
+  ReplaceCourtTimeWindowsTournamentsTournamentIdCourtsCourtIdTimeWindowsPutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    ReplaceCourtTimeWindowsTournamentsTournamentIdCourtsCourtIdTimeWindowsPutResponses,
+    ReplaceCourtTimeWindowsTournamentsTournamentIdCourtsCourtIdTimeWindowsPutErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/courts/{court_id}/time_windows',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -1788,6 +1934,35 @@ export const rescheduleMatchTournamentsTournamentIdMatchesMatchIdReschedulePost 
     responseType: 'json',
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/tournaments/{tournament_id}/matches/{match_id}/reschedule',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Mark Started
+ *
+ * Kick-off: a started match keeps its pitch and time when the schedule is changed.
+ */
+export const markStartedTournamentsTournamentIdMatchesMatchIdStartedPut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<MarkStartedTournamentsTournamentIdMatchesMatchIdStartedPutData, ThrowOnError>,
+): RequestResult<
+  MarkStartedTournamentsTournamentIdMatchesMatchIdStartedPutResponses,
+  MarkStartedTournamentsTournamentIdMatchesMatchIdStartedPutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    MarkStartedTournamentsTournamentIdMatchesMatchIdStartedPutResponses,
+    MarkStartedTournamentsTournamentIdMatchesMatchIdStartedPutErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/matches/{match_id}/started',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -2290,6 +2465,31 @@ export const updateClubOfCupTournamentsTournamentIdParticipatingClubsClubIdPut =
       'Content-Type': 'application/json',
       ...options.headers,
     },
+  });
+
+/**
+ * Get Planning Hours
+ *
+ * The opening hours of pitches and the days/hours of classes that have their own.
+ */
+export const getPlanningHoursTournamentsTournamentIdPlanningHoursGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetPlanningHoursTournamentsTournamentIdPlanningHoursGetData, ThrowOnError>,
+): RequestResult<
+  GetPlanningHoursTournamentsTournamentIdPlanningHoursGetResponses,
+  GetPlanningHoursTournamentsTournamentIdPlanningHoursGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetPlanningHoursTournamentsTournamentIdPlanningHoursGetResponses,
+    GetPlanningHoursTournamentsTournamentIdPlanningHoursGetErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/planning_hours',
+    ...options,
   });
 
 /**
@@ -2865,36 +3065,6 @@ export const applyMatchScheduleTournamentsTournamentIdScheduleApplyPost = <
   });
 
 /**
- * Delay Schedule
- *
- * When the cup runs late: moves the remaining matches (of one court or all) by some minutes.
- * Returns the number of matches that moved.
- */
-export const delayScheduleTournamentsTournamentIdScheduleDelayPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<DelayScheduleTournamentsTournamentIdScheduleDelayPostData, ThrowOnError>,
-): RequestResult<
-  DelayScheduleTournamentsTournamentIdScheduleDelayPostResponses,
-  DelayScheduleTournamentsTournamentIdScheduleDelayPostErrors,
-  ThrowOnError
-> =>
-  (options.client ?? client).post<
-    DelayScheduleTournamentsTournamentIdScheduleDelayPostResponses,
-    DelayScheduleTournamentsTournamentIdScheduleDelayPostErrors,
-    ThrowOnError
-  >({
-    responseType: 'json',
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/tournaments/{tournament_id}/schedule/delay',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
-/**
  * Get Schedule Issues
  *
  * Problems in the current plan: overlapping matches, too little rest, matches outside the
@@ -2947,6 +3117,71 @@ export const proposeMatchScheduleTournamentsTournamentIdScheduleProposePost = <
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/tournaments/{tournament_id}/schedule/propose',
     ...options,
+  });
+
+/**
+ * Apply Schedule Change
+ *
+ * Like the preview, and saves the matches that change.
+ */
+export const applyScheduleChangeTournamentsTournamentIdScheduleReplanApplyPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    ApplyScheduleChangeTournamentsTournamentIdScheduleReplanApplyPostData,
+    ThrowOnError
+  >,
+): RequestResult<
+  ApplyScheduleChangeTournamentsTournamentIdScheduleReplanApplyPostResponses,
+  ApplyScheduleChangeTournamentsTournamentIdScheduleReplanApplyPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    ApplyScheduleChangeTournamentsTournamentIdScheduleReplanApplyPostResponses,
+    ApplyScheduleChangeTournamentsTournamentIdScheduleReplanApplyPostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/schedule/replan/apply',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Preview Schedule Change
+ *
+ * What a new schedule from a moment, or a delay, would change, without saving. Played and
+ * started matches stay where they are; nothing is planned before `from_time`.
+ */
+export const previewScheduleChangeTournamentsTournamentIdScheduleReplanPreviewPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    PreviewScheduleChangeTournamentsTournamentIdScheduleReplanPreviewPostData,
+    ThrowOnError
+  >,
+): RequestResult<
+  PreviewScheduleChangeTournamentsTournamentIdScheduleReplanPreviewPostResponses,
+  PreviewScheduleChangeTournamentsTournamentIdScheduleReplanPreviewPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PreviewScheduleChangeTournamentsTournamentIdScheduleReplanPreviewPostResponses,
+    PreviewScheduleChangeTournamentsTournamentIdScheduleReplanPreviewPostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/schedule/replan/preview',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 
 /**
@@ -3050,6 +3285,38 @@ export const revokeScoreLinkTournamentsTournamentIdScoreLinksScoreLinkIdRevokePo
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/tournaments/{tournament_id}/score_links/{score_link_id}/revoke',
     ...options,
+  });
+
+/**
+ * Set Score Link Validity
+ *
+ * Until a moment, or (empty) until the cup is over. The link itself stays the same.
+ */
+export const setScoreLinkValidityTournamentsTournamentIdScoreLinksScoreLinkIdValidityPut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    SetScoreLinkValidityTournamentsTournamentIdScoreLinksScoreLinkIdValidityPutData,
+    ThrowOnError
+  >,
+): RequestResult<
+  SetScoreLinkValidityTournamentsTournamentIdScoreLinksScoreLinkIdValidityPutResponses,
+  SetScoreLinkValidityTournamentsTournamentIdScoreLinksScoreLinkIdValidityPutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    SetScoreLinkValidityTournamentsTournamentIdScoreLinksScoreLinkIdValidityPutResponses,
+    SetScoreLinkValidityTournamentsTournamentIdScoreLinksScoreLinkIdValidityPutErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/score_links/{score_link_id}/validity',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 
 /**

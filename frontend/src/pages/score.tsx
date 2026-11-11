@@ -24,6 +24,7 @@ import {
   IconCheck,
   IconClockPause,
   IconMinus,
+  IconPlayerPlay,
   IconPlus,
   IconUser,
   IconUserCheck,
@@ -44,6 +45,7 @@ import {
   enterResult,
   enterWalkover,
   getScoreEntry,
+  setStartedAtPitch,
   isLinkRefused,
   reportFromPitch,
 } from '@services/score_links';
@@ -504,7 +506,9 @@ export default function ScoreEntryPage() {
               <Group justify="space-between">
                 <MatchHeader match={selected} />
                 {selected.id === current?.id ? (
-                  selected.start_time != null && new Date(selected.start_time) > new Date() ? (
+                  selected.started_at == null &&
+                  selected.start_time != null &&
+                  new Date(selected.start_time) > new Date() ? (
                     <Badge color="blue">{t('score_next_badge')}</Badge>
                   ) : (
                     <Badge color="green">{t('score_now_badge')}</Badge>
@@ -522,6 +526,39 @@ export default function ScoreEntryPage() {
                     await swrView.mutate();
                   }}
                 />
+              ) : null}
+              {canBeEntered(selected) && !selected.played ? (
+                selected.started_at == null ? (
+                  <Button
+                    size="lg"
+                    variant="light"
+                    color="green"
+                    leftSection={<IconPlayerPlay size={22} />}
+                    onClick={async () => {
+                      const result = await setStartedAtPitch(token, selected.id, true);
+                      if (requestSucceeded(result)) await swrView.mutate();
+                    }}
+                  >
+                    {t('score_start_match_button')}
+                  </Button>
+                ) : (
+                  <Group justify="space-between">
+                    <Badge color="green" size="lg" variant="light">
+                      {t('score_started_at')} <Time datetime={selected.started_at} />
+                    </Badge>
+                    <Button
+                      size="xs"
+                      variant="subtle"
+                      color="gray"
+                      onClick={async () => {
+                        const result = await setStartedAtPitch(token, selected.id, false);
+                        if (requestSucceeded(result)) await swrView.mutate();
+                      }}
+                    >
+                      {t('score_undo_start_button')}
+                    </Button>
+                  </Group>
+                )
               ) : null}
               {canBeEntered(selected) ? (
                 <ResultForm

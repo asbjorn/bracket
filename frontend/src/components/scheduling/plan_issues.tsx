@@ -8,7 +8,6 @@ import { SWRResponse } from 'swr';
 import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
 import { Court, PlanIssueOut, StagesWithStageItemsResponse } from '@openapi';
 import { getPlanIssues, requestSucceeded } from '@services/adapter';
-import { delaySchedule } from '@services/planning';
 
 const MAX_ISSUES_SHOWN = 10;
 
@@ -60,69 +59,5 @@ export function PlanIssues({
         </Text>
       ) : null}
     </Alert>
-  );
-}
-
-/**
- * When the cup runs late: moves all remaining matches (of one court or all courts) that start
- * from now on.
- */
-export function DelayForm({
-  tournamentId,
-  courts,
-  onDelayed,
-}: {
-  tournamentId: number;
-  courts: Court[];
-  onDelayed: () => Promise<void>;
-}) {
-  const { t } = useTranslation();
-  const [minutes, setMinutes] = useState<number | string>(5);
-  const [courtId, setCourtId] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-
-  return (
-    <Stack gap="xs">
-      <Text size="sm" c="dimmed">
-        {t('delay_description')}
-      </Text>
-      <Group align="end">
-        <NumberInput
-          label={t('delay_minutes_label')}
-          min={1}
-          max={600}
-          value={minutes}
-          onChange={setMinutes}
-          w="10rem"
-        />
-        <Select
-          label={t('delay_court_label')}
-          placeholder={t('delay_all_courts')}
-          clearable
-          data={courts.map((court) => ({ value: `${court.id}`, label: court.name }))}
-          value={courtId}
-          onChange={setCourtId}
-          w="12rem"
-        />
-        <Button
-          leftSection={<IconClockPlus size={20} />}
-          onClick={async () => {
-            const result = await delaySchedule(
-              tournamentId,
-              Number(minutes),
-              dayjs().toISOString(),
-              courtId == null ? null : Number(courtId),
-            );
-            if (requestSucceeded(result) && 'data' in result) {
-              setMessage(t('delay_result', { count: result.data.data }));
-              await onDelayed();
-            }
-          }}
-        >
-          {t('delay_button')}
-        </Button>
-      </Group>
-      {message != null ? <Text size="sm">{message}</Text> : null}
-    </Stack>
   );
 }

@@ -207,6 +207,10 @@ export type CapacityClass = {
    */
   margin_minutes: number;
   /**
+   * Max Matches Per Day
+   */
+  max_matches_per_day: number | null;
+  /**
    * Min Rest Minutes
    */
   min_rest_minutes: number;
@@ -227,6 +231,10 @@ export type CapacityClass = {
    * Third Place Match
    */
   third_place_match: boolean;
+  /**
+   * Time Windows
+   */
+  time_windows: Array<TimeWindowBody>;
 };
 
 /**
@@ -245,6 +253,10 @@ export type CapacityClassResult = {
    * Max Matches Per Team
    */
   max_matches_per_team: number;
+  /**
+   * Max Matches Per Team Per Day
+   */
+  max_matches_per_team_per_day: number;
   /**
    * Min Matches Per Team
    */
@@ -269,6 +281,8 @@ export type CapacityClassResult = {
 
 /**
  * CapacityCourts
+ *
+ * `count` pitches; with `split_into`, each is a full pitch split into parts.
  */
 export type CapacityCourts = {
   /**
@@ -276,6 +290,11 @@ export type CapacityCourts = {
    */
   count: number;
   game_format: GameFormat | null;
+  part_format: GameFormat | null;
+  /**
+   * Split Into
+   */
+  split_into: number | null;
 };
 
 /**
@@ -293,6 +312,10 @@ export type CapacityResult = {
    * Classes
    */
   classes: Array<CapacityClassResult>;
+  /**
+   * Matches Per Day
+   */
+  matches_per_day: Array<MatchesOnDay>;
   schedule: ScheduleProposal;
 };
 
@@ -349,6 +372,10 @@ export type Category = {
    */
   margin_minutes: number | null;
   /**
+   * Max Matches Per Day
+   */
+  max_matches_per_day: number | null;
+  /**
    * Max Teams
    */
   max_teams: number | null;
@@ -400,6 +427,10 @@ export type CategoryBody = {
    * Margin Minutes
    */
   margin_minutes: number | null;
+  /**
+   * Max Matches Per Day
+   */
+  max_matches_per_day: number | null;
   /**
    * Min Rest Minutes
    */
@@ -557,6 +588,10 @@ export type Court = {
    */
   name: string;
   /**
+   * Parent Court Id
+   */
+  parent_court_id: number | null;
+  /**
    * Tournament Id
    */
   tournament_id: number;
@@ -637,6 +672,19 @@ export type CourtHostBody = {
 };
 
 /**
+ * CourtSplitBody
+ *
+ * Splits a full pitch into parts, e.g. an 11v11 pitch into two 7v7 halves "Bane 1A/1B".
+ */
+export type CourtSplitBody = {
+  game_format: GameFormat | null;
+  /**
+   * Parts
+   */
+  parts: number;
+};
+
+/**
  * CourtsMultiBody
  *
  * Creates courts "<name_prefix> 1", "<name_prefix> 2", ... continuing the numbering.
@@ -651,6 +699,11 @@ export type CourtsMultiBody = {
    * Name Prefix
    */
   name_prefix: string;
+  part_format: GameFormat | null;
+  /**
+   * Split Into
+   */
+  split_into: number | null;
 };
 
 /**
@@ -707,6 +760,10 @@ export type CupSetupClass = {
    */
   margin_minutes: number;
   /**
+   * Max Matches Per Day
+   */
+  max_matches_per_day: number | null;
+  /**
    * Min Rest Minutes
    */
   min_rest_minutes: number;
@@ -731,6 +788,10 @@ export type CupSetupClass = {
    * Third Place Match
    */
   third_place_match: boolean;
+  /**
+   * Time Windows
+   */
+  time_windows: Array<TimeWindowBody>;
 };
 
 /**
@@ -755,26 +816,6 @@ export type CupSetupNames = {
    * Playoff Stage
    */
   playoff_stage: string;
-};
-
-/**
- * DelayBody
- *
- * Moves all matches that haven't been played yet and start at or after `from_time`.
- */
-export type DelayBody = {
-  /**
-   * Court Id
-   */
-  court_id: number | null;
-  /**
-   * From Time
-   */
-  from_time: string;
-  /**
-   * Minutes
-   */
-  minutes: number;
 };
 
 /**
@@ -1043,7 +1084,10 @@ export type IssueKind =
   | 'COURT_OVERLAP'
   | 'WRONG_GAME_FORMAT'
   | 'OUTSIDE_TIME_WINDOWS'
-  | 'BEFORE_DEPENDENCY';
+  | 'BEFORE_DEPENDENCY'
+  | 'SPLIT_PITCH_OVERLAP'
+  | 'OUTSIDE_CLASS_HOURS'
+  | 'TOO_MANY_MATCHES_PER_DAY';
 
 /**
  * JuryDecision
@@ -1228,6 +1272,10 @@ export type Match = {
    * Start Time
    */
   start_time: string | null;
+  /**
+   * Started At
+   */
+  started_at: string | null;
 };
 
 /**
@@ -1348,6 +1396,32 @@ export type MatchCardBody = {
  */
 export type MatchCardResponse = {
   data: MatchCard;
+};
+
+/**
+ * MatchChange
+ */
+export type MatchChange = {
+  /**
+   * Match Id
+   */
+  match_id: number;
+  /**
+   * New Court Id
+   */
+  new_court_id: number | null;
+  /**
+   * New Start
+   */
+  new_start: string | null;
+  /**
+   * Old Court Id
+   */
+  old_court_id: number | null;
+  /**
+   * Old Start
+   */
+  old_start: string | null;
 };
 
 /**
@@ -1513,6 +1587,18 @@ export type MatchRescheduleBody = {
 export type MatchResultType = 'NORMAL' | 'EXTRA_TIME' | 'PENALTIES' | 'WALKOVER';
 
 /**
+ * MatchStartedBody
+ *
+ * A started match keeps its pitch and time when the schedule is changed.
+ */
+export type MatchStartedBody = {
+  /**
+   * Started
+   */
+  started: boolean;
+};
+
+/**
  * MatchWithDetails
  *
  * MatchWithDetails has zero or one defined stage item inputs, but not both.
@@ -1630,6 +1716,10 @@ export type MatchWithDetails = {
    * Start Time
    */
   start_time: string | null;
+  /**
+   * Started At
+   */
+  started_at: string | null;
 };
 
 /**
@@ -1746,6 +1836,24 @@ export type MatchWithDetailsDefinitive = {
    * Start Time
    */
   start_time: string | null;
+  /**
+   * Started At
+   */
+  started_at: string | null;
+};
+
+/**
+ * MatchesOnDay
+ */
+export type MatchesOnDay = {
+  /**
+   * Day
+   */
+  day: string;
+  /**
+   * Matches
+   */
+  matches: number;
 };
 
 /**
@@ -2185,6 +2293,33 @@ export type PlanIssuesResponse = {
    * Data
    */
   data: Array<PlanIssueOut>;
+};
+
+/**
+ * PlanningHours
+ *
+ * The opening hours of pitches and the days/hours of classes that have their own.
+ */
+export type PlanningHours = {
+  /**
+   * Categories
+   */
+  categories: {
+    [key: string]: Array<TimeWindow>;
+  };
+  /**
+   * Courts
+   */
+  courts: {
+    [key: string]: Array<TimeWindow>;
+  };
+};
+
+/**
+ * PlanningHoursResponse
+ */
+export type PlanningHoursResponse = {
+  data: PlanningHours;
 };
 
 /**
@@ -2781,6 +2916,75 @@ export type RegistrationsResponse = {
 };
 
 /**
+ * ReplanBody
+ *
+ * Changing the schedule during the cup. Played and started matches stay where they are.
+ *
+ * - Without `keep_courts` ("a new schedule from now"): all other matches are planned again,
+ * not before `from_time`.
+ * - With `keep_courts` (a delay): matches keep their pitch and order. The selected matches (all,
+ * one court or one class) start no earlier than `from_time + delay_minutes`; the others
+ * keep their time unless a delayed match pushes them (same pitch, rest, knockout order).
+ * Gaps such as the lunch break absorb the delay.
+ */
+export type ReplanBody = {
+  /**
+   * Category Id
+   */
+  category_id: number | null;
+  /**
+   * Court Id
+   */
+  court_id: number | null;
+  /**
+   * Delay Minutes
+   */
+  delay_minutes: number;
+  /**
+   * From Time
+   */
+  from_time: string;
+  /**
+   * Keep Courts
+   */
+  keep_courts: boolean;
+};
+
+/**
+ * ReplanPreview
+ */
+export type ReplanPreview = {
+  /**
+   * Changes
+   */
+  changes: Array<MatchChange>;
+  /**
+   * Max Shift Minutes
+   */
+  max_shift_minutes: number;
+  /**
+   * Moved
+   */
+  moved: number;
+  proposal: ScheduleProposal;
+  /**
+   * Teams Affected
+   */
+  teams_affected: number;
+  /**
+   * Unchanged
+   */
+  unchanged: number;
+};
+
+/**
+ * ReplanPreviewResponse
+ */
+export type ReplanPreviewResponse = {
+  data: ReplanPreview;
+};
+
+/**
  * RoundCreateBody
  */
 export type RoundCreateBody = {
@@ -3032,6 +3236,10 @@ export type ScoreEntryMatch = {
    */
   start_time: string | null;
   /**
+   * Started At
+   */
+  started_at: string | null;
+  /**
    * Suspended Players
    */
   suspended_players: Array<SuspendedPlayer>;
@@ -3149,9 +3357,9 @@ export type ScoreLinkBody = {
    */
   name: string;
   /**
-   * Valid Hours
+   * Valid Until
    */
-  valid_hours: number;
+  valid_until: string | null;
 };
 
 /**
@@ -3170,6 +3378,25 @@ export type ScoreLinkCreated = {
  */
 export type ScoreLinkCreatedResponse = {
   data: ScoreLinkCreated;
+};
+
+/**
+ * ScoreLinkResponse
+ */
+export type ScoreLinkResponse = {
+  data: ScoreLink;
+};
+
+/**
+ * ScoreLinkValidityBody
+ *
+ * Extends (or shortens) a link without changing it: the QR codes keep working.
+ */
+export type ScoreLinkValidityBody = {
+  /**
+   * Valid Until
+   */
+  valid_until: string | null;
 };
 
 /**
@@ -4019,6 +4246,14 @@ export type Tiebreaker = 'GOAL_DIFFERENCE' | 'GOALS_SCORED' | 'HEAD_TO_HEAD';
  */
 export type TimeWindow = {
   /**
+   * Category Id
+   */
+  category_id: number | null;
+  /**
+   * Court Id
+   */
+  court_id: number | null;
+  /**
    * End Time
    */
   end_time: string;
@@ -4781,6 +5016,42 @@ export type EnterCardAtPitchScoreTokenMatchesMatchIdCardsPostResponses = {
 export type EnterCardAtPitchScoreTokenMatchesMatchIdCardsPostResponse =
   EnterCardAtPitchScoreTokenMatchesMatchIdCardsPostResponses[keyof EnterCardAtPitchScoreTokenMatchesMatchIdCardsPostResponses];
 
+export type MarkMatchStartedScoreTokenMatchesMatchIdStartedPutData = {
+  body: MatchStartedBody;
+  path: {
+    /**
+     * Match Id
+     */
+    match_id: number;
+    /**
+     * Token
+     */
+    token: string;
+  };
+  query?: never;
+  url: '/score/{token}/matches/{match_id}/started';
+};
+
+export type MarkMatchStartedScoreTokenMatchesMatchIdStartedPutErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type MarkMatchStartedScoreTokenMatchesMatchIdStartedPutError =
+  MarkMatchStartedScoreTokenMatchesMatchIdStartedPutErrors[keyof MarkMatchStartedScoreTokenMatchesMatchIdStartedPutErrors];
+
+export type MarkMatchStartedScoreTokenMatchesMatchIdStartedPutResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type MarkMatchStartedScoreTokenMatchesMatchIdStartedPutResponse =
+  MarkMatchStartedScoreTokenMatchesMatchIdStartedPutResponses[keyof MarkMatchStartedScoreTokenMatchesMatchIdStartedPutResponses];
+
 export type EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutData = {
   body: WalkoverBody;
   path: {
@@ -5378,6 +5649,45 @@ export type UpdateRegistrationSettingsTournamentsTournamentIdCategoriesCategoryI
 export type UpdateRegistrationSettingsTournamentsTournamentIdCategoriesCategoryIdRegistrationPutResponse =
   UpdateRegistrationSettingsTournamentsTournamentIdCategoriesCategoryIdRegistrationPutResponses[keyof UpdateRegistrationSettingsTournamentsTournamentIdCategoriesCategoryIdRegistrationPutResponses];
 
+export type ReplaceCategoryTimeWindowsTournamentsTournamentIdCategoriesCategoryIdTimeWindowsPutData =
+  {
+    body: TimeWindowsBody;
+    path: {
+      /**
+       * Tournament Id
+       */
+      tournament_id: number;
+      /**
+       * Category Id
+       */
+      category_id: number;
+    };
+    query?: never;
+    url: '/tournaments/{tournament_id}/categories/{category_id}/time_windows';
+  };
+
+export type ReplaceCategoryTimeWindowsTournamentsTournamentIdCategoriesCategoryIdTimeWindowsPutErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+  };
+
+export type ReplaceCategoryTimeWindowsTournamentsTournamentIdCategoriesCategoryIdTimeWindowsPutError =
+  ReplaceCategoryTimeWindowsTournamentsTournamentIdCategoriesCategoryIdTimeWindowsPutErrors[keyof ReplaceCategoryTimeWindowsTournamentsTournamentIdCategoriesCategoryIdTimeWindowsPutErrors];
+
+export type ReplaceCategoryTimeWindowsTournamentsTournamentIdCategoriesCategoryIdTimeWindowsPutResponses =
+  {
+    /**
+     * Successful Response
+     */
+    200: SuccessResponse;
+  };
+
+export type ReplaceCategoryTimeWindowsTournamentsTournamentIdCategoriesCategoryIdTimeWindowsPutResponse =
+  ReplaceCategoryTimeWindowsTournamentsTournamentIdCategoriesCategoryIdTimeWindowsPutResponses[keyof ReplaceCategoryTimeWindowsTournamentsTournamentIdCategoriesCategoryIdTimeWindowsPutResponses];
+
 export type PromoteFirstOnWaitlistTournamentsTournamentIdCategoriesCategoryIdWaitlistPromotePostData =
   {
     body?: never;
@@ -5684,6 +5994,78 @@ export type UpdateCourtByIdTournamentsTournamentIdCourtsCourtIdPutResponses = {
 
 export type UpdateCourtByIdTournamentsTournamentIdCourtsCourtIdPutResponse =
   UpdateCourtByIdTournamentsTournamentIdCourtsCourtIdPutResponses[keyof UpdateCourtByIdTournamentsTournamentIdCourtsCourtIdPutResponses];
+
+export type SplitCourtTournamentsTournamentIdCourtsCourtIdSplitPostData = {
+  body: CourtSplitBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+    /**
+     * Court Id
+     */
+    court_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/courts/{court_id}/split';
+};
+
+export type SplitCourtTournamentsTournamentIdCourtsCourtIdSplitPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type SplitCourtTournamentsTournamentIdCourtsCourtIdSplitPostError =
+  SplitCourtTournamentsTournamentIdCourtsCourtIdSplitPostErrors[keyof SplitCourtTournamentsTournamentIdCourtsCourtIdSplitPostErrors];
+
+export type SplitCourtTournamentsTournamentIdCourtsCourtIdSplitPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: CourtsResponse;
+};
+
+export type SplitCourtTournamentsTournamentIdCourtsCourtIdSplitPostResponse =
+  SplitCourtTournamentsTournamentIdCourtsCourtIdSplitPostResponses[keyof SplitCourtTournamentsTournamentIdCourtsCourtIdSplitPostResponses];
+
+export type ReplaceCourtTimeWindowsTournamentsTournamentIdCourtsCourtIdTimeWindowsPutData = {
+  body: TimeWindowsBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+    /**
+     * Court Id
+     */
+    court_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/courts/{court_id}/time_windows';
+};
+
+export type ReplaceCourtTimeWindowsTournamentsTournamentIdCourtsCourtIdTimeWindowsPutErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ReplaceCourtTimeWindowsTournamentsTournamentIdCourtsCourtIdTimeWindowsPutError =
+  ReplaceCourtTimeWindowsTournamentsTournamentIdCourtsCourtIdTimeWindowsPutErrors[keyof ReplaceCourtTimeWindowsTournamentsTournamentIdCourtsCourtIdTimeWindowsPutErrors];
+
+export type ReplaceCourtTimeWindowsTournamentsTournamentIdCourtsCourtIdTimeWindowsPutResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type ReplaceCourtTimeWindowsTournamentsTournamentIdCourtsCourtIdTimeWindowsPutResponse =
+  ReplaceCourtTimeWindowsTournamentsTournamentIdCourtsCourtIdTimeWindowsPutResponses[keyof ReplaceCourtTimeWindowsTournamentsTournamentIdCourtsCourtIdTimeWindowsPutResponses];
 
 export type CreateMultipleCourtsTournamentsTournamentIdCourtsMultiPostData = {
   body: CourtsMultiBody;
@@ -6253,6 +6635,42 @@ export type RescheduleMatchTournamentsTournamentIdMatchesMatchIdReschedulePostRe
 
 export type RescheduleMatchTournamentsTournamentIdMatchesMatchIdReschedulePostResponse =
   RescheduleMatchTournamentsTournamentIdMatchesMatchIdReschedulePostResponses[keyof RescheduleMatchTournamentsTournamentIdMatchesMatchIdReschedulePostResponses];
+
+export type MarkStartedTournamentsTournamentIdMatchesMatchIdStartedPutData = {
+  body: MatchStartedBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+    /**
+     * Match Id
+     */
+    match_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/matches/{match_id}/started';
+};
+
+export type MarkStartedTournamentsTournamentIdMatchesMatchIdStartedPutErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type MarkStartedTournamentsTournamentIdMatchesMatchIdStartedPutError =
+  MarkStartedTournamentsTournamentIdMatchesMatchIdStartedPutErrors[keyof MarkStartedTournamentsTournamentIdMatchesMatchIdStartedPutErrors];
+
+export type MarkStartedTournamentsTournamentIdMatchesMatchIdStartedPutResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type MarkStartedTournamentsTournamentIdMatchesMatchIdStartedPutResponse =
+  MarkStartedTournamentsTournamentIdMatchesMatchIdStartedPutResponses[keyof MarkStartedTournamentsTournamentIdMatchesMatchIdStartedPutResponses];
 
 export type GiveWalkoverTournamentsTournamentIdMatchesMatchIdWalkoverPostData = {
   body: WalkoverBody;
@@ -6865,6 +7283,38 @@ export type UpdateClubOfCupTournamentsTournamentIdParticipatingClubsClubIdPutRes
 
 export type UpdateClubOfCupTournamentsTournamentIdParticipatingClubsClubIdPutResponse =
   UpdateClubOfCupTournamentsTournamentIdParticipatingClubsClubIdPutResponses[keyof UpdateClubOfCupTournamentsTournamentIdParticipatingClubsClubIdPutResponses];
+
+export type GetPlanningHoursTournamentsTournamentIdPlanningHoursGetData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/planning_hours';
+};
+
+export type GetPlanningHoursTournamentsTournamentIdPlanningHoursGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetPlanningHoursTournamentsTournamentIdPlanningHoursGetError =
+  GetPlanningHoursTournamentsTournamentIdPlanningHoursGetErrors[keyof GetPlanningHoursTournamentsTournamentIdPlanningHoursGetErrors];
+
+export type GetPlanningHoursTournamentsTournamentIdPlanningHoursGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: PlanningHoursResponse;
+};
+
+export type GetPlanningHoursTournamentsTournamentIdPlanningHoursGetResponse =
+  GetPlanningHoursTournamentsTournamentIdPlanningHoursGetResponses[keyof GetPlanningHoursTournamentsTournamentIdPlanningHoursGetResponses];
 
 export type GetPlayersTournamentsTournamentIdPlayersGetData = {
   body?: never;
@@ -7633,38 +8083,6 @@ export type ApplyMatchScheduleTournamentsTournamentIdScheduleApplyPostResponses 
 export type ApplyMatchScheduleTournamentsTournamentIdScheduleApplyPostResponse =
   ApplyMatchScheduleTournamentsTournamentIdScheduleApplyPostResponses[keyof ApplyMatchScheduleTournamentsTournamentIdScheduleApplyPostResponses];
 
-export type DelayScheduleTournamentsTournamentIdScheduleDelayPostData = {
-  body: DelayBody;
-  path: {
-    /**
-     * Tournament Id
-     */
-    tournament_id: number;
-  };
-  query?: never;
-  url: '/tournaments/{tournament_id}/schedule/delay';
-};
-
-export type DelayScheduleTournamentsTournamentIdScheduleDelayPostErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
-};
-
-export type DelayScheduleTournamentsTournamentIdScheduleDelayPostError =
-  DelayScheduleTournamentsTournamentIdScheduleDelayPostErrors[keyof DelayScheduleTournamentsTournamentIdScheduleDelayPostErrors];
-
-export type DelayScheduleTournamentsTournamentIdScheduleDelayPostResponses = {
-  /**
-   * Successful Response
-   */
-  200: CountResponse;
-};
-
-export type DelayScheduleTournamentsTournamentIdScheduleDelayPostResponse =
-  DelayScheduleTournamentsTournamentIdScheduleDelayPostResponses[keyof DelayScheduleTournamentsTournamentIdScheduleDelayPostResponses];
-
 export type GetScheduleIssuesTournamentsTournamentIdScheduleIssuesGetData = {
   body?: never;
   path: {
@@ -7728,6 +8146,70 @@ export type ProposeMatchScheduleTournamentsTournamentIdScheduleProposePostRespon
 
 export type ProposeMatchScheduleTournamentsTournamentIdScheduleProposePostResponse =
   ProposeMatchScheduleTournamentsTournamentIdScheduleProposePostResponses[keyof ProposeMatchScheduleTournamentsTournamentIdScheduleProposePostResponses];
+
+export type ApplyScheduleChangeTournamentsTournamentIdScheduleReplanApplyPostData = {
+  body: ReplanBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/schedule/replan/apply';
+};
+
+export type ApplyScheduleChangeTournamentsTournamentIdScheduleReplanApplyPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ApplyScheduleChangeTournamentsTournamentIdScheduleReplanApplyPostError =
+  ApplyScheduleChangeTournamentsTournamentIdScheduleReplanApplyPostErrors[keyof ApplyScheduleChangeTournamentsTournamentIdScheduleReplanApplyPostErrors];
+
+export type ApplyScheduleChangeTournamentsTournamentIdScheduleReplanApplyPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: ReplanPreviewResponse;
+};
+
+export type ApplyScheduleChangeTournamentsTournamentIdScheduleReplanApplyPostResponse =
+  ApplyScheduleChangeTournamentsTournamentIdScheduleReplanApplyPostResponses[keyof ApplyScheduleChangeTournamentsTournamentIdScheduleReplanApplyPostResponses];
+
+export type PreviewScheduleChangeTournamentsTournamentIdScheduleReplanPreviewPostData = {
+  body: ReplanBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/schedule/replan/preview';
+};
+
+export type PreviewScheduleChangeTournamentsTournamentIdScheduleReplanPreviewPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type PreviewScheduleChangeTournamentsTournamentIdScheduleReplanPreviewPostError =
+  PreviewScheduleChangeTournamentsTournamentIdScheduleReplanPreviewPostErrors[keyof PreviewScheduleChangeTournamentsTournamentIdScheduleReplanPreviewPostErrors];
+
+export type PreviewScheduleChangeTournamentsTournamentIdScheduleReplanPreviewPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: ReplanPreviewResponse;
+};
+
+export type PreviewScheduleChangeTournamentsTournamentIdScheduleReplanPreviewPostResponse =
+  PreviewScheduleChangeTournamentsTournamentIdScheduleReplanPreviewPostResponses[keyof PreviewScheduleChangeTournamentsTournamentIdScheduleReplanPreviewPostResponses];
 
 export type ScheduleMatchesTournamentsTournamentIdScheduleMatchesPostData = {
   body?: never;
@@ -7860,6 +8342,42 @@ export type RevokeScoreLinkTournamentsTournamentIdScoreLinksScoreLinkIdRevokePos
 
 export type RevokeScoreLinkTournamentsTournamentIdScoreLinksScoreLinkIdRevokePostResponse =
   RevokeScoreLinkTournamentsTournamentIdScoreLinksScoreLinkIdRevokePostResponses[keyof RevokeScoreLinkTournamentsTournamentIdScoreLinksScoreLinkIdRevokePostResponses];
+
+export type SetScoreLinkValidityTournamentsTournamentIdScoreLinksScoreLinkIdValidityPutData = {
+  body: ScoreLinkValidityBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+    /**
+     * Score Link Id
+     */
+    score_link_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/score_links/{score_link_id}/validity';
+};
+
+export type SetScoreLinkValidityTournamentsTournamentIdScoreLinksScoreLinkIdValidityPutErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type SetScoreLinkValidityTournamentsTournamentIdScoreLinksScoreLinkIdValidityPutError =
+  SetScoreLinkValidityTournamentsTournamentIdScoreLinksScoreLinkIdValidityPutErrors[keyof SetScoreLinkValidityTournamentsTournamentIdScoreLinksScoreLinkIdValidityPutErrors];
+
+export type SetScoreLinkValidityTournamentsTournamentIdScoreLinksScoreLinkIdValidityPutResponses = {
+  /**
+   * Successful Response
+   */
+  200: ScoreLinkResponse;
+};
+
+export type SetScoreLinkValidityTournamentsTournamentIdScoreLinksScoreLinkIdValidityPutResponse =
+  SetScoreLinkValidityTournamentsTournamentIdScoreLinksScoreLinkIdValidityPutResponses[keyof SetScoreLinkValidityTournamentsTournamentIdScoreLinksScoreLinkIdValidityPutResponses];
 
 export type CreateStageItemTournamentsTournamentIdStageItemsPostData = {
   body: StageItemCreateBody;
