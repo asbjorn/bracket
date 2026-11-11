@@ -78,7 +78,7 @@ export function CreateStagesFromTemplateButtons({
 }) {
   return (
     <Grid grow>
-      <Grid.Col span={{ base: 12, sm: 4 }}>
+      <Grid.Col span={{ base: 12, sm: 6 }}>
         <StageSelectCard
           title={t('round_robin_label')}
           description={t('round_robin_description')}
@@ -89,7 +89,7 @@ export function CreateStagesFromTemplateButtons({
           }}
         />
       </Grid.Col>
-      <Grid.Col span={{ base: 12, sm: 4 }}>
+      <Grid.Col span={{ base: 12, sm: 6 }}>
         <StageSelectCard
           title={t('single_elimination_label')}
           description={t('single_elimination_description')}
@@ -100,17 +100,7 @@ export function CreateStagesFromTemplateButtons({
           }}
         />
       </Grid.Col>
-      <Grid.Col span={{ base: 12, sm: 4 }}>
-        <StageSelectCard
-          title={t('swiss_label')}
-          description={t('swiss_description')}
-          image="/icons/swiss-stage-item.svg"
-          selected={selectedType === 'SWISS'}
-          onClick={() => {
-            setSelectedType('SWISS');
-          }}
-        />
-      </Grid.Col>
+      {/* Swiss system is supported by the backend but not offered: football cups use groups and knockouts */}
     </Grid>
   );
 }
