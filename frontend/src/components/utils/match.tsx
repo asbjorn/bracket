@@ -121,3 +121,11 @@ export function formatResultNote(t: Translator, match: MatchWithDetails): string
       return null;
   }
 }
+
+/**
+ * A score was entered, but the match isn't marked as finished yet: it doesn't count in tables and
+ * nobody advances until the final result is saved.
+ */
+export function isLiveScore(match: MatchWithDetails): boolean {
+  return !match.played && (match.stage_item_input1_score > 0 || match.stage_item_input2_score > 0);
+}

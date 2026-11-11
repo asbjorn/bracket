@@ -19,6 +19,7 @@ import {
   formatMatchInput2,
   formatResultNote,
   getMatchOutcome,
+  isLiveScore,
 } from '@components/utils/match';
 import { getScheduleHeaders } from '@components/utils/schedule_headers';
 import { Translator } from '@components/utils/types';
@@ -78,6 +79,11 @@ function ScheduleRow({
             <Center>
               <Text mt="sm" fw={800}>
                 {data.match.start_time != null ? <Time datetime={data.match.start_time} /> : null}
+                {!resultsHidden && isLiveScore(data.match) ? (
+                  <Badge color="red" variant="filled" size="sm" ml="xs">
+                    {t('live_badge')}
+                  </Badge>
+                ) : null}
               </Text>
             </Center>
           </Grid.Col>

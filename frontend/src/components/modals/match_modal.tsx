@@ -10,7 +10,7 @@ import {
   Text,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SWRResponse } from 'swr';
 
@@ -81,7 +81,6 @@ function MatchModalForm({
       stage_item_input2_score: match.stage_item_input2_score,
       custom_duration_minutes: match.custom_duration_minutes,
       custom_margin_minutes: match.custom_margin_minutes,
-      played: match.played,
       result_type: match.result_type,
       stage_item_input1_penalties: match.stage_item_input1_penalties ?? '',
       stage_item_input2_penalties: match.stage_item_input2_penalties ?? '',
@@ -126,6 +125,8 @@ function MatchModalForm({
   const team1Name = formatMatchInput1(t, stageItemsLookup, matchesLookup, match);
   const team2Name = formatMatchInput2(t, stageItemsLookup, matchesLookup, match);
   const isShootout = form.getValues().result_type === 'PENALTIES';
+  // Set by the button that submits the form: a live score doesn't count yet, a final result does
+  const saveAsFinalResult = useRef(true);
 
   return (
     <>
@@ -139,7 +140,7 @@ function MatchModalForm({
             court_id: match.court_id || null,
             custom_duration_minutes: customDurationEnabled ? values.custom_duration_minutes : null,
             custom_margin_minutes: customMarginEnabled ? values.custom_margin_minutes : null,
-            played: values.played,
+            played: saveAsFinalResult.current,
             result_type: values.result_type,
             stage_item_input1_penalties: isShootout
               ? Number(values.stage_item_input1_penalties)
@@ -161,11 +162,7 @@ function MatchModalForm({
           label={`${t('score_of_label')} ${team1Name}`}
           placeholder={`${t('score_of_label')} ${team1Name}`}
           {...form.getInputProps('stage_item_input1_score')}
-          onChange={(value) => {
-            form.setFieldValue('stage_item_input1_score', Number(value));
-            // Entering a score means the match has been played
-            form.setFieldValue('played', true);
-          }}
+          onChange={(value) => form.setFieldValue('stage_item_input1_score', Number(value))}
         />
         <NumberInput
           withAsterisk
@@ -173,10 +170,7 @@ function MatchModalForm({
           label={`${t('score_of_label')} ${team2Name}`}
           placeholder={`${t('score_of_label')} ${team2Name}`}
           {...form.getInputProps('stage_item_input2_score')}
-          onChange={(value) => {
-            form.setFieldValue('stage_item_input2_score', Number(value));
-            form.setFieldValue('played', true);
-          }}
+          onChange={(value) => form.setFieldValue('stage_item_input2_score', Number(value))}
         />
         <Select
           mt="lg"
@@ -206,12 +200,6 @@ function MatchModalForm({
             </Grid.Col>
           </Grid>
         ) : null}
-        <Checkbox
-          mt="lg"
-          label={t('match_played_checkbox_label')}
-          description={t('match_played_checkbox_description')}
-          {...form.getInputProps('played', { type: 'checkbox' })}
-        />
         <Divider mt="lg" />
 
         <Text size="sm" mt="lg">
@@ -266,9 +254,36 @@ function MatchModalForm({
           </Grid.Col>
         </Grid>
 
-        <Button fullWidth style={{ marginTop: 20 }} color="green" type="submit">
-          {t('save_button')}
-        </Button>
+        <Text size="sm" c="dimmed" mt="lg">
+          {t('save_result_description')}
+        </Text>
+        <Grid mt="xs">
+          <Grid.Col span={{ base: 12, sm: 6 }}>
+            <Button
+              fullWidth
+              variant="light"
+              color="grape"
+              type="submit"
+              onClick={() => {
+                saveAsFinalResult.current = false;
+              }}
+            >
+              {t('save_live_score_button')}
+            </Button>
+          </Grid.Col>
+          <Grid.Col span={{ base: 12, sm: 6 }}>
+            <Button
+              fullWidth
+              color="green"
+              type="submit"
+              onClick={() => {
+                saveAsFinalResult.current = true;
+              }}
+            >
+              {t('save_final_result_button')}
+            </Button>
+          </Grid.Col>
+        </Grid>
       </form>
       {round && round.is_draft && (
         <MatchDeleteButton
