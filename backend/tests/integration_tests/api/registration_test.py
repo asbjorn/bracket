@@ -1,3 +1,4 @@
+import asyncio
 from datetime import timedelta
 
 import aiohttp
@@ -309,5 +310,35 @@ async def test_sign_up_respects_archive_and_subscription(
             tournaments.update().where(tournaments.c.id == tournament_id),
             values={"status": "OPEN"},
         )
+        public_sign_ups.hits.clear()
+        await delete_cup(auth_context)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_concurrent_sign_ups_are_serialised(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    """Five teams at once for two spots: exactly two get in, the rest queue in order."""
+    tournament_id = auth_context.tournament.id
+    public_sign_ups.hits.clear()
+    try:
+        category_id = await create_class(auth_context, {"registration_open": True, "max_teams": 2})
+        results = await asyncio.gather(
+            *(
+                public_post(tournament_id, sign_up(category_id, f"Lag {number}"))
+                for number in range(5)
+            )
+        )
+        outcomes = sorted(
+            (r["data"]["registration_status"], r["data"]["waitlist_place"] or 0) for r in results
+        )
+        assert outcomes == [
+            ("REGISTERED", 0),
+            ("REGISTERED", 0),
+            ("WAITLIST", 1),
+            ("WAITLIST", 2),
+            ("WAITLIST", 3),
+        ]
+    finally:
         public_sign_ups.hits.clear()
         await delete_cup(auth_context)

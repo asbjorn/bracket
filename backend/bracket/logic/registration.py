@@ -104,7 +104,13 @@ async def register_team(
     tournament_id: TournamentId, body: PublicRegistrationBody, now: datetime_utc
 ) -> PublicRegistrationResult:
     async with database.transaction():
-        # One sign-up at a time per class, so two teams can't take the last spot
+        # One sign-up at a time per tournament (count and insert together), so two teams can't
+        # take the last spot or pass the team limit. The tournament first, then the class.
+        tournament = await database.fetch_one(
+            "SELECT status FROM tournaments WHERE id = :id FOR UPDATE", values={"id": tournament_id}
+        )
+        if tournament is None or tournament._mapping["status"] == TournamentStatus.ARCHIVED.value:
+            raise bad_request("Registration for this cup is closed")
         row = await database.fetch_one(
             "SELECT * FROM categories WHERE id = :id AND tournament_id = :tournament_id FOR UPDATE",
             values={"id": body.category_id, "tournament_id": tournament_id},
@@ -114,12 +120,6 @@ async def register_team(
         category = Category.model_validate(dict(row._mapping))
         if not is_open(category, now):
             raise bad_request("Registration for this class is closed")
-
-        tournament = await database.fetch_one(
-            "SELECT status FROM tournaments WHERE id = :id FOR SHARE", values={"id": tournament_id}
-        )
-        if tournament is None or tournament._mapping["status"] == TournamentStatus.ARCHIVED.value:
-            raise bad_request("Registration for this cup is closed")
 
         team_count = int(
             await database.fetch_val(
