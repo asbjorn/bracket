@@ -607,6 +607,10 @@
             ],
             "title": "Position In Schedule"
           },
+          "result_type": {
+            "$ref": "#/components/schemas/MatchResultType",
+            "default": "NORMAL"
+          },
           "round_id": {
             "title": "Round Id",
             "type": "integer"
@@ -642,6 +646,17 @@
               }
             ],
             "title": "Stage Item Input1 Id"
+          },
+          "stage_item_input1_penalties": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage Item Input1 Penalties"
           },
           "stage_item_input1_score": {
             "title": "Stage Item Input1 Score",
@@ -690,6 +705,17 @@
             ],
             "title": "Stage Item Input2 Id"
           },
+          "stage_item_input2_penalties": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage Item Input2 Penalties"
+          },
           "stage_item_input2_score": {
             "title": "Stage Item Input2 Score",
             "type": "integer"
@@ -733,6 +759,9 @@
           "stage_item_input1_conflict",
           "stage_item_input2_conflict",
           "played",
+          "result_type",
+          "stage_item_input1_penalties",
+          "stage_item_input2_penalties",
           "stage_item_input1_id",
           "stage_item_input2_id",
           "stage_item_input1_winner_from_match_id",
@@ -790,17 +819,47 @@
             ],
             "title": "Played"
           },
+          "result_type": {
+            "$ref": "#/components/schemas/MatchResultType",
+            "default": "NORMAL"
+          },
           "round_id": {
             "title": "Round Id",
             "type": "integer"
           },
+          "stage_item_input1_penalties": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage Item Input1 Penalties"
+          },
           "stage_item_input1_score": {
             "default": 0,
+            "minimum": 0.0,
             "title": "Stage Item Input1 Score",
             "type": "integer"
           },
+          "stage_item_input2_penalties": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage Item Input2 Penalties"
+          },
           "stage_item_input2_score": {
             "default": 0,
+            "minimum": 0.0,
             "title": "Stage Item Input2 Score",
             "type": "integer"
           }
@@ -812,7 +871,10 @@
           "court_id",
           "custom_duration_minutes",
           "custom_margin_minutes",
-          "played"
+          "played",
+          "result_type",
+          "stage_item_input1_penalties",
+          "stage_item_input2_penalties"
         ],
         "title": "MatchBody",
         "type": "object"
@@ -918,6 +980,16 @@
         "title": "MatchRescheduleBody",
         "type": "object"
       },
+      "MatchResultType": {
+        "enum": [
+          "NORMAL",
+          "EXTRA_TIME",
+          "PENALTIES",
+          "WALKOVER"
+        ],
+        "title": "MatchResultType",
+        "type": "string"
+      },
       "MatchWithDetails": {
         "description": "MatchWithDetails has zero or one defined stage item inputs, but not both.",
         "properties": {
@@ -997,6 +1069,10 @@
             ],
             "title": "Position In Schedule"
           },
+          "result_type": {
+            "$ref": "#/components/schemas/MatchResultType",
+            "default": "NORMAL"
+          },
           "round_id": {
             "title": "Round Id",
             "type": "integer"
@@ -1032,6 +1108,17 @@
               }
             ],
             "title": "Stage Item Input1 Id"
+          },
+          "stage_item_input1_penalties": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage Item Input1 Penalties"
           },
           "stage_item_input1_score": {
             "title": "Stage Item Input1 Score",
@@ -1080,6 +1167,17 @@
             ],
             "title": "Stage Item Input2 Id"
           },
+          "stage_item_input2_penalties": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage Item Input2 Penalties"
+          },
           "stage_item_input2_score": {
             "title": "Stage Item Input2 Score",
             "type": "integer"
@@ -1123,6 +1221,9 @@
           "stage_item_input1_conflict",
           "stage_item_input2_conflict",
           "played",
+          "result_type",
+          "stage_item_input1_penalties",
+          "stage_item_input2_penalties",
           "stage_item_input1_id",
           "stage_item_input2_id",
           "stage_item_input1_winner_from_match_id",
@@ -1213,6 +1314,10 @@
             ],
             "title": "Position In Schedule"
           },
+          "result_type": {
+            "$ref": "#/components/schemas/MatchResultType",
+            "default": "NORMAL"
+          },
           "round_id": {
             "title": "Round Id",
             "type": "integer"
@@ -1245,6 +1350,17 @@
               }
             ],
             "title": "Stage Item Input1 Id"
+          },
+          "stage_item_input1_penalties": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage Item Input1 Penalties"
           },
           "stage_item_input1_score": {
             "title": "Stage Item Input1 Score",
@@ -1290,6 +1406,17 @@
             ],
             "title": "Stage Item Input2 Id"
           },
+          "stage_item_input2_penalties": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage Item Input2 Penalties"
+          },
           "stage_item_input2_score": {
             "title": "Stage Item Input2 Score",
             "type": "integer"
@@ -1333,6 +1460,9 @@
           "stage_item_input1_conflict",
           "stage_item_input2_conflict",
           "played",
+          "result_type",
+          "stage_item_input1_penalties",
+          "stage_item_input2_penalties",
           "stage_item_input1_id",
           "stage_item_input2_id",
           "stage_item_input1_winner_from_match_id",

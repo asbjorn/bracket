@@ -6,7 +6,7 @@ import pytest
 
 from bracket.database import database
 from bracket.models.db.category import CategoryInsertable
-from bracket.models.db.match import Match
+from bracket.models.db.match import Match, MatchResultType
 from bracket.models.db.stage_item_inputs import StageItemInputInsertable
 from bracket.schema import matches
 from bracket.utils.db import fetch_one_parsed_certain
@@ -411,3 +411,56 @@ async def test_public_teams_hide_statistics_of_private_classes(
     assert stats(public, g10.category_id) == {(0, "1200", "0.0")}
     assert stats(public, j14.category_id) == {(5, "1500.0", "2.0")}
     assert stats(organiser, g10.category_id) == {(5, "1500.0", "2.0")}
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_update_match_penalty_shootout(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    async with inserted_class_with_played_match(auth_context, "J14", results_public=True) as j14:
+        response = await send_tournament_request(
+            HTTPMethod.PUT,
+            f"matches/{j14.match_id}",
+            auth_context,
+            json={
+                "round_id": j14.round_id,
+                "stage_item_input1_score": 1,
+                "stage_item_input2_score": 1,
+                "result_type": "PENALTIES",
+                "stage_item_input1_penalties": 4,
+                "stage_item_input2_penalties": 3,
+                "played": True,
+            },
+        )
+        assert response == SUCCESS_RESPONSE
+        match = await fetch_one_parsed_certain(
+            database, Match, matches.select().where(matches.c.id == j14.match_id)
+        )
+        assert match.result_type is MatchResultType.PENALTIES
+        assert (match.stage_item_input1_penalties, match.stage_item_input2_penalties) == (4, 3)
+
+        public = await send_request(
+            HTTPMethod.GET, f"tournaments/{auth_context.tournament.id}/stages?no_draft_rounds=true"
+        )
+        assert find_match(public, j14.match_id)["stage_item_input1_penalties"] == 4
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_public_dashboard_hides_penalties_of_private_classes(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    async with inserted_class_with_played_match(auth_context, "G10", results_public=False) as g10:
+        await database.execute(
+            "UPDATE matches SET result_type = 'PENALTIES', stage_item_input1_score = 1, "
+            "stage_item_input2_score = 1, stage_item_input1_penalties = 4, "
+            "stage_item_input2_penalties = 3 WHERE id = :id",
+            values={"id": g10.match_id},
+        )
+        public = await send_request(
+            HTTPMethod.GET, f"tournaments/{auth_context.tournament.id}/stages?no_draft_rounds=true"
+        )
+
+    public_match = find_match(public, g10.match_id)
+    assert public_match["result_type"] == "NORMAL"
+    assert public_match["stage_item_input1_penalties"] is None
+    assert public_match["stage_item_input2_penalties"] is None

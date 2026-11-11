@@ -164,6 +164,14 @@ matches = Table(
     Column("stage_item_input2_score", Integer, nullable=False),
     Column("position_in_schedule", Integer, nullable=True),
     Column("played", Boolean, nullable=False, server_default="f"),
+    Column(
+        "result_type",
+        Enum("NORMAL", "EXTRA_TIME", "PENALTIES", "WALKOVER", name="match_result_type"),
+        nullable=False,
+        server_default="NORMAL",
+    ),
+    Column("stage_item_input1_penalties", Integer, nullable=True),
+    Column("stage_item_input2_penalties", Integer, nullable=True),
 )
 
 teams = Table(

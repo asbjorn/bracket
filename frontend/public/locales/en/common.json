@@ -214,6 +214,10 @@
     "only_recommended_radio_label": "Only recommended",
     "password_input_label": "Password",
     "password_input_placeholder": "Your password",
+    "penalties_need_winner_validation": "A penalty shootout must have a winner",
+    "penalties_of_label": "Penalties",
+    "penalties_require_draw_validation": "A penalty shootout is only possible when the score is equal",
+    "penalties_required_validation": "Enter the number of penalties scored",
     "plan_next_round_button": "Plan next round",
     "plan_next_stage_button": "Start the next stage",
     "plan_previous_stage_button": "Go back to the previous stage",
@@ -234,6 +238,14 @@
     "recommended_badge_title": "Recommended",
     "remove_logo": "Remove logo",
     "remove_match_button": "Remove Match",
+    "result_after_extra_time": "after extra time",
+    "result_after_penalties": "{{score}} on penalties",
+    "result_type_extra_time": "After extra time",
+    "result_type_label": "Result",
+    "result_type_normal": "Normal time",
+    "result_type_penalties": "After penalties",
+    "result_type_walkover": "Walkover (team did not show up)",
+    "result_walkover": "walkover",
     "results_hidden_alert": "The public dashboard only shows whether matches have been played, without scores or tables. This class can only have round robin groups, without playoffs.",
     "results_hidden_badge": "Hidden",
     "results_public_badge": "Public",
@@ -317,5 +329,6 @@
     "win_distribution_text_draws": "draws",
     "win_distribution_text_losses": "losses",
     "win_distribution_text_win": "wins",
-    "win_points_input_label": "Points for a win"
+    "win_points_input_label": "Points for a win",
+    "winner_of_match": "Winner of match {{match}}"
 }

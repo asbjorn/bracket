@@ -303,6 +303,7 @@ export type {
   MatchBody,
   MatchCreateBodyFrontend,
   MatchRescheduleBody,
+  MatchResultType,
   MatchWithDetails,
   MatchWithDetailsDefinitive,
   PaginatedPlayers,

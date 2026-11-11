@@ -364,6 +364,7 @@ export type Match = {
    * Position In Schedule
    */
   position_in_schedule: number | null;
+  result_type: MatchResultType;
   /**
    * Round Id
    */
@@ -380,6 +381,10 @@ export type Match = {
    * Stage Item Input1 Id
    */
   stage_item_input1_id: number | null;
+  /**
+   * Stage Item Input1 Penalties
+   */
+  stage_item_input1_penalties: number | null;
   /**
    * Stage Item Input1 Score
    */
@@ -400,6 +405,10 @@ export type Match = {
    * Stage Item Input2 Id
    */
   stage_item_input2_id: number | null;
+  /**
+   * Stage Item Input2 Penalties
+   */
+  stage_item_input2_penalties: number | null;
   /**
    * Stage Item Input2 Score
    */
@@ -434,14 +443,23 @@ export type MatchBody = {
    * Played
    */
   played: boolean | null;
+  result_type: MatchResultType;
   /**
    * Round Id
    */
   round_id: number;
   /**
+   * Stage Item Input1 Penalties
+   */
+  stage_item_input1_penalties: number | null;
+  /**
    * Stage Item Input1 Score
    */
   stage_item_input1_score: number;
+  /**
+   * Stage Item Input2 Penalties
+   */
+  stage_item_input2_penalties: number | null;
   /**
    * Stage Item Input2 Score
    */
@@ -501,6 +519,11 @@ export type MatchRescheduleBody = {
 };
 
 /**
+ * MatchResultType
+ */
+export type MatchResultType = 'NORMAL' | 'EXTRA_TIME' | 'PENALTIES' | 'WALKOVER';
+
+/**
  * MatchWithDetails
  *
  * MatchWithDetails has zero or one defined stage item inputs, but not both.
@@ -543,6 +566,7 @@ export type MatchWithDetails = {
    * Position In Schedule
    */
   position_in_schedule: number | null;
+  result_type: MatchResultType;
   /**
    * Round Id
    */
@@ -559,6 +583,10 @@ export type MatchWithDetails = {
    * Stage Item Input1 Id
    */
   stage_item_input1_id: number | null;
+  /**
+   * Stage Item Input1 Penalties
+   */
+  stage_item_input1_penalties: number | null;
   /**
    * Stage Item Input1 Score
    */
@@ -579,6 +607,10 @@ export type MatchWithDetails = {
    * Stage Item Input2 Id
    */
   stage_item_input2_id: number | null;
+  /**
+   * Stage Item Input2 Penalties
+   */
+  stage_item_input2_penalties: number | null;
   /**
    * Stage Item Input2 Score
    */
@@ -634,6 +666,7 @@ export type MatchWithDetailsDefinitive = {
    * Position In Schedule
    */
   position_in_schedule: number | null;
+  result_type: MatchResultType;
   /**
    * Round Id
    */
@@ -650,6 +683,10 @@ export type MatchWithDetailsDefinitive = {
    * Stage Item Input1 Id
    */
   stage_item_input1_id: number | null;
+  /**
+   * Stage Item Input1 Penalties
+   */
+  stage_item_input1_penalties: number | null;
   /**
    * Stage Item Input1 Score
    */
@@ -670,6 +707,10 @@ export type MatchWithDetailsDefinitive = {
    * Stage Item Input2 Id
    */
   stage_item_input2_id: number | null;
+  /**
+   * Stage Item Input2 Penalties
+   */
+  stage_item_input2_penalties: number | null;
   /**
    * Stage Item Input2 Score
    */

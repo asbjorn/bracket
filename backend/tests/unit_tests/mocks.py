@@ -77,6 +77,7 @@ def get_2_definitive_matches_mock(
         stage_item_input1_conflict=False,
         stage_item_input2_conflict=False,
         position_in_schedule=1,
+        played=True,
     )
     match2 = MatchWithDetailsDefinitive(
         id=MatchId(-2),
@@ -95,6 +96,7 @@ def get_2_definitive_matches_mock(
         stage_item_input1_conflict=False,
         stage_item_input2_conflict=False,
         position_in_schedule=1,
+        played=True,
     )
     return match1, match2
 
@@ -117,6 +119,7 @@ def get_2_definitive_and_2_tentative_matches_mock(
         stage_item_input2_conflict=False,
         stage_item_input1_winner_from_match_id=match1.id,
         stage_item_input2_winner_from_match_id=match2.id,
+        played=True,
     )
     match4 = MatchWithDetails(
         id=MatchId(-4),
@@ -130,6 +133,7 @@ def get_2_definitive_and_2_tentative_matches_mock(
         stage_item_input2_conflict=False,
         stage_item_input1_winner_from_match_id=match2.id,
         stage_item_input2_winner_from_match_id=match3.id,
+        played=True,
     )
     return match1, match2, match3, match4
 

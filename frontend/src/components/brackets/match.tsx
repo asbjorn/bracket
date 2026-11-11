@@ -7,7 +7,12 @@ import { SWRResponse } from 'swr';
 import MatchModal from '@components/modals/match_modal';
 import { assert_not_none } from '@components/utils/assert';
 import { Time } from '@components/utils/datetime';
-import { formatMatchInput1, formatMatchInput2, isMatchHappening } from '@components/utils/match';
+import {
+  formatMatchInput1,
+  formatMatchInput2,
+  getMatchOutcome,
+  isMatchHappening,
+} from '@components/utils/match';
 import { TournamentMinimal } from '@components/utils/tournament';
 import { MatchWithDetails, RoundWithMatches, StagesWithStageItemsResponse } from '@openapi';
 import { getMatchLookup, getStageItemLookup } from '@services/lookups';
@@ -62,10 +67,9 @@ export default function Match({
   const stageItemsLookup = getStageItemLookup(swrStagesResponse);
   const matchesLookup = getMatchLookup(swrStagesResponse);
 
-  const team1_style =
-    match.stage_item_input1_score > match.stage_item_input2_score ? winner_style : {};
-  const team2_style =
-    match.stage_item_input1_score < match.stage_item_input2_score ? winner_style : {};
+  const outcome = getMatchOutcome(match);
+  const team1_style = outcome === 1 ? winner_style : {};
+  const team2_style = outcome === 2 ? winner_style : {};
 
   const team1_label = formatMatchInput1(t, stageItemsLookup, matchesLookup, match);
   const team2_label = formatMatchInput2(t, stageItemsLookup, matchesLookup, match);
@@ -78,14 +82,20 @@ export default function Match({
       <div className={classes.top} style={team1_style}>
         <Grid grow>
           <Grid.Col span={10}>{team1_label}</Grid.Col>
-          <Grid.Col span={2}>{match.stage_item_input1_score}</Grid.Col>
+          <Grid.Col span={2}>
+            {match.stage_item_input1_score}
+            {match.result_type === 'PENALTIES' ? ` (${match.stage_item_input1_penalties})` : ''}
+          </Grid.Col>
         </Grid>
       </div>
       <div className={classes.divider} />
       <div className={classes.bottom} style={team2_style}>
         <Grid grow>
           <Grid.Col span={10}>{team2_label}</Grid.Col>
-          <Grid.Col span={2}>{match.stage_item_input2_score}</Grid.Col>
+          <Grid.Col span={2}>
+            {match.stage_item_input2_score}
+            {match.result_type === 'PENALTIES' ? ` (${match.stage_item_input2_penalties})` : ''}
+          </Grid.Col>
         </Grid>
       </div>
     </>

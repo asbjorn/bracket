@@ -14,7 +14,7 @@ from starlette import status
 
 from bracket.logic.ranking.statistics import START_ELO
 from bracket.models.db.category import Category
-from bracket.models.db.match import MatchWithDetails, MatchWithDetailsDefinitive
+from bracket.models.db.match import MatchResultType, MatchWithDetails, MatchWithDetailsDefinitive
 from bracket.models.db.stage_item import StageType
 from bracket.models.db.stage_item_inputs import StageItemInput
 from bracket.models.db.team import FullTeamWithPlayers
@@ -39,7 +39,13 @@ def without_statistics(stage_item_input: StageItemInput) -> StageItemInput:
 def without_score(
     match: MatchWithDetailsDefinitive | MatchWithDetails,
 ) -> MatchWithDetailsDefinitive | MatchWithDetails:
-    update: dict[str, object] = {"stage_item_input1_score": 0, "stage_item_input2_score": 0}
+    update: dict[str, object] = {
+        "stage_item_input1_score": 0,
+        "stage_item_input2_score": 0,
+        "result_type": MatchResultType.NORMAL,
+        "stage_item_input1_penalties": None,
+        "stage_item_input2_penalties": None,
+    }
     if match.stage_item_input1 is not None:
         update["stage_item_input1"] = without_statistics(match.stage_item_input1)
     if match.stage_item_input2 is not None:

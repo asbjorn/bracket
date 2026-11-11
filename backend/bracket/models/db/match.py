@@ -1,13 +1,25 @@
 from decimal import Decimal
+from enum import auto
+from typing import Self
 
 from heliclockter import datetime_utc, timedelta
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, model_validator
 
 from bracket.models.db.court import Court
 from bracket.models.db.shared import BaseModelORM
 from bracket.models.db.stage_item_inputs import StageItemInput
 from bracket.utils.id_types import CourtId, MatchId, RoundId, StageItemInputId
-from bracket.utils.types import assert_some
+from bracket.utils.types import EnumAutoStr, assert_some
+
+
+class MatchResultType(EnumAutoStr):
+    NORMAL = auto()
+    # The score includes the goals of extra time
+    EXTRA_TIME = auto()
+    # The score is equal (after normal or extra time), the penalty shootout decides
+    PENALTIES = auto()
+    # A team didn't show up, the score is set by the tournament rules (e.g. 3-0)
+    WALKOVER = auto()
 
 
 class MatchBaseInsertable(BaseModelORM):
@@ -26,6 +38,9 @@ class MatchBaseInsertable(BaseModelORM):
     stage_item_input2_conflict: bool
     # Whether the match has been played. Only played matches count in rankings.
     played: bool = False
+    result_type: MatchResultType = MatchResultType.NORMAL
+    stage_item_input1_penalties: int | None = None
+    stage_item_input2_penalties: int | None = None
 
     @property
     def end_time(self) -> datetime_utc:
@@ -46,10 +61,22 @@ class Match(MatchInsertable):
     stage_item_input2: StageItemInput | None = None
 
     def get_winner(self) -> StageItemInput | None:
+        """
+        The winner of a played match: the team with the higher score, or when the score is
+        equal, the winner of the penalty shootout. A match that is still being played (a live
+        score) has no winner yet.
+        """
+        if not self.played:
+            return None
         if self.stage_item_input1_score > self.stage_item_input2_score:
             return self.stage_item_input1
         if self.stage_item_input1_score < self.stage_item_input2_score:
             return self.stage_item_input2
+
+        penalties1, penalties2 = self.stage_item_input1_penalties, self.stage_item_input2_penalties
+        if self.result_type is MatchResultType.PENALTIES and penalties1 is not None:
+            if penalties2 is not None and penalties1 != penalties2:
+                return self.stage_item_input1 if penalties1 > penalties2 else self.stage_item_input2
 
         return None
 
@@ -90,13 +117,35 @@ class MatchWithDetailsDefinitive(Match):
 
 class MatchBody(BaseModelORM):
     round_id: RoundId
-    stage_item_input1_score: int = 0
-    stage_item_input2_score: int = 0
+    stage_item_input1_score: int = Field(0, ge=0)
+    stage_item_input2_score: int = Field(0, ge=0)
     court_id: CourtId | None = None
     custom_duration_minutes: int | None = None
     custom_margin_minutes: int | None = None
     # When omitted, the match counts as played once a score other than 0-0 is entered.
     played: bool | None = None
+    result_type: MatchResultType = MatchResultType.NORMAL
+    stage_item_input1_penalties: int | None = Field(None, ge=0)
+    stage_item_input2_penalties: int | None = Field(None, ge=0)
+
+    @model_validator(mode="after")
+    def check_result(self) -> Self:
+        penalties = (self.stage_item_input1_penalties, self.stage_item_input2_penalties)
+        equal_score = self.stage_item_input1_score == self.stage_item_input2_score
+
+        if self.result_type is MatchResultType.PENALTIES:
+            if None in penalties:
+                raise ValueError("Enter the penalty shootout score of both teams")
+            if not equal_score:
+                raise ValueError("A penalty shootout is only possible when the score is equal")
+            if penalties[0] == penalties[1]:
+                raise ValueError("A penalty shootout must have a winner")
+        elif penalties != (None, None):
+            raise ValueError("Penalty scores can only be entered for a penalty shootout")
+
+        if self.result_type is MatchResultType.WALKOVER and equal_score:
+            raise ValueError("A walkover must have a winner, e.g. 3-0")
+        return self
 
     def is_played(self, previously_played: bool) -> bool:
         if self.played is not None:

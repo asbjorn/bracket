@@ -1,4 +1,14 @@
-import { Button, Center, Checkbox, Divider, Grid, Modal, NumberInput, Text } from '@mantine/core';
+import {
+  Button,
+  Center,
+  Checkbox,
+  Divider,
+  Grid,
+  Modal,
+  NumberInput,
+  Select,
+  Text,
+} from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,9 +17,16 @@ import { SWRResponse } from 'swr';
 import DeleteButton from '@components/buttons/delete';
 import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
 import { TournamentMinimal } from '@components/utils/tournament';
-import { MatchWithDetails, RoundWithMatches, StagesWithStageItemsResponse } from '@openapi';
+import {
+  MatchResultType,
+  MatchWithDetails,
+  RoundWithMatches,
+  StagesWithStageItemsResponse,
+} from '@openapi';
 import { getMatchLookup, getStageItemLookup } from '@services/lookups';
 import { deleteMatch, updateMatch } from '@services/match';
+
+const RESULT_TYPES: MatchResultType[] = ['NORMAL', 'EXTRA_TIME', 'PENALTIES', 'WALKOVER'];
 
 function MatchDeleteButton({
   tournamentData,
@@ -65,6 +82,9 @@ function MatchModalForm({
       custom_duration_minutes: match.custom_duration_minutes,
       custom_margin_minutes: match.custom_margin_minutes,
       played: match.played,
+      result_type: match.result_type,
+      stage_item_input1_penalties: match.stage_item_input1_penalties ?? '',
+      stage_item_input2_penalties: match.stage_item_input2_penalties ?? '',
     },
 
     validate: {
@@ -74,6 +94,22 @@ function MatchModalForm({
         value == null || value >= 0 ? null : t('negative_match_duration_validation'),
       custom_margin_minutes: (value) =>
         value == null || value >= 0 ? null : t('negative_match_margin_validation'),
+      result_type: (value, values) =>
+        value === 'PENALTIES' && values.stage_item_input1_score !== values.stage_item_input2_score
+          ? t('penalties_require_draw_validation')
+          : null,
+      stage_item_input1_penalties: (value, values) =>
+        values.result_type === 'PENALTIES' && value === ''
+          ? t('penalties_required_validation')
+          : null,
+      stage_item_input2_penalties: (value, values) =>
+        values.result_type !== 'PENALTIES'
+          ? null
+          : value === ''
+            ? t('penalties_required_validation')
+            : value === values.stage_item_input1_penalties
+              ? t('penalties_need_winner_validation')
+              : null,
     },
   });
 
@@ -89,6 +125,7 @@ function MatchModalForm({
 
   const team1Name = formatMatchInput1(t, stageItemsLookup, matchesLookup, match);
   const team2Name = formatMatchInput2(t, stageItemsLookup, matchesLookup, match);
+  const isShootout = form.getValues().result_type === 'PENALTIES';
 
   return (
     <>
@@ -103,8 +140,17 @@ function MatchModalForm({
             custom_duration_minutes: customDurationEnabled ? values.custom_duration_minutes : null,
             custom_margin_minutes: customMarginEnabled ? values.custom_margin_minutes : null,
             played: values.played,
+            result_type: values.result_type,
+            stage_item_input1_penalties: isShootout
+              ? Number(values.stage_item_input1_penalties)
+              : null,
+            stage_item_input2_penalties: isShootout
+              ? Number(values.stage_item_input2_penalties)
+              : null,
           };
-          await updateMatch(tournamentData.id, match.id, updatedMatch);
+          const result = await updateMatch(tournamentData.id, match.id, updatedMatch);
+          // Keep the form open when the server rejected the result (an error is shown)
+          if (result == null) return;
           await swrStagesResponse.mutate();
           if (swrUpcomingMatchesResponse != null) await swrUpcomingMatchesResponse.mutate();
           setOpened(false);
@@ -132,6 +178,34 @@ function MatchModalForm({
             form.setFieldValue('played', true);
           }}
         />
+        <Select
+          mt="lg"
+          label={t('result_type_label')}
+          data={RESULT_TYPES.map((resultType) => ({
+            value: resultType,
+            label: t(`result_type_${resultType.toLowerCase()}`),
+          }))}
+          allowDeselect={false}
+          {...form.getInputProps('result_type')}
+        />
+        {isShootout ? (
+          <Grid mt="xs">
+            <Grid.Col span={6}>
+              <NumberInput
+                min={0}
+                label={`${t('penalties_of_label')} ${team1Name}`}
+                {...form.getInputProps('stage_item_input1_penalties')}
+              />
+            </Grid.Col>
+            <Grid.Col span={6}>
+              <NumberInput
+                min={0}
+                label={`${t('penalties_of_label')} ${team2Name}`}
+                {...form.getInputProps('stage_item_input2_penalties')}
+              />
+            </Grid.Col>
+          </Grid>
+        ) : null}
         <Checkbox
           mt="lg"
           label={t('match_played_checkbox_label')}

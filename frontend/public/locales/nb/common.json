@@ -214,6 +214,10 @@
     "only_recommended_radio_label": "Bare anbefalte",
     "password_input_label": "Passord",
     "password_input_placeholder": "Ditt passord",
+    "penalties_need_winner_validation": "Straffesparkkonkurransen må ha en vinner",
+    "penalties_of_label": "Straffespark",
+    "penalties_require_draw_validation": "Straffesparkkonkurranse er bare mulig ved uavgjort",
+    "penalties_required_validation": "Skriv inn antall scorede straffespark",
     "plan_next_round_button": "Planlegg neste runde",
     "plan_next_stage_button": "Start neste fase",
     "plan_previous_stage_button": "Gå tilbake til forrige fase",
@@ -234,6 +238,14 @@
     "recommended_badge_title": "Anbefalt",
     "remove_logo": "Fjern logo",
     "remove_match_button": "Fjern kamp",
+    "result_after_extra_time": "etter ekstraomganger",
+    "result_after_penalties": "{{score}} etter straffespark",
+    "result_type_extra_time": "Etter ekstraomganger",
+    "result_type_label": "Resultat",
+    "result_type_normal": "Ordinær tid",
+    "result_type_penalties": "Etter straffespark",
+    "result_type_walkover": "Walkover (laget møtte ikke)",
+    "result_walkover": "walkover",
     "results_hidden_alert": "Den offentlige visningen viser bare om kampene er spilt, uten resultater eller tabeller. Klassen kan bare ha puljespill (alle mot alle), uten sluttspill.",
     "results_hidden_badge": "Skjult",
     "results_public_badge": "Offentlige",
@@ -317,5 +329,6 @@
     "win_distribution_text_draws": "uavgjort",
     "win_distribution_text_losses": "tap",
     "win_distribution_text_win": "seiere",
-    "win_points_input_label": "Poeng for seier"
+    "win_points_input_label": "Poeng for seier",
+    "winner_of_match": "Vinner av kamp {{match}}"
 }

@@ -19,7 +19,12 @@ import { useTranslation } from 'react-i18next';
 import MatchModal from '@components/modals/match_modal';
 import { NoContent } from '@components/no_content/empty_table_info';
 import { Time, compareDateTime, spansMultipleDays } from '@components/utils/datetime';
-import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
+import {
+  formatMatchInput1,
+  formatMatchInput2,
+  formatResultNote,
+  getMatchOutcome,
+} from '@components/utils/match';
 import { getScheduleHeaders } from '@components/utils/schedule_headers';
 import { Translator } from '@components/utils/types';
 import { getTournamentIdFromRouter, responseIsValid } from '@components/utils/util';
@@ -43,18 +48,11 @@ function ScheduleRow({
   const winColor = '#2a8f37';
   const drawColor = '#656565';
   const loseColor = '#af4034';
-  const team1_color =
-    data.match.stage_item_input1_score > data.match.stage_item_input2_score
-      ? winColor
-      : data.match.stage_item_input1_score === data.match.stage_item_input2_score
-        ? drawColor
-        : loseColor;
-  const team2_color =
-    data.match.stage_item_input2_score > data.match.stage_item_input1_score
-      ? winColor
-      : data.match.stage_item_input1_score === data.match.stage_item_input2_score
-        ? drawColor
-        : loseColor;
+  // Penalty shootouts decide the winner of a draw; unplayed matches have no winner yet
+  const outcome = getMatchOutcome(data.match);
+  const team1_color = outcome === 1 ? winColor : outcome === 2 ? loseColor : drawColor;
+  const team2_color = outcome === 2 ? winColor : outcome === 1 ? loseColor : drawColor;
+  const resultNote = formatResultNote(t, data.match);
 
   return (
     <UnstyledButton style={{ width: '48rem' }}>
@@ -140,6 +138,11 @@ function ScheduleRow({
               </div>
             </Grid.Col>
           </Grid>
+          {resultNote != null ? (
+            <Text size="sm" c="dimmed" ta="right" mt="-0.5rem">
+              {resultNote}
+            </Text>
+          ) : null}
         </Stack>
       </Card>
     </UnstyledButton>
