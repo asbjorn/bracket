@@ -621,6 +621,9 @@
                 "$ref": "#/components/schemas/StageItemInputTentative"
               },
               {
+                "$ref": "#/components/schemas/StageItemInputBestOf"
+              },
+              {
                 "$ref": "#/components/schemas/StageItemInputFinal"
               },
               {
@@ -688,6 +691,9 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/StageItemInputTentative"
+              },
+              {
+                "$ref": "#/components/schemas/StageItemInputBestOf"
               },
               {
                 "$ref": "#/components/schemas/StageItemInputFinal"
@@ -1107,6 +1113,9 @@
                 "$ref": "#/components/schemas/StageItemInputTentative"
               },
               {
+                "$ref": "#/components/schemas/StageItemInputBestOf"
+              },
+              {
                 "$ref": "#/components/schemas/StageItemInputFinal"
               },
               {
@@ -1174,6 +1183,9 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/StageItemInputTentative"
+              },
+              {
+                "$ref": "#/components/schemas/StageItemInputBestOf"
               },
               {
                 "$ref": "#/components/schemas/StageItemInputFinal"
@@ -1376,6 +1388,9 @@
                 "$ref": "#/components/schemas/StageItemInputTentative"
               },
               {
+                "$ref": "#/components/schemas/StageItemInputBestOf"
+              },
+              {
                 "$ref": "#/components/schemas/StageItemInputFinal"
               },
               {
@@ -1440,6 +1455,9 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/StageItemInputTentative"
+              },
+              {
+                "$ref": "#/components/schemas/StageItemInputBestOf"
               },
               {
                 "$ref": "#/components/schemas/StageItemInputFinal"
@@ -1707,8 +1725,29 @@
         "type": "object"
       },
       "PlayoffBody": {
-        "description": "One knockout bracket, e.g. \"A playoff\" for placings [1, 2] of every group.",
+        "description": "One knockout bracket, e.g. \"A playoff\" for placings [1, 2] of every group. It can also take\nthe best teams at one placing across all groups: `best_of_placing=3, best_ranks=[1, 2]` adds\nthe two best third placed teams.",
         "properties": {
+          "best_of_placing": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Of Placing"
+          },
+          "best_ranks": {
+            "default": [],
+            "items": {
+              "minimum": 1.0,
+              "type": "integer"
+            },
+            "title": "Best Ranks",
+            "type": "array"
+          },
           "name": {
             "maxLength": 50,
             "minLength": 1,
@@ -1716,11 +1755,11 @@
             "type": "string"
           },
           "placings": {
+            "default": [],
             "items": {
               "minimum": 1.0,
               "type": "integer"
             },
-            "minItems": 1,
             "title": "Placings",
             "type": "array"
           },
@@ -1733,7 +1772,9 @@
         "required": [
           "name",
           "placings",
-          "third_place_match"
+          "third_place_match",
+          "best_of_placing",
+          "best_ranks"
         ],
         "title": "PlayoffBody",
         "type": "object"
@@ -2261,8 +2302,128 @@
         "title": "StageItemCreateBody",
         "type": "object"
       },
+      "StageItemInputBestOf": {
+        "description": "The `best_rank`-th best team of all teams at `winner_position` in the groups of a stage,\ne.g. the 2nd best third placed team. Determined when the next stage is activated.",
+        "properties": {
+          "best_from_stage_id": {
+            "title": "Best From Stage Id",
+            "type": "integer"
+          },
+          "best_rank": {
+            "minimum": 1.0,
+            "title": "Best Rank",
+            "type": "integer"
+          },
+          "draws": {
+            "default": 0,
+            "title": "Draws",
+            "type": "integer"
+          },
+          "goals_against": {
+            "default": 0,
+            "title": "Goals Against",
+            "type": "integer"
+          },
+          "goals_for": {
+            "default": 0,
+            "title": "Goals For",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "losses": {
+            "default": 0,
+            "title": "Losses",
+            "type": "integer"
+          },
+          "points": {
+            "default": "0.0",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Points",
+            "type": "string"
+          },
+          "position": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position"
+          },
+          "slot": {
+            "title": "Slot",
+            "type": "integer"
+          },
+          "stage_item_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage Item Id"
+          },
+          "team_id": {
+            "title": "Team Id",
+            "type": "null"
+          },
+          "tournament_id": {
+            "title": "Tournament Id",
+            "type": "integer"
+          },
+          "winner_from_stage_item_id": {
+            "title": "Winner From Stage Item Id",
+            "type": "null"
+          },
+          "winner_position": {
+            "minimum": 1.0,
+            "title": "Winner Position",
+            "type": "integer"
+          },
+          "wins": {
+            "default": 0,
+            "title": "Wins",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "points",
+          "wins",
+          "draws",
+          "losses",
+          "goals_for",
+          "goals_against",
+          "position",
+          "id",
+          "slot",
+          "tournament_id",
+          "stage_item_id",
+          "team_id",
+          "winner_from_stage_item_id",
+          "winner_position",
+          "best_from_stage_id",
+          "best_rank"
+        ],
+        "title": "StageItemInputBestOf",
+        "type": "object"
+      },
       "StageItemInputEmpty": {
         "properties": {
+          "best_from_stage_id": {
+            "title": "Best From Stage Id",
+            "type": "null"
+          },
+          "best_rank": {
+            "title": "Best Rank",
+            "type": "null"
+          },
           "draws": {
             "default": 0,
             "title": "Draws",
@@ -2355,13 +2516,37 @@
           "stage_item_id",
           "team_id",
           "winner_from_stage_item_id",
-          "winner_position"
+          "winner_position",
+          "best_from_stage_id",
+          "best_rank"
         ],
         "title": "StageItemInputEmpty",
         "type": "object"
       },
       "StageItemInputFinal": {
         "properties": {
+          "best_from_stage_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best From Stage Id"
+          },
+          "best_rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Rank"
+          },
           "draws": {
             "default": 0,
             "title": "Draws",
@@ -2472,6 +2657,8 @@
           "team_id",
           "winner_from_stage_item_id",
           "winner_position",
+          "best_from_stage_id",
+          "best_rank",
           "team"
         ],
         "title": "StageItemInputFinal",
@@ -2546,6 +2733,14 @@
       },
       "StageItemInputTentative": {
         "properties": {
+          "best_from_stage_id": {
+            "title": "Best From Stage Id",
+            "type": "null"
+          },
+          "best_rank": {
+            "title": "Best Rank",
+            "type": "null"
+          },
           "draws": {
             "default": 0,
             "title": "Draws",
@@ -2639,7 +2834,9 @@
           "stage_item_id",
           "team_id",
           "winner_from_stage_item_id",
-          "winner_position"
+          "winner_position",
+          "best_from_stage_id",
+          "best_rank"
         ],
         "title": "StageItemInputTentative",
         "type": "object"
@@ -2647,7 +2844,15 @@
       "StageItemInputUpdate": {
         "properties": {
           "stage_item_input": {
-            "$ref": "#/components/schemas/StageItemInputTentative"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StageItemInputTentative"
+              },
+              {
+                "$ref": "#/components/schemas/StageItemInputBestOf"
+              }
+            ],
+            "title": "Stage Item Input"
           },
           "team": {
             "$ref": "#/components/schemas/Team"
@@ -2749,6 +2954,9 @@
               "anyOf": [
                 {
                   "$ref": "#/components/schemas/StageItemInputTentative"
+                },
+                {
+                  "$ref": "#/components/schemas/StageItemInputBestOf"
                 },
                 {
                   "$ref": "#/components/schemas/StageItemInputFinal"
@@ -2962,6 +3170,9 @@
                 "$ref": "#/components/schemas/StageItemInputTentative"
               },
               {
+                "$ref": "#/components/schemas/StageItemInputBestOf"
+              },
+              {
                 "$ref": "#/components/schemas/StageItemInputFinal"
               },
               {
@@ -2974,6 +3185,9 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/StageItemInputTentative"
+              },
+              {
+                "$ref": "#/components/schemas/StageItemInputBestOf"
               },
               {
                 "$ref": "#/components/schemas/StageItemInputFinal"

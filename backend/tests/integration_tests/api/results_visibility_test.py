@@ -464,3 +464,48 @@ async def test_public_dashboard_hides_penalties_of_private_classes(
     assert public_match["result_type"] == "NORMAL"
     assert public_match["stage_item_input1_penalties"] is None
     assert public_match["stage_item_input2_penalties"] is None
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_cannot_hide_results_of_class_with_best_placed_teams(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    tournament_id = auth_context.tournament.id
+    async with (
+        inserted_class_with_played_match(auth_context, "J13", results_public=True) as j13,
+        inserted_stage(
+            DUMMY_STAGE2.model_copy(
+                update={"tournament_id": tournament_id, "category_id": j13.category_id}
+            )
+        ) as next_stage,
+        inserted_stage_item(
+            DUMMY_STAGE_ITEM1.model_copy(
+                update={"stage_id": next_stage.id, "ranking_id": auth_context.ranking.id}
+            )
+        ) as next_group,
+        inserted_stage_item_input(
+            StageItemInputInsertable(
+                slot=0, team_id=None, tournament_id=tournament_id, stage_item_id=next_group.id
+            )
+        ) as next_input,
+    ):
+        group_stage_id = await database.fetch_val(
+            "SELECT stage_id FROM stage_items WHERE id = :id", values={"id": j13.stage_item_id}
+        )
+        await database.execute(
+            "UPDATE stage_item_inputs SET best_from_stage_id = :stage_id, winner_position = 2, "
+            "best_rank = 1 WHERE id = :id",
+            values={"stage_id": group_stage_id, "id": next_input.id},
+        )
+        response = await send_tournament_request(
+            HTTPMethod.PUT,
+            f"categories/{j13.category_id}",
+            auth_context,
+            json={"name": "J13", "results_public": False},
+        )
+        assert response == NO_ADVANCING
+        # Reset, so the group stage can be deleted afterwards
+        await database.execute(
+            "UPDATE stage_item_inputs SET best_from_stage_id = NULL WHERE id = :id",
+            values={"id": next_input.id},
+        )

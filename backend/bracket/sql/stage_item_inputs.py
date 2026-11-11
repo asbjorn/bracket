@@ -5,6 +5,7 @@ from bracket.models.db.stage_item_inputs import (
     StageItemInput,
     StageItemInputBase,
     StageItemInputCreateBody,
+    StageItemInputCreateBodyBestOf,
     StageItemInputCreateBodyFinal,
     StageItemInputCreateBodyTentative,
     StageItemInputFinal,
@@ -91,7 +92,9 @@ async def sql_create_stage_item_input(
             stage_item_id,
             team_id,
             winner_from_stage_item_id,
-            winner_position
+            winner_position,
+            best_from_stage_id,
+            best_rank
         )
         VALUES
         (
@@ -100,7 +103,9 @@ async def sql_create_stage_item_input(
             :stage_item_id,
             :team_id,
             :winner_from_stage_item_id,
-            :winner_position
+            :winner_position,
+            :best_from_stage_id,
+            :best_rank
         )
         RETURNING *
         """
@@ -122,7 +127,20 @@ async def sql_create_stage_item_input(
             ),
             "winner_position": (
                 stage_item_input.winner_position
-                if isinstance(stage_item_input, StageItemInputCreateBodyTentative)
+                if isinstance(
+                    stage_item_input,
+                    StageItemInputCreateBodyTentative | StageItemInputCreateBodyBestOf,
+                )
+                else None
+            ),
+            "best_from_stage_id": (
+                stage_item_input.best_from_stage_id
+                if isinstance(stage_item_input, StageItemInputCreateBodyBestOf)
+                else None
+            ),
+            "best_rank": (
+                stage_item_input.best_rank
+                if isinstance(stage_item_input, StageItemInputCreateBodyBestOf)
                 else None
             ),
         },

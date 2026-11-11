@@ -33,6 +33,7 @@ import {
   StageItemInput,
   StageItemInputChoice,
   StageItemInputOption,
+  formatStageItemInput,
   formatStageItemInputTentative,
 } from '@components/utils/stage_item_input';
 import {
@@ -223,6 +224,17 @@ function StageItemInputSection({
   swrRankingsPerStageItemResponse: SWRResponse<StageRankingResponse>;
 }) {
   const opts = lastInList ? { pt: 'xs', mb: '-0.5rem' } : { py: 'xs', withBorder: true };
+
+  // "Best placed across groups" is set by the playoff wizard and can't be picked here
+  if (stageItemInput.best_from_stage_id != null && stageItemInput.team_id == null) {
+    return (
+      <Card.Section inheritPadding {...opts}>
+        <Text size="sm" py={6}>
+          {formatStageItemInput(stageItemInput, {})}
+        </Text>
+      </Card.Section>
+    );
+  }
 
   return (
     <Card.Section inheritPadding {...opts}>

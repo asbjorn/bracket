@@ -151,5 +151,9 @@ def check_category_can_hide_results(
         for stage_item in stage.stage_items:
             if stage_item.type != StageType.ROUND_ROBIN:
                 raise_bad_request(ONLY_ROUND_ROBIN_WHEN_HIDDEN)
-            if any(input_.winner_from_stage_item_id is not None for input_ in stage_item.inputs):
+            if any(
+                input_.winner_from_stage_item_id is not None
+                or input_.best_from_stage_id is not None
+                for input_ in stage_item.inputs
+            ):
                 raise_bad_request(NO_ADVANCING_WHEN_HIDDEN)

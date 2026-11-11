@@ -6,6 +6,7 @@ import {
   Group,
   Modal,
   MultiSelect,
+  Select,
   Stack,
   Text,
   TextInput,
@@ -40,6 +41,8 @@ function presetPlayoffs(t: any, groupSize: number, count: number): PlayoffBody[]
     name: t('playoff_default_name', { name: PLAYOFF_NAMES[index] }),
     placings,
     third_place_match: false,
+    best_of_placing: null,
+    best_ranks: [],
   }));
 }
 
@@ -59,6 +62,7 @@ export default function CreatePlayoffsModal({
   const [opened, setOpened] = useState(false);
   const groups = groupStage.stage_items;
   const smallestGroup = Math.min(...groups.map((group) => group.team_count));
+  const largestGroup = Math.max(...groups.map((group) => group.team_count));
   const [stageName, setStageName] = useState(t('playoffs_stage_default_name'));
   const [playoffs, setPlayoffs] = useState<PlayoffBody[]>(() =>
     presetPlayoffs(t, smallestGroup, 2),
@@ -103,7 +107,12 @@ export default function CreatePlayoffsModal({
             onChange={(event) => setStageName(event.currentTarget.value)}
           />
           {playoffs.map((playoff, index) => {
-            const teamCount = playoff.placings.length * groups.length;
+            const teamCount = playoff.placings.length * groups.length + playoff.best_ranks.length;
+            const bestCandidates =
+              playoff.best_of_placing == null
+                ? 0
+                : groups.filter((group) => group.team_count >= (playoff.best_of_placing ?? 0))
+                    .length;
             return (
               <Stack
                 key={index}
@@ -138,6 +147,36 @@ export default function CreatePlayoffsModal({
                     })
                   }
                 />
+                <Group grow align="start">
+                  <Select
+                    label={t('playoff_best_of_placing_label')}
+                    description={t('playoff_best_of_placing_description')}
+                    clearable
+                    data={Array.from({ length: largestGroup }, (_, i) => ({
+                      value: `${i + 1}`,
+                      label: t('placing_label', { placing: i + 1 }),
+                    })).filter((option) => !playoff.placings.includes(Number(option.value)))}
+                    value={playoff.best_of_placing == null ? null : `${playoff.best_of_placing}`}
+                    onChange={(value) =>
+                      updatePlayoff(index, {
+                        best_of_placing: value == null ? null : Number(value),
+                        best_ranks: value == null ? [] : playoff.best_ranks,
+                      })
+                    }
+                  />
+                  <MultiSelect
+                    label={t('playoff_best_ranks_label')}
+                    disabled={playoff.best_of_placing == null}
+                    data={Array.from({ length: bestCandidates }, (_, i) => ({
+                      value: `${i + 1}`,
+                      label: t('best_rank_label', { rank: i + 1 }),
+                    }))}
+                    value={playoff.best_ranks.map((rank) => `${rank}`)}
+                    onChange={(values) =>
+                      updatePlayoff(index, { best_ranks: values.map(Number).sort((a, b) => a - b) })
+                    }
+                  />
+                </Group>
                 <Checkbox
                   label={t('third_place_match_label')}
                   disabled={teamCount < 4}
@@ -163,6 +202,8 @@ export default function CreatePlayoffsModal({
                   }),
                   placings: [],
                   third_place_match: false,
+                  best_of_placing: null,
+                  best_ranks: [],
                 },
               ])
             }
@@ -178,7 +219,8 @@ export default function CreatePlayoffsModal({
                 playoffs: playoffs.map((playoff) => ({
                   ...playoff,
                   third_place_match:
-                    playoff.third_place_match && playoff.placings.length * groups.length >= 4,
+                    playoff.third_place_match &&
+                    playoff.placings.length * groups.length + playoff.best_ranks.length >= 4,
                 })),
               });
               if (requestSucceeded(result)) {

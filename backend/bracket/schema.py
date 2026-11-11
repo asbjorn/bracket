@@ -117,6 +117,10 @@ stage_item_inputs = Table(
     Column("goals_against", Integer, nullable=False, server_default="0"),
     # Place in the ranking of the stage item (1 = first), after applying the tiebreakers
     Column("position", Integer, nullable=True),
+    # The `best_rank`-th best team at `winner_position` of all groups in `best_from_stage_id`,
+    # e.g. the 2 best third placed teams
+    Column("best_from_stage_id", BigInteger, ForeignKey("stages.id"), nullable=True),
+    Column("best_rank", Integer, nullable=True),
     UniqueConstraint("stage_item_id", "team_id"),
     UniqueConstraint("stage_item_id", "winner_from_stage_item_id", "winner_position"),
 )

@@ -233,3 +233,147 @@ async def test_no_playoffs_in_classes_with_hidden_results(
             assert "teams can't advance based on their placing" in response["detail"]
         finally:
             await delete_stages_except(auth_context, group_stage.id)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_playoff_with_best_runner_up(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    """
+    3 groups of 3: the A playoff gets the 3 group winners and the best runner-up. The runner-up
+    of group C has the best goal difference, so it takes the 4th place.
+    """
+    tournament_id = auth_context.tournament.id
+
+    async def request(method: HTTPMethod, endpoint: str, json: JsonDict | None = None) -> JsonDict:
+        return await send_tournament_request(method, endpoint, auth_context, json=json)
+
+    async with AsyncExitStack() as stack:
+        group_stage = await stack.enter_async_context(
+            inserted_stage(DUMMY_STAGE1.model_copy(update={"tournament_id": tournament_id}))
+        )
+        teams = [
+            await stack.enter_async_context(
+                inserted_team(
+                    DUMMY_TEAM1.model_copy(
+                        update={"tournament_id": tournament_id, "name": f"{letter}{slot}"}
+                    )
+                )
+            )
+            for letter in "ABC"
+            for slot in range(1, 4)
+        ]
+        try:
+            for letter in "ABC":
+                response = await request(
+                    HTTPMethod.POST,
+                    "stage_items",
+                    {
+                        "stage_id": group_stage.id,
+                        "type": "ROUND_ROBIN",
+                        "team_count": 3,
+                        "name": f"Group {letter}",
+                    },
+                )
+                assert response == SUCCESS_RESPONSE
+
+            [stage] = await get_full_tournament_details(tournament_id)
+            for group in stage.stage_items:
+                letter = group.name[-1]
+                for input_ in group.inputs:
+                    [team] = [t for t in teams if t.name == f"{letter}{input_.slot}"]
+                    response = await request(
+                        HTTPMethod.PUT,
+                        f"stage_items/{group.id}/inputs/{input_.id}",
+                        {"team_id": team.id},
+                    )
+                    assert response == SUCCESS_RESPONSE
+
+            [stage] = await get_full_tournament_details(tournament_id)
+            for group in stage.stage_items:
+                slot_of_input = {input_.id: input_.slot for input_ in group.inputs}
+                for round_ in group.rounds:
+                    for match in round_.matches:
+                        slot1 = slot_of_input[assert_some(match.stage_item_input1_id)]
+                        slot2 = slot_of_input[assert_some(match.stage_item_input2_id)]
+                        # The lower slot wins 1-0, except C2 beats C3 5-0
+                        margin = 5 if group.name == "Group C" and {slot1, slot2} == {2, 3} else 1
+                        response = await request(
+                            HTTPMethod.PUT,
+                            f"matches/{match.id}",
+                            {
+                                "round_id": round_.id,
+                                "stage_item_input1_score": margin if slot1 < slot2 else 0,
+                                "stage_item_input2_score": margin if slot2 < slot1 else 0,
+                                "played": True,
+                            },
+                        )
+                        assert response == SUCCESS_RESPONSE
+
+            response = await request(
+                HTTPMethod.POST,
+                "playoffs",
+                {
+                    "group_stage_id": group_stage.id,
+                    "playoffs": [
+                        {
+                            "name": "A",
+                            "placings": [1],
+                            "best_of_placing": 2,
+                            "best_ranks": [1],
+                        }
+                    ],
+                },
+            )
+            assert response == SUCCESS_RESPONSE
+
+            assert await request(HTTPMethod.POST, "stages/activate", {}) == SUCCESS_RESPONSE
+            [_, playoff_stage] = await get_full_tournament_details(tournament_id)
+            assert first_round_team_names(playoff_stage, "A") == [["A1", "C2"], ["B1", "C1"]]
+        finally:
+            await delete_stages_except(auth_context, group_stage.id)
+
+
+@pytest.mark.parametrize(
+    ("playoffs", "error"),
+    [
+        pytest.param(
+            [{"name": "A", "placings": [1], "best_ranks": [1]}],
+            "choose both the placing and which of the best teams",
+            id="ranks without placing",
+        ),
+        pytest.param(
+            [
+                {"name": "A", "placings": [1], "best_of_placing": 2, "best_ranks": [1]},
+                {"name": "B", "placings": [2]},
+            ],
+            "both completely and partly",
+            id="placing in two ways",
+        ),
+        pytest.param(
+            [
+                {"name": "A", "placings": [1], "best_of_placing": 2, "best_ranks": [1]},
+                {"name": "B", "placings": [3], "best_of_placing": 2, "best_ranks": [1, 2]},
+            ],
+            "Each of the best teams can only go to one playoff",
+            id="same best team twice",
+        ),
+    ],
+)
+@pytest.mark.asyncio(loop_scope="session")
+async def test_invalid_best_of_playoffs(
+    startup_and_shutdown_uvicorn_server: None,
+    auth_context: AuthContext,
+    playoffs: list[JsonDict],
+    error: str,
+) -> None:
+    async with inserted_stage(
+        DUMMY_STAGE1.model_copy(update={"tournament_id": auth_context.tournament.id})
+    ) as group_stage:
+        response = await send_tournament_request(
+            HTTPMethod.POST,
+            "playoffs",
+            auth_context,
+            json={"group_stage_id": group_stage.id, "playoffs": playoffs},
+        )
+    assert error in str(response["detail"])

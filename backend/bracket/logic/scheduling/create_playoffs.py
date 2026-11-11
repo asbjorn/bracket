@@ -11,6 +11,7 @@ from bracket.models.db.playoffs import PlayoffBody, PlayoffsCreateBody
 from bracket.models.db.stage_item import StageItemWithInputsCreate, StageType
 from bracket.models.db.stage_item_inputs import (
     StageItemInputCreateBody,
+    StageItemInputCreateBodyBestOf,
     StageItemInputCreateBodyTentative,
 )
 from bracket.models.db.user import UserPublic
@@ -18,7 +19,7 @@ from bracket.models.db.util import StageItemWithRounds, StageWithStageItems
 from bracket.sql.categories import get_category_by_id
 from bracket.sql.stage_items import sql_create_stage_item_with_inputs
 from bracket.sql.stages import get_full_tournament_details, sql_create_stage
-from bracket.utils.id_types import TournamentId
+from bracket.utils.id_types import StageId, TournamentId
 
 MAX_TEAMS_PER_PLAYOFF = 64
 
@@ -27,14 +28,25 @@ def bad_request(detail: str) -> HTTPException:
     return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
 
 
+def get_team_count(playoff: PlayoffBody, groups: list[StageItemWithRounds]) -> int:
+    return len(groups) * len(playoff.placings) + len(playoff.best_ranks)
+
+
 def check_playoff(playoff: PlayoffBody, groups: list[StageItemWithRounds]) -> None:
-    team_count = len(groups) * len(playoff.placings)
+    team_count = get_team_count(playoff, groups)
     if not 2 <= team_count <= MAX_TEAMS_PER_PLAYOFF:
         raise bad_request(f"{playoff.name}: a playoff needs between 2 and 64 teams")
     if playoff.third_place_match and team_count < MIN_TEAMS_THIRD_PLACE_MATCH:
         raise bad_request(f"{playoff.name}: a third place match needs at least 4 teams")
+    if playoff.best_of_placing is not None:
+        candidates = sum(1 for group in groups if group.team_count >= playoff.best_of_placing)
+        if max(playoff.best_ranks) > candidates:
+            raise bad_request(
+                f"{playoff.name}: only {candidates} groups have a number "
+                f"{playoff.best_of_placing}, so there is no {max(playoff.best_ranks)}. best"
+            )
     for group in groups:
-        if max(playoff.placings) > group.team_count:
+        if len(playoff.placings) > 0 and max(playoff.placings) > group.team_count:
             raise bad_request(
                 f"{playoff.name}: {group.name} only has {group.team_count} teams, "
                 f"so it has no number {max(playoff.placings)}"
@@ -42,21 +54,39 @@ def check_playoff(playoff: PlayoffBody, groups: list[StageItemWithRounds]) -> No
 
 
 def get_playoff_inputs(
-    playoff: PlayoffBody, groups: list[StageItemWithRounds]
+    playoff: PlayoffBody, groups: list[StageItemWithRounds], group_stage_id: StageId
 ) -> list[StageItemInputCreateBody]:
     qualifiers = [
         Qualifier(group_index, placing)
         for group_index in range(len(groups))
         for placing in playoff.placings
     ]
-    return [
-        StageItemInputCreateBodyTentative(
-            slot=slot,
-            winner_from_stage_item_id=groups[qualifier.group_index].id,
-            winner_position=qualifier.placing,
-        )
-        for slot, qualifier in enumerate(get_qualifiers_per_slot(qualifiers), start=1)
-    ]
+    if playoff.best_of_placing is not None:
+        qualifiers += [
+            Qualifier(group_index=-rank, placing=playoff.best_of_placing, best_rank=rank)
+            for rank in playoff.best_ranks
+        ]
+
+    inputs: list[StageItemInputCreateBody] = []
+    for slot, qualifier in enumerate(get_qualifiers_per_slot(qualifiers), start=1):
+        if qualifier.best_rank is not None:
+            inputs.append(
+                StageItemInputCreateBodyBestOf(
+                    slot=slot,
+                    best_from_stage_id=group_stage_id,
+                    winner_position=qualifier.placing,
+                    best_rank=qualifier.best_rank,
+                )
+            )
+        else:
+            inputs.append(
+                StageItemInputCreateBodyTentative(
+                    slot=slot,
+                    winner_from_stage_item_id=groups[qualifier.group_index].id,
+                    winner_position=qualifier.placing,
+                )
+            )
+    return inputs
 
 
 async def create_playoffs(
@@ -82,7 +112,7 @@ async def create_playoffs(
     async with database.transaction():
         stage = await sql_create_stage(tournament_id, group_stage.category_id, body.stage_name)
         for playoff in body.playoffs:
-            inputs = get_playoff_inputs(playoff, groups)
+            inputs = get_playoff_inputs(playoff, groups, group_stage.id)
             stage_item = await sql_create_stage_item_with_inputs(
                 tournament_id,
                 StageItemWithInputsCreate(

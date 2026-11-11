@@ -364,6 +364,7 @@ export type {
   StageCreateBody,
   StageItemActivateNextBody,
   StageItemCreateBody,
+  StageItemInputBestOf,
   StageItemInputEmpty,
   StageItemInputFinal,
   StageItemInputOptionFinal,

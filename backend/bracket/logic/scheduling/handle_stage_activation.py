@@ -7,8 +7,9 @@ from starlette import status
 from bracket.logic.ranking.calculation import (
     determine_team_ranking_for_stage_item,
 )
-from bracket.logic.ranking.statistics import TeamStatistics
+from bracket.logic.ranking.cross_group import StageItemXTeamRanking, rank_teams_at_placing
 from bracket.models.db.stage_item_inputs import (
+    StageItemInputBestOf,
     StageItemInputEmpty,
     StageItemInputFinal,
     StageItemInputTentative,
@@ -30,11 +31,9 @@ from bracket.utils.id_types import (
 )
 from bracket.utils.types import assert_some
 
-StageItemXTeamRanking = dict[StageItemId, list[tuple[StageItemInputId, TeamStatistics]]]
-
 
 class StageItemInputUpdate(BaseModel):
-    stage_item_input: StageItemInputTentative
+    stage_item_input: StageItemInputTentative | StageItemInputBestOf
     team: Team
 
 
@@ -58,16 +57,42 @@ def determine_team_id(
     return team_ranking[winner_position - 1][0]
 
 
+def determine_best_of_team_id(
+    stage_item_input: StageItemInputBestOf,
+    stages: list[StageWithStageItems],
+    stage_item_x_team_rankings: StageItemXTeamRanking,
+) -> StageItemInputId:
+    """
+    E.g. the 2nd best of all teams that finished third in the groups of the previous stage.
+    """
+    stage = next(stage for stage in stages if stage.id == stage_item_input.best_from_stage_id)
+    ranked = rank_teams_at_placing(
+        stage, stage_item_input.winner_position, stage_item_x_team_rankings
+    )
+    msg = (
+        f"Only {len(ranked)} teams finished at position {stage_item_input.winner_position}, "
+        f"so there is no number {stage_item_input.best_rank} among them"
+    )
+    assert len(ranked) >= stage_item_input.best_rank, msg
+    return ranked[stage_item_input.best_rank - 1]
+
+
 async def get_team_update_for_input(
     tournament_id: TournamentId,
-    stage_item_input: StageItemInputTentative,
+    stage_item_input: StageItemInputTentative | StageItemInputBestOf,
+    stages: list[StageWithStageItems],
     stage_item_x_team_rankings: StageItemXTeamRanking,
 ) -> StageItemInputUpdate:
-    target_stage_item_input_id = determine_team_id(
-        stage_item_input.winner_from_stage_item_id,
-        stage_item_input.winner_position,
-        stage_item_x_team_rankings,
-    )
+    if isinstance(stage_item_input, StageItemInputBestOf):
+        target_stage_item_input_id = determine_best_of_team_id(
+            stage_item_input, stages, stage_item_x_team_rankings
+        )
+    else:
+        target_stage_item_input_id = determine_team_id(
+            stage_item_input.winner_from_stage_item_id,
+            stage_item_input.winner_position,
+            stage_item_x_team_rankings,
+        )
     target_stage_item_input = await get_stage_item_input_by_id(
         tournament_id, target_stage_item_input_id
     )
@@ -117,10 +142,10 @@ async def get_updates_to_inputs_in_activated_stage(
 
     for stage_item in activated_stage.stage_items:
         for stage_item_input in stage_item.inputs:
-            if isinstance(stage_item_input, StageItemInputTentative):
+            if isinstance(stage_item_input, StageItemInputTentative | StageItemInputBestOf):
                 result[stage_item.id].append(
                     await get_team_update_for_input(
-                        tournament_id, stage_item_input, team_rankings_per_stage_item
+                        tournament_id, stage_item_input, stages, team_rankings_per_stage_item
                     )
                 )
 
@@ -149,5 +174,9 @@ async def update_matches_in_deactivated_stage(
         await clear_scores_for_matches_in_stage_item(tournament_id, stage_item.id)
 
         for stage_item_input in stage_item.inputs:
-            if stage_item_input.winner_from_stage_item_id is not None:
+            advanced = (
+                stage_item_input.winner_from_stage_item_id is not None
+                or stage_item_input.best_from_stage_id is not None
+            )
+            if advanced:
                 await sql_set_team_id_for_stage_item_input(tournament_id, stage_item_input.id, None)

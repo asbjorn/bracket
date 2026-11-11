@@ -20,10 +20,15 @@ from bracket.logic.scheduling.elimination import (
 
 @dataclass(frozen=True)
 class Qualifier:
-    """The team at `placing` (1 = winner) of the group with index `group_index`."""
+    """
+    The team at `placing` (1 = winner) of the group with index `group_index`, or with
+    `best_rank`: the best_rank-th best team at `placing` across all groups (its group is not
+    known yet, `group_index` is then a unique negative number).
+    """
 
     group_index: int
     placing: int
+    best_rank: int | None = None
 
 
 def first_possible_meeting_round(position1: int, position2: int) -> int:
@@ -116,7 +121,8 @@ def seed_qualifiers(qualifiers: list[Qualifier]) -> list[Qualifier]:
     seeds: list[Qualifier] = []
     for placing in sorted({q.placing for q in qualifiers}):
         same_placing = sorted(
-            (q for q in qualifiers if q.placing == placing), key=lambda q: q.group_index
+            (q for q in qualifiers if q.placing == placing),
+            key=lambda q: (q.best_rank or 0, q.group_index),
         )
         count = len(same_placing)
         first_seed = len(seeds) + 1

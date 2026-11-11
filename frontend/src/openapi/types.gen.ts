@@ -372,7 +372,12 @@ export type Match = {
   /**
    * Stage Item Input1
    */
-  stage_item_input1: StageItemInputTentative | StageItemInputFinal | StageItemInputEmpty | null;
+  stage_item_input1:
+    | StageItemInputTentative
+    | StageItemInputBestOf
+    | StageItemInputFinal
+    | StageItemInputEmpty
+    | null;
   /**
    * Stage Item Input1 Conflict
    */
@@ -400,7 +405,12 @@ export type Match = {
   /**
    * Stage Item Input2
    */
-  stage_item_input2: StageItemInputTentative | StageItemInputFinal | StageItemInputEmpty | null;
+  stage_item_input2:
+    | StageItemInputTentative
+    | StageItemInputBestOf
+    | StageItemInputFinal
+    | StageItemInputEmpty
+    | null;
   /**
    * Stage Item Input2 Conflict
    */
@@ -582,7 +592,12 @@ export type MatchWithDetails = {
   /**
    * Stage Item Input1
    */
-  stage_item_input1: StageItemInputTentative | StageItemInputFinal | StageItemInputEmpty | null;
+  stage_item_input1:
+    | StageItemInputTentative
+    | StageItemInputBestOf
+    | StageItemInputFinal
+    | StageItemInputEmpty
+    | null;
   /**
    * Stage Item Input1 Conflict
    */
@@ -610,7 +625,12 @@ export type MatchWithDetails = {
   /**
    * Stage Item Input2
    */
-  stage_item_input2: StageItemInputTentative | StageItemInputFinal | StageItemInputEmpty | null;
+  stage_item_input2:
+    | StageItemInputTentative
+    | StageItemInputBestOf
+    | StageItemInputFinal
+    | StageItemInputEmpty
+    | null;
   /**
    * Stage Item Input2 Conflict
    */
@@ -690,7 +710,11 @@ export type MatchWithDetailsDefinitive = {
   /**
    * Stage Item Input1
    */
-  stage_item_input1: StageItemInputTentative | StageItemInputFinal | StageItemInputEmpty;
+  stage_item_input1:
+    | StageItemInputTentative
+    | StageItemInputBestOf
+    | StageItemInputFinal
+    | StageItemInputEmpty;
   /**
    * Stage Item Input1 Conflict
    */
@@ -718,7 +742,11 @@ export type MatchWithDetailsDefinitive = {
   /**
    * Stage Item Input2
    */
-  stage_item_input2: StageItemInputTentative | StageItemInputFinal | StageItemInputEmpty;
+  stage_item_input2:
+    | StageItemInputTentative
+    | StageItemInputBestOf
+    | StageItemInputFinal
+    | StageItemInputEmpty;
   /**
    * Stage Item Input2 Conflict
    */
@@ -861,9 +889,19 @@ export type PlayersResponse = {
 /**
  * PlayoffBody
  *
- * One knockout bracket, e.g. "A playoff" for placings [1, 2] of every group.
+ * One knockout bracket, e.g. "A playoff" for placings [1, 2] of every group. It can also take
+ * the best teams at one placing across all groups: `best_of_placing=3, best_ranks=[1, 2]` adds
+ * the two best third placed teams.
  */
 export type PlayoffBody = {
+  /**
+   * Best Of Placing
+   */
+  best_of_placing: number | null;
+  /**
+   * Best Ranks
+   */
+  best_ranks: Array<number>;
   /**
    * Name
    */
@@ -1161,9 +1199,90 @@ export type StageItemCreateBody = {
 };
 
 /**
+ * StageItemInputBestOf
+ *
+ * The `best_rank`-th best team of all teams at `winner_position` in the groups of a stage,
+ * e.g. the 2nd best third placed team. Determined when the next stage is activated.
+ */
+export type StageItemInputBestOf = {
+  /**
+   * Best From Stage Id
+   */
+  best_from_stage_id: number;
+  /**
+   * Best Rank
+   */
+  best_rank: number;
+  /**
+   * Draws
+   */
+  draws: number;
+  /**
+   * Goals Against
+   */
+  goals_against: number;
+  /**
+   * Goals For
+   */
+  goals_for: number;
+  /**
+   * Id
+   */
+  id: number;
+  /**
+   * Losses
+   */
+  losses: number;
+  /**
+   * Points
+   */
+  points: string;
+  /**
+   * Position
+   */
+  position: number | null;
+  /**
+   * Slot
+   */
+  slot: number;
+  /**
+   * Stage Item Id
+   */
+  stage_item_id: number | null;
+  /**
+   * Team Id
+   */
+  team_id: null;
+  /**
+   * Tournament Id
+   */
+  tournament_id: number;
+  /**
+   * Winner From Stage Item Id
+   */
+  winner_from_stage_item_id: null;
+  /**
+   * Winner Position
+   */
+  winner_position: number;
+  /**
+   * Wins
+   */
+  wins: number;
+};
+
+/**
  * StageItemInputEmpty
  */
 export type StageItemInputEmpty = {
+  /**
+   * Best From Stage Id
+   */
+  best_from_stage_id: null;
+  /**
+   * Best Rank
+   */
+  best_rank: null;
   /**
    * Draws
    */
@@ -1226,6 +1345,14 @@ export type StageItemInputEmpty = {
  * StageItemInputFinal
  */
 export type StageItemInputFinal = {
+  /**
+   * Best From Stage Id
+   */
+  best_from_stage_id: number | null;
+  /**
+   * Best Rank
+   */
+  best_rank: number | null;
   /**
    * Draws
    */
@@ -1334,6 +1461,14 @@ export type StageItemInputOptionsResponse = {
  */
 export type StageItemInputTentative = {
   /**
+   * Best From Stage Id
+   */
+  best_from_stage_id: null;
+  /**
+   * Best Rank
+   */
+  best_rank: null;
+  /**
    * Draws
    */
   draws: number;
@@ -1395,7 +1530,10 @@ export type StageItemInputTentative = {
  * StageItemInputUpdate
  */
 export type StageItemInputUpdate = {
-  stage_item_input: StageItemInputTentative;
+  /**
+   * Stage Item Input
+   */
+  stage_item_input: StageItemInputTentative | StageItemInputBestOf;
   team: Team;
 };
 
@@ -1470,7 +1608,9 @@ export type StageItemWithRounds = {
   /**
    * Inputs
    */
-  inputs: Array<StageItemInputTentative | StageItemInputFinal | StageItemInputEmpty>;
+  inputs: Array<
+    StageItemInputTentative | StageItemInputBestOf | StageItemInputFinal | StageItemInputEmpty
+  >;
   /**
    * Name
    */
@@ -1598,11 +1738,19 @@ export type SuggestedMatch = {
   /**
    * Stage Item Input1
    */
-  stage_item_input1: StageItemInputTentative | StageItemInputFinal | StageItemInputEmpty;
+  stage_item_input1:
+    | StageItemInputTentative
+    | StageItemInputBestOf
+    | StageItemInputFinal
+    | StageItemInputEmpty;
   /**
    * Stage Item Input2
    */
-  stage_item_input2: StageItemInputTentative | StageItemInputFinal | StageItemInputEmpty;
+  stage_item_input2:
+    | StageItemInputTentative
+    | StageItemInputBestOf
+    | StageItemInputFinal
+    | StageItemInputEmpty;
   /**
    * Swiss Diff
    */
