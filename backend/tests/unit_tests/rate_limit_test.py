@@ -24,14 +24,37 @@ def test_sliding_window() -> None:
     assert [limiter.allow("a") for _ in range(4)] == [True, True, True, False]
 
 
-def test_check_raises_429_and_idle_keys_are_forgotten() -> None:
-    clock = FakeClock()
-    limiter = SlidingWindowLimiter(limit=1, window_seconds=10, clock=clock)
+def test_check_raises_429() -> None:
+    limiter = SlidingWindowLimiter(limit=1, window_seconds=10, clock=FakeClock())
     limiter.check("a")
     with pytest.raises(HTTPException) as error:
         limiter.check("a")
     assert error.value.status_code == 429
 
-    clock.now += 11
-    limiter.forget_idle(clock.now)
-    assert limiter.hits == {}
+
+def test_number_of_keys_is_bounded() -> None:
+    clock = FakeClock()
+    limiter = SlidingWindowLimiter(limit=5, window_seconds=60, max_keys=100, clock=clock)
+    for index in range(1000):
+        limiter.allow(f"key{index}")
+        assert len(limiter.hits) <= 100
+    # The least recently used keys went first
+    assert "key999" in limiter.hits
+    assert "key0" not in limiter.hits
+
+
+def test_recently_used_keys_stay_and_idle_keys_are_dropped_first() -> None:
+    clock = FakeClock()
+    limiter = SlidingWindowLimiter(
+        limit=2, window_seconds=60, max_keys=3, cleanup_seconds=5, clock=clock
+    )
+    limiter.allow("old")
+    clock.now += 61  # "old" is idle now
+    limiter.allow("busy")
+    limiter.allow("other")
+    limiter.allow("busy")  # Used again: most recently used
+    assert not limiter.allow("busy")
+
+    limiter.allow("new")  # Full: the idle key goes, "busy" keeps its count
+    assert set(limiter.hits) == {"busy", "other", "new"}
+    assert not limiter.allow("busy")

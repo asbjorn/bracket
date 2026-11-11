@@ -183,23 +183,46 @@ async def test_score_link_rules(
 async def test_score_link_rate_limit(
     startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
 ) -> None:
-    """Also invalid tokens count, so tokens can't be guessed quickly."""
-    limit = score_entry.score_link_writes.limit
-    score_entry.score_link_writes.limit = 2
+    """Wrong tokens are limited per client, valid links per link and client."""
+    limiters = (score_entry.invalid_link_attempts, score_entry.score_link_writes)
+    limits = [limiter.limit for limiter in limiters]
+    for limiter in limiters:
+        limiter.limit = 2
+        limiter.hits.clear()  # Other tests used wrong tokens too
     try:
         body = {"delay_minutes": 5}
         responses = [
-            await send_request(HTTPMethod.POST, "score/not-a-real-token/notices", json=body)
-            for _ in range(3)
+            await send_request(HTTPMethod.POST, f"score/wrong-token-{index}/notices", json=body)
+            for index in range(3)
         ]
         assert [r["detail"][:20] for r in responses] == [
             "This link is not val",
             "This link is not val",
             "Too many requests, p",
         ]
+
+        created = await send_tournament_request(
+            HTTPMethod.POST, "score_links", auth_context, json={"name": "Alle", "valid_hours": 8}
+        )
+        token = created["data"]["token"]
+        responses = [
+            await send_request(HTTPMethod.POST, f"score/{token}/notices", json=body)
+            for _ in range(3)
+        ]
+        assert "data" in responses[0]
+        assert "data" in responses[1]
+        assert responses[2]["detail"].startswith("Too many requests")
         # Reading has its own, larger limit
-        read = await send_request(HTTPMethod.GET, "score/not-a-real-token")
-        assert read["detail"].startswith("This link is not valid")
+        assert "data" in await send_request(HTTPMethod.GET, f"score/{token}")
     finally:
-        score_entry.score_link_writes.limit = limit
-        score_entry.score_link_writes.hits.clear()
+        for limiter, limit in zip(limiters, limits, strict=True):
+            limiter.limit = limit
+            limiter.hits.clear()
+        await database.execute(
+            match_day_notices.delete().where(
+                match_day_notices.c.tournament_id == auth_context.tournament.id
+            )
+        )
+        await database.execute(
+            score_links.delete().where(score_links.c.tournament_id == auth_context.tournament.id)
+        )

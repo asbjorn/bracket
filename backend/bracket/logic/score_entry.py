@@ -3,8 +3,6 @@ Entering results with a score link: no account, only the token of the link. A li
 to a tournament and optionally to one court; only those matches can be seen and changed.
 """
 
-import hashlib
-
 from fastapi import HTTPException, Request
 from starlette import status
 
@@ -27,23 +25,24 @@ from bracket.sql.tournaments import sql_get_tournament
 from bracket.utils.id_types import MatchId, TeamId
 from bracket.utils.rate_limit import SlidingWindowLimiter
 
-# Per link and client: reading (the page refreshes) and writing (results, check-ins, notices)
+# Per link and client: reading (the page refreshes) and writing (results, check-ins, notices).
+# Keys are only made for valid links; wrong tokens are limited per client, so guessing is slow.
 score_link_reads = SlidingWindowLimiter(limit=300, window_seconds=60)
 score_link_writes = SlidingWindowLimiter(limit=60, window_seconds=60)
+invalid_link_attempts = SlidingWindowLimiter(limit=20, window_seconds=60)
 
 
 async def score_link_dependency(token: str, request: Request) -> ScoreLink:
-    token_key = hashlib.sha256(token.encode()).hexdigest()[:32]
     client = request.client.host if request.client is not None else "unknown"
-    limiter = score_link_reads if request.method == "GET" else score_link_writes
-    limiter.check(f"{token_key}:{client}")
-
     link = await get_valid_score_link(token)
     if link is None:
+        invalid_link_attempts.check(client)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="This link is not valid (any more). Ask the organiser for a new one.",
         )
+    limiter = score_link_reads if request.method == "GET" else score_link_writes
+    limiter.check(f"{link.id}:{client}")
     return link
 
 
