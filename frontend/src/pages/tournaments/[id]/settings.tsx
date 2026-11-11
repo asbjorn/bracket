@@ -136,6 +136,8 @@ function GeneralTournamentForm({
       auto_assign_courts: tournament.auto_assign_courts,
       duration_minutes: tournament.duration_minutes,
       margin_minutes: tournament.margin_minutes,
+      min_rest_minutes: tournament.min_rest_minutes,
+      stage_buffer_minutes: tournament.stage_buffer_minutes,
     },
 
     validate: {
@@ -164,6 +166,8 @@ function GeneralTournamentForm({
           values.start_time.toISOString(),
           values.duration_minutes,
           values.margin_minutes,
+          values.min_rest_minutes,
+          values.stage_buffer_minutes,
         );
 
         await swrTournamentResponse.mutate();
@@ -224,6 +228,24 @@ function GeneralTournamentForm({
               label={t('time_between_matches_label')}
               mt="lg"
               {...form.getInputProps('margin_minutes')}
+            />
+          </Grid.Col>
+          <Grid.Col span={{ sm: 6 }}>
+            <NumberInput
+              label={t('min_rest_label')}
+              description={t('min_rest_description')}
+              min={0}
+              mt="lg"
+              {...form.getInputProps('min_rest_minutes')}
+            />
+          </Grid.Col>
+          <Grid.Col span={{ sm: 6 }}>
+            <NumberInput
+              label={t('stage_buffer_label')}
+              description={t('stage_buffer_description')}
+              min={0}
+              mt="lg"
+              {...form.getInputProps('stage_buffer_minutes')}
             />
           </Grid.Col>
         </Grid>

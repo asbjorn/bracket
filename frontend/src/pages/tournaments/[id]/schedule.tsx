@@ -3,7 +3,6 @@ import {
   ActionIcon,
   Alert,
   Badge,
-  Button,
   Card,
   Grid,
   Group,
@@ -13,13 +12,14 @@ import {
   Title,
 } from '@mantine/core';
 import { AiFillWarning } from '@react-icons/all-files/ai/AiFillWarning';
-import { IconAlertCircle, IconCalendarPlus, IconDots, IconTrash } from '@tabler/icons-react';
+import { IconAlertCircle, IconDots, IconTrash } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SWRResponse } from 'swr';
 
 import CourtModal from '@components/modals/create_court_modal';
 import MatchModal from '@components/modals/match_modal';
+import MatchPlanPanel from '@components/scheduling/match_plan_panel';
 import { NoContent } from '@components/no_content/empty_table_info';
 import { DayAndTime, Time, spansMultipleDays } from '@components/utils/datetime';
 import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
@@ -37,7 +37,7 @@ import {
   getStageItemLookup,
   stringToColour,
 } from '@services/lookups';
-import { rescheduleMatch, scheduleMatches } from '@services/match';
+import { rescheduleMatch } from '@services/match';
 
 function ScheduleRow({
   index,
@@ -162,7 +162,10 @@ function ScheduleColumn({
           <div style={{ width: '25rem' }}>
             <Group justify="space-between">
               <Group>
-                <h4 style={{ marginTop: '0', margin: 'auto' }}>{court.name}</h4>
+                <h4 style={{ marginTop: '0', margin: 'auto' }}>
+                  {court.name}
+                  {court.game_format != null ? ` (${court.game_format})` : ''}
+                </h4>
               </Group>
               <Menu withinPortal position="bottom-end" shadow="sm">
                 <Menu.Target>
@@ -303,30 +306,14 @@ export default function SchedulePage() {
           round={null}
         />
       ) : null}
-      <Grid grow>
-        <Grid.Col span={6}>
-          <Title>{t('planning_title')}</Title>
-        </Grid.Col>
-        <Grid.Col span={6}>
-          {data.length < 1 ? null : (
-            <Group justify="right">
-              <Button
-                color="indigo"
-                size="md"
-                variant="filled"
-                style={{ marginBottom: 10 }}
-                leftSection={<IconCalendarPlus size={24} />}
-                onClick={async () => {
-                  await scheduleMatches(tournamentData.id);
-                  await swrStagesResponse.mutate();
-                }}
-              >
-                {t('schedule_description')}
-              </Button>
-            </Group>
-          )}
-        </Grid.Col>
-      </Grid>
+      <Title mb="md">{t('planning_title')}</Title>
+      <MatchPlanPanel
+        tournamentId={tournamentData.id}
+        swrCourtsResponse={swrCourtsResponse}
+        onApplied={async () => {
+          await swrStagesResponse.mutate();
+        }}
+      />
       <Group grow mt="1rem">
         <DragDropContext
           onDragEnd={async ({ destination, source, draggableId: matchId }) => {

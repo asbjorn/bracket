@@ -1,9 +1,14 @@
+import { GameFormat } from '@openapi';
 import { awaitRequestAndHandleError } from './adapter';
 
 export interface CategoryValues {
   name: string;
   age: number | null;
   results_public: boolean;
+  duration_minutes: number | null;
+  margin_minutes: number | null;
+  min_rest_minutes: number | null;
+  game_format: GameFormat | null;
 }
 
 export async function createCategory(tournament_id: number, values: CategoryValues) {

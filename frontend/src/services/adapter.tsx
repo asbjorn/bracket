@@ -18,6 +18,7 @@ import {
   StageRankingResponse,
   StagesWithStageItemsResponse,
   TeamsWithPlayersResponse,
+  TimeWindowsResponse,
   TournamentResponse,
   TournamentsResponse,
   UpcomingMatchesResponse,
@@ -220,6 +221,10 @@ export function getRankingsPerStageItem(
 ): SWRResponse<StageRankingResponse> {
   const query = category_id == null ? '' : `?category_id=${category_id}`;
   return useSWR(`tournaments/${tournament_id}/next_stage_rankings${query}`, fetcher);
+}
+
+export function getTimeWindows(tournament_id: number): SWRResponse<TimeWindowsResponse> {
+  return useSWR(`tournaments/${tournament_id}/time_windows`, fetcher);
 }
 
 export function getCategoryWarnings(tournament_id: number): SWRResponse<CategoryWarningsResponse> {

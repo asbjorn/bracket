@@ -1,15 +1,30 @@
-import { Alert, Button, Modal, NumberInput, Switch, TextInput } from '@mantine/core';
+import {
+  Alert,
+  Button,
+  Fieldset,
+  Grid,
+  Modal,
+  NumberInput,
+  Select,
+  Switch,
+  TextInput,
+} from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { IconInfoCircle } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { SWRResponse } from 'swr';
 
-import { CategoriesResponse, Category } from '@openapi';
+import { GAME_FORMATS } from '@components/scheduling/match_plan_panel';
+import { CategoriesResponse, Category, GameFormat } from '@openapi';
 import { requestSucceeded } from '@services/adapter';
 import { CategoryValues, createCategory, updateCategory } from '@services/category';
 
 // NFF: results and tables may only be published from the 13-year class (youth football)
 const YOUTH_FOOTBALL_MIN_AGE = 13;
+
+function optionalNumber(value: number | string): number | null {
+  return value === '' ? null : Number(value);
+}
 
 export function defaultResultsPublic(age: number | null) {
   return age == null || age >= YOUTH_FOOTBALL_MIN_AGE;
@@ -34,11 +49,23 @@ export default function CategoryModal({
   setOpened: (opened: boolean) => void;
 }) {
   const { t } = useTranslation();
-  const form = useForm<{ name: string; age: number | string; results_public: boolean }>({
+  const form = useForm<{
+    name: string;
+    age: number | string;
+    results_public: boolean;
+    duration_minutes: number | string;
+    margin_minutes: number | string;
+    min_rest_minutes: number | string;
+    game_format: string | null;
+  }>({
     initialValues: {
       name: category?.name ?? '',
       age: category?.age ?? '',
       results_public: category?.results_public ?? true,
+      duration_minutes: category?.duration_minutes ?? '',
+      margin_minutes: category?.margin_minutes ?? '',
+      min_rest_minutes: category?.min_rest_minutes ?? '',
+      game_format: category?.game_format ?? null,
     },
     validate: {
       name: (value) => (value.trim().length > 0 ? null : t('too_short_name_validation')),
@@ -57,6 +84,10 @@ export default function CategoryModal({
             name: values.name.trim(),
             age: values.age === '' ? null : Number(values.age),
             results_public: values.results_public,
+            duration_minutes: optionalNumber(values.duration_minutes),
+            margin_minutes: optionalNumber(values.margin_minutes),
+            min_rest_minutes: optionalNumber(values.min_rest_minutes),
+            game_format: values.game_format as GameFormat | null,
           };
           const result =
             category == null
@@ -107,6 +138,44 @@ export default function CategoryModal({
             {t('results_hidden_alert')}
           </Alert>
         ) : null}
+        <Fieldset legend={t('category_timing_legend')} mt="lg" radius="md">
+          <Grid>
+            <Grid.Col span={{ sm: 6 }}>
+              <NumberInput
+                label={t('match_duration_label')}
+                placeholder={t('tournament_default_placeholder')}
+                min={1}
+                {...form.getInputProps('duration_minutes')}
+              />
+            </Grid.Col>
+            <Grid.Col span={{ sm: 6 }}>
+              <NumberInput
+                label={t('time_between_matches_label')}
+                placeholder={t('tournament_default_placeholder')}
+                min={0}
+                {...form.getInputProps('margin_minutes')}
+              />
+            </Grid.Col>
+            <Grid.Col span={{ sm: 6 }}>
+              <NumberInput
+                label={t('min_rest_label')}
+                placeholder={t('tournament_default_placeholder')}
+                min={0}
+                {...form.getInputProps('min_rest_minutes')}
+              />
+            </Grid.Col>
+            <Grid.Col span={{ sm: 6 }}>
+              <Select
+                label={t('game_format_label')}
+                description={t('category_game_format_description')}
+                placeholder={t('game_format_any')}
+                clearable
+                data={GAME_FORMATS}
+                {...form.getInputProps('game_format')}
+              />
+            </Grid.Col>
+          </Grid>
+        </Fieldset>
         <Button fullWidth mt="lg" color="green" type="submit">
           {t('save_button')}
         </Button>
