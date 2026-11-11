@@ -21,10 +21,12 @@ from tests.integration_tests.models import AuthContext
 TEAM_NAMES = ["Brann", "Lyn", "Fana", "Os", "Nest-Sotra", "Åsane"]
 
 
-async def set_up_playable_cup(auth_context: AuthContext) -> dict[str, TeamId]:
-    """G10 with six teams drawn into two groups of three, planned on two courts."""
+async def set_up_playable_cup(
+    auth_context: AuthContext, cup_class: JsonDict = G10
+) -> dict[str, TeamId]:
+    """G10 (or another class) with six teams in two groups of three, planned on two courts."""
     body: JsonDict = {
-        "classes": [G10],
+        "classes": [cup_class],
         "courts": [{"count": 2, "name_prefix": "Bane", "game_format": "7v7"}],
         "time_windows": [WINDOW],
     }

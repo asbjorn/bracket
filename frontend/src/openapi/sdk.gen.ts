@@ -44,6 +44,12 @@ import type {
   CreateCupStructureTournamentsTournamentIdCupSetupPostData,
   CreateCupStructureTournamentsTournamentIdCupSetupPostErrors,
   CreateCupStructureTournamentsTournamentIdCupSetupPostResponses,
+  CreateJuryDecisionTournamentsTournamentIdJuryDecisionsPostData,
+  CreateJuryDecisionTournamentsTournamentIdJuryDecisionsPostErrors,
+  CreateJuryDecisionTournamentsTournamentIdJuryDecisionsPostResponses,
+  CreateMatchCardTournamentsTournamentIdMatchesMatchIdCardsPostData,
+  CreateMatchCardTournamentsTournamentIdMatchesMatchIdCardsPostErrors,
+  CreateMatchCardTournamentsTournamentIdMatchesMatchIdCardsPostResponses,
   CreateMatchTournamentsTournamentIdMatchesPostData,
   CreateMatchTournamentsTournamentIdMatchesPostErrors,
   CreateMatchTournamentsTournamentIdMatchesPostResponses,
@@ -92,6 +98,9 @@ import type {
   DelayScheduleTournamentsTournamentIdScheduleDelayPostData,
   DelayScheduleTournamentsTournamentIdScheduleDelayPostErrors,
   DelayScheduleTournamentsTournamentIdScheduleDelayPostResponses,
+  DeleteCardAtPitchScoreTokenCardsCardIdDeleteData,
+  DeleteCardAtPitchScoreTokenCardsCardIdDeleteErrors,
+  DeleteCardAtPitchScoreTokenCardsCardIdDeleteResponses,
   DeleteCategoryTournamentsTournamentIdCategoriesCategoryIdDeleteData,
   DeleteCategoryTournamentsTournamentIdCategoriesCategoryIdDeleteErrors,
   DeleteCategoryTournamentsTournamentIdCategoriesCategoryIdDeleteResponses,
@@ -104,6 +113,12 @@ import type {
   DeleteCourtTournamentsTournamentIdCourtsCourtIdDeleteData,
   DeleteCourtTournamentsTournamentIdCourtsCourtIdDeleteErrors,
   DeleteCourtTournamentsTournamentIdCourtsCourtIdDeleteResponses,
+  DeleteJuryDecisionTournamentsTournamentIdJuryDecisionsDecisionIdDeleteData,
+  DeleteJuryDecisionTournamentsTournamentIdJuryDecisionsDecisionIdDeleteErrors,
+  DeleteJuryDecisionTournamentsTournamentIdJuryDecisionsDecisionIdDeleteResponses,
+  DeleteMatchCardTournamentsTournamentIdCardsCardIdDeleteData,
+  DeleteMatchCardTournamentsTournamentIdCardsCardIdDeleteErrors,
+  DeleteMatchCardTournamentsTournamentIdCardsCardIdDeleteResponses,
   DeleteMatchTournamentsTournamentIdMatchesMatchIdDeleteData,
   DeleteMatchTournamentsTournamentIdMatchesMatchIdDeleteErrors,
   DeleteMatchTournamentsTournamentIdMatchesMatchIdDeleteResponses,
@@ -134,6 +149,9 @@ import type {
   DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostData,
   DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostErrors,
   DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostResponses,
+  EnterCardAtPitchScoreTokenMatchesMatchIdCardsPostData,
+  EnterCardAtPitchScoreTokenMatchesMatchIdCardsPostErrors,
+  EnterCardAtPitchScoreTokenMatchesMatchIdCardsPostResponses,
   EnterMatchResultScoreTokenMatchesMatchIdPutData,
   EnterMatchResultScoreTokenMatchesMatchIdPutErrors,
   EnterMatchResultScoreTokenMatchesMatchIdPutResponses,
@@ -204,6 +222,9 @@ import type {
   GetTournamentAnnouncementTournamentsTournamentIdAnnouncementGetData,
   GetTournamentAnnouncementTournamentsTournamentIdAnnouncementGetErrors,
   GetTournamentAnnouncementTournamentsTournamentIdAnnouncementGetResponses,
+  GetTournamentDisciplineTournamentsTournamentIdDisciplineGetData,
+  GetTournamentDisciplineTournamentsTournamentIdDisciplineGetErrors,
+  GetTournamentDisciplineTournamentsTournamentIdDisciplineGetResponses,
   GetTournamentOfficialsTournamentsTournamentIdOfficialsGetData,
   GetTournamentOfficialsTournamentsTournamentIdOfficialsGetErrors,
   GetTournamentOfficialsTournamentsTournamentIdOfficialsGetResponses,
@@ -292,6 +313,9 @@ import type {
   UpdateCourtByIdTournamentsTournamentIdCourtsCourtIdPutData,
   UpdateCourtByIdTournamentsTournamentIdCourtsCourtIdPutErrors,
   UpdateCourtByIdTournamentsTournamentIdCourtsCourtIdPutResponses,
+  UpdateDisciplineSettingsTournamentsTournamentIdDisciplineSettingsPutData,
+  UpdateDisciplineSettingsTournamentsTournamentIdDisciplineSettingsPutErrors,
+  UpdateDisciplineSettingsTournamentsTournamentIdDisciplineSettingsPutResponses,
   UpdateEntryFeesTournamentsTournamentIdEntryFeesPutData,
   UpdateEntryFeesTournamentsTournamentIdEntryFeesPutErrors,
   UpdateEntryFeesTournamentsTournamentIdEntryFeesPutResponses,
@@ -520,6 +544,26 @@ export const getScoreEntryScoreTokenGet = <ThrowOnError extends boolean = false>
   });
 
 /**
+ * Delete Card At Pitch
+ */
+export const deleteCardAtPitchScoreTokenCardsCardIdDelete = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteCardAtPitchScoreTokenCardsCardIdDeleteData, ThrowOnError>,
+): RequestResult<
+  DeleteCardAtPitchScoreTokenCardsCardIdDeleteResponses,
+  DeleteCardAtPitchScoreTokenCardsCardIdDeleteErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    DeleteCardAtPitchScoreTokenCardsCardIdDeleteResponses,
+    DeleteCardAtPitchScoreTokenCardsCardIdDeleteErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    url: '/score/{token}/cards/{card_id}',
+    ...options,
+  });
+
+/**
  * Enter Match Result
  */
 export const enterMatchResultScoreTokenMatchesMatchIdPut = <ThrowOnError extends boolean = false>(
@@ -536,6 +580,34 @@ export const enterMatchResultScoreTokenMatchesMatchIdPut = <ThrowOnError extends
   >({
     responseType: 'json',
     url: '/score/{token}/matches/{match_id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Enter Card At Pitch
+ *
+ * A yellow or red card (classes from 13 years with public results).
+ */
+export const enterCardAtPitchScoreTokenMatchesMatchIdCardsPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<EnterCardAtPitchScoreTokenMatchesMatchIdCardsPostData, ThrowOnError>,
+): RequestResult<
+  EnterCardAtPitchScoreTokenMatchesMatchIdCardsPostResponses,
+  EnterCardAtPitchScoreTokenMatchesMatchIdCardsPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    EnterCardAtPitchScoreTokenMatchesMatchIdCardsPostResponses,
+    EnterCardAtPitchScoreTokenMatchesMatchIdCardsPostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    url: '/score/{token}/matches/{match_id}/cards',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -840,6 +912,29 @@ export const getAvailableInputsTournamentsTournamentIdAvailableInputsGet = <
     responseType: 'json',
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/tournaments/{tournament_id}/available_inputs',
+    ...options,
+  });
+
+/**
+ * Delete Match Card
+ */
+export const deleteMatchCardTournamentsTournamentIdCardsCardIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<DeleteMatchCardTournamentsTournamentIdCardsCardIdDeleteData, ThrowOnError>,
+): RequestResult<
+  DeleteMatchCardTournamentsTournamentIdCardsCardIdDeleteResponses,
+  DeleteMatchCardTournamentsTournamentIdCardsCardIdDeleteErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    DeleteMatchCardTournamentsTournamentIdCardsCardIdDeleteResponses,
+    DeleteMatchCardTournamentsTournamentIdCardsCardIdDeleteErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/cards/{card_id}',
     ...options,
   });
 
@@ -1264,6 +1359,61 @@ export const createCupStructureTournamentsTournamentIdCupSetupPost = <
   });
 
 /**
+ * Get Tournament Discipline
+ *
+ * Cards, the suspensions that follow from them, the settings and the jury's log.
+ */
+export const getTournamentDisciplineTournamentsTournamentIdDisciplineGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetTournamentDisciplineTournamentsTournamentIdDisciplineGetData, ThrowOnError>,
+): RequestResult<
+  GetTournamentDisciplineTournamentsTournamentIdDisciplineGetResponses,
+  GetTournamentDisciplineTournamentsTournamentIdDisciplineGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetTournamentDisciplineTournamentsTournamentIdDisciplineGetResponses,
+    GetTournamentDisciplineTournamentsTournamentIdDisciplineGetErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/discipline',
+    ...options,
+  });
+
+/**
+ * Update Discipline Settings
+ */
+export const updateDisciplineSettingsTournamentsTournamentIdDisciplineSettingsPut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    UpdateDisciplineSettingsTournamentsTournamentIdDisciplineSettingsPutData,
+    ThrowOnError
+  >,
+): RequestResult<
+  UpdateDisciplineSettingsTournamentsTournamentIdDisciplineSettingsPutResponses,
+  UpdateDisciplineSettingsTournamentsTournamentIdDisciplineSettingsPutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    UpdateDisciplineSettingsTournamentsTournamentIdDisciplineSettingsPutResponses,
+    UpdateDisciplineSettingsTournamentsTournamentIdDisciplineSettingsPutErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/discipline_settings',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
  * Update Entry Fees
  */
 export const updateEntryFeesTournamentsTournamentIdEntryFeesPut = <
@@ -1288,6 +1438,61 @@ export const updateEntryFeesTournamentsTournamentIdEntryFeesPut = <
       'Content-Type': 'application/json',
       ...options.headers,
     },
+  });
+
+/**
+ * Create Jury Decision
+ *
+ * Logs a decision of the jury; with a card, it can add or remove suspended matches.
+ */
+export const createJuryDecisionTournamentsTournamentIdJuryDecisionsPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CreateJuryDecisionTournamentsTournamentIdJuryDecisionsPostData, ThrowOnError>,
+): RequestResult<
+  CreateJuryDecisionTournamentsTournamentIdJuryDecisionsPostResponses,
+  CreateJuryDecisionTournamentsTournamentIdJuryDecisionsPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    CreateJuryDecisionTournamentsTournamentIdJuryDecisionsPostResponses,
+    CreateJuryDecisionTournamentsTournamentIdJuryDecisionsPostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/jury_decisions',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete Jury Decision
+ */
+export const deleteJuryDecisionTournamentsTournamentIdJuryDecisionsDecisionIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    DeleteJuryDecisionTournamentsTournamentIdJuryDecisionsDecisionIdDeleteData,
+    ThrowOnError
+  >,
+): RequestResult<
+  DeleteJuryDecisionTournamentsTournamentIdJuryDecisionsDecisionIdDeleteResponses,
+  DeleteJuryDecisionTournamentsTournamentIdJuryDecisionsDecisionIdDeleteErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    DeleteJuryDecisionTournamentsTournamentIdJuryDecisionsDecisionIdDeleteResponses,
+    DeleteJuryDecisionTournamentsTournamentIdJuryDecisionsDecisionIdDeleteErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/jury_decisions/{decision_id}',
+    ...options,
   });
 
 /**
@@ -1408,6 +1613,33 @@ export const updateMatchByIdTournamentsTournamentIdMatchesMatchIdPut = <
     responseType: 'json',
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/tournaments/{tournament_id}/matches/{match_id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Create Match Card
+ */
+export const createMatchCardTournamentsTournamentIdMatchesMatchIdCardsPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CreateMatchCardTournamentsTournamentIdMatchesMatchIdCardsPostData, ThrowOnError>,
+): RequestResult<
+  CreateMatchCardTournamentsTournamentIdMatchesMatchIdCardsPostResponses,
+  CreateMatchCardTournamentsTournamentIdMatchesMatchIdCardsPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    CreateMatchCardTournamentsTournamentIdMatchesMatchIdCardsPostResponses,
+    CreateMatchCardTournamentsTournamentIdMatchesMatchIdCardsPostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/matches/{match_id}/cards',
     ...options,
     headers: {
       'Content-Type': 'application/json',

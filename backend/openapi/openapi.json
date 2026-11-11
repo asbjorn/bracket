@@ -494,6 +494,15 @@
         "title": "CapacityWarning",
         "type": "string"
       },
+      "CardType": {
+        "enum": [
+          "YELLOW",
+          "YELLOW_RED",
+          "RED"
+        ],
+        "title": "CardType",
+        "type": "string"
+      },
       "CategoriesResponse": {
         "properties": {
           "data": {
@@ -1353,6 +1362,84 @@
         "title": "DemoUserToRegister",
         "type": "object"
       },
+      "DisciplineOverview": {
+        "properties": {
+          "cards": {
+            "items": {
+              "$ref": "#/components/schemas/MatchCard"
+            },
+            "title": "Cards",
+            "type": "array"
+          },
+          "decisions": {
+            "items": {
+              "$ref": "#/components/schemas/JuryDecision"
+            },
+            "title": "Decisions",
+            "type": "array"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/DisciplineSettingsBody"
+          },
+          "suspensions": {
+            "items": {
+              "$ref": "#/components/schemas/Suspension"
+            },
+            "title": "Suspensions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "settings",
+          "cards",
+          "suspensions",
+          "decisions"
+        ],
+        "title": "DisciplineOverview",
+        "type": "object"
+      },
+      "DisciplineOverviewResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DisciplineOverview"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "DisciplineOverviewResponse",
+        "type": "object"
+      },
+      "DisciplineSettingsBody": {
+        "properties": {
+          "suspension_matches_per_red": {
+            "default": 1,
+            "maximum": 5.0,
+            "minimum": 0.0,
+            "title": "Suspension Matches Per Red",
+            "type": "integer"
+          },
+          "yellow_cards_for_suspension": {
+            "anyOf": [
+              {
+                "maximum": 10.0,
+                "minimum": 2.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yellow Cards For Suspension"
+          }
+        },
+        "required": [
+          "suspension_matches_per_red",
+          "yellow_cards_for_suspension"
+        ],
+        "title": "DisciplineSettingsBody",
+        "type": "object"
+      },
       "DrawBody": {
         "description": "`pots`: the teams to draw, pot by pot (best teams first). One pot is a plain random draw.\n`seed`: the same seed gives the same draw.",
         "properties": {
@@ -1646,6 +1733,152 @@
         ],
         "title": "IssueKind",
         "type": "string"
+      },
+      "JuryDecision": {
+        "properties": {
+          "card_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Card Id"
+          },
+          "decided_at": {
+            "format": "date-time",
+            "title": "Decided At",
+            "type": "string"
+          },
+          "decided_by": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided By"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "match_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Id"
+          },
+          "suspension_change": {
+            "default": 0,
+            "maximum": 10.0,
+            "minimum": -10.0,
+            "title": "Suspension Change",
+            "type": "integer"
+          },
+          "team_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team Id"
+          },
+          "text": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          },
+          "tournament_id": {
+            "title": "Tournament Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "text",
+          "match_id",
+          "team_id",
+          "card_id",
+          "suspension_change",
+          "id",
+          "tournament_id",
+          "decided_at",
+          "decided_by"
+        ],
+        "title": "JuryDecision",
+        "type": "object"
+      },
+      "JuryDecisionBody": {
+        "properties": {
+          "card_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Card Id"
+          },
+          "match_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Id"
+          },
+          "suspension_change": {
+            "default": 0,
+            "maximum": 10.0,
+            "minimum": -10.0,
+            "title": "Suspension Change",
+            "type": "integer"
+          },
+          "team_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team Id"
+          },
+          "text": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "match_id",
+          "team_id",
+          "card_id",
+          "suspension_change"
+        ],
+        "title": "JuryDecisionBody",
+        "type": "object"
       },
       "Match": {
         "properties": {
@@ -2015,6 +2248,165 @@
           "stage_item_input2_penalties"
         ],
         "title": "MatchBody",
+        "type": "object"
+      },
+      "MatchCard": {
+        "properties": {
+          "card_type": {
+            "$ref": "#/components/schemas/CardType"
+          },
+          "created": {
+            "format": "date-time",
+            "title": "Created",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "match_id": {
+            "title": "Match Id",
+            "type": "integer"
+          },
+          "minute": {
+            "anyOf": [
+              {
+                "maximum": 200.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minute"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "player_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Player Id"
+          },
+          "player_name": {
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Player Name",
+            "type": "string"
+          },
+          "team_id": {
+            "title": "Team Id",
+            "type": "integer"
+          },
+          "tournament_id": {
+            "title": "Tournament Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "team_id",
+          "player_name",
+          "player_id",
+          "card_type",
+          "minute",
+          "note",
+          "id",
+          "tournament_id",
+          "match_id",
+          "created"
+        ],
+        "title": "MatchCard",
+        "type": "object"
+      },
+      "MatchCardBody": {
+        "properties": {
+          "card_type": {
+            "$ref": "#/components/schemas/CardType"
+          },
+          "minute": {
+            "anyOf": [
+              {
+                "maximum": 200.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minute"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "player_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Player Id"
+          },
+          "player_name": {
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Player Name",
+            "type": "string"
+          },
+          "team_id": {
+            "title": "Team Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "team_id",
+          "player_name",
+          "player_id",
+          "card_type",
+          "minute",
+          "note"
+        ],
+        "title": "MatchCardBody",
+        "type": "object"
+      },
+      "MatchCardResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/MatchCard"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "MatchCardResponse",
         "type": "object"
       },
       "MatchCreateBodyFrontend": {
@@ -4728,6 +5120,14 @@
             "title": "Assistant Names",
             "type": "array"
           },
+          "cards": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/MatchCard"
+            },
+            "title": "Cards",
+            "type": "array"
+          },
           "category_name": {
             "anyOf": [
               {
@@ -4760,6 +5160,11 @@
               }
             ],
             "title": "Court Name"
+          },
+          "discipline_allowed": {
+            "default": false,
+            "title": "Discipline Allowed",
+            "type": "boolean"
           },
           "duration_minutes": {
             "title": "Duration Minutes",
@@ -4837,6 +5242,14 @@
             ],
             "title": "Start Time"
           },
+          "suspended_players": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/SuspendedPlayer"
+            },
+            "title": "Suspended Players",
+            "type": "array"
+          },
           "team1_checked_in": {
             "title": "Team1 Checked In",
             "type": "boolean"
@@ -4912,7 +5325,10 @@
           "played",
           "result_type",
           "referee_name",
-          "assistant_names"
+          "assistant_names",
+          "discipline_allowed",
+          "cards",
+          "suspended_players"
         ],
         "title": "ScoreEntryMatch",
         "type": "object"
@@ -6233,6 +6649,73 @@
         "title": "SuggestedMatch",
         "type": "object"
       },
+      "SuspendedPlayer": {
+        "description": "For the pitch page and printed cards: who may not play in this match.",
+        "properties": {
+          "player_name": {
+            "title": "Player Name",
+            "type": "string"
+          },
+          "team_id": {
+            "title": "Team Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "team_id",
+          "player_name"
+        ],
+        "title": "SuspendedPlayer",
+        "type": "object"
+      },
+      "Suspension": {
+        "properties": {
+          "card_id": {
+            "title": "Card Id",
+            "type": "integer"
+          },
+          "match_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Match Ids",
+            "type": "array"
+          },
+          "matches": {
+            "title": "Matches",
+            "type": "integer"
+          },
+          "player_name": {
+            "title": "Player Name",
+            "type": "string"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/SuspensionReason"
+          },
+          "team_id": {
+            "title": "Team Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "team_id",
+          "player_name",
+          "reason",
+          "card_id",
+          "match_ids",
+          "matches"
+        ],
+        "title": "Suspension",
+        "type": "object"
+      },
+      "SuspensionReason": {
+        "enum": [
+          "RED_CARD",
+          "YELLOW_CARDS"
+        ],
+        "title": "SuspensionReason",
+        "type": "string"
+      },
       "Team": {
         "properties": {
           "active": {
@@ -7101,7 +7584,7 @@
     }
   },
   "info": {
-    "description": "\n### Description\nThis API allows you to do everything the frontend of [Bracket](https://github.com/evroon/bracket)\nallows you to do (the frontend uses this API as well).\n\nFore more information, see the [documentation](https://docs.bracketapp.nl).\n\n### Table of Contents\n*(links only work for [ReDoc](https://api.bracketapp.nl/redoc), not for Swagger UI)*\n\n- [Auth](#tag/Auth)\n\n- [Capacity](#tag/Capacity)\n\n- [Cup setup](#tag/Cup-setup)\n\n- [Draw](#tag/Draw)\n\n- [Officials](#tag/Officials)\n\n- [Public info](#tag/Public-info)\n\n- [Registrations](#tag/Registrations)\n\n- [Score links](#tag/Score-links)\n\n- [Categories](#tag/Categories)\n\n- [Clubs](#tag/Clubs)\n\n- [Courts](#tag/Courts)\n\n- [Internals](#tag/Internals)\n\n- [Matches](#tag/Matches)\n\n- [Players](#tag/Players)\n\n- [Rankings](#tag/Rankings)\n\n- [Rounds](#tag/Rounds)\n\n- [Stage Items](#tag/Stage-Items)\n\n- [Stage Item Inputs](#tag/Stage-Item-Inputs)\n\n- [Stages](#tag/Stages)\n\n- [Teams](#tag/Teams)\n\n- [Tournaments](#tag/Tournaments)\n\n- [Users](#tag/Users)\n\n### Links\nGitHub: <https://github.com/evroon/bracket>\n\nDocs: <https://docs.bracketapp.nl>\n\nDemo: <https://www.bracketapp.nl/demo>\n\nAPI docs (Redoc): <https://api.bracketapp.nl/redoc>\n\nAPI docs (Swagger UI): <https://api.bracketapp.nl/docs>\n",
+    "description": "\n### Description\nThis API allows you to do everything the frontend of [Bracket](https://github.com/evroon/bracket)\nallows you to do (the frontend uses this API as well).\n\nFore more information, see the [documentation](https://docs.bracketapp.nl).\n\n### Table of Contents\n*(links only work for [ReDoc](https://api.bracketapp.nl/redoc), not for Swagger UI)*\n\n- [Auth](#tag/Auth)\n\n- [Capacity](#tag/Capacity)\n\n- [Cup setup](#tag/Cup-setup)\n\n- [Draw](#tag/Draw)\n\n- [Officials](#tag/Officials)\n\n- [Discipline](#tag/Discipline)\n\n- [Public info](#tag/Public-info)\n\n- [Registrations](#tag/Registrations)\n\n- [Score links](#tag/Score-links)\n\n- [Categories](#tag/Categories)\n\n- [Clubs](#tag/Clubs)\n\n- [Courts](#tag/Courts)\n\n- [Internals](#tag/Internals)\n\n- [Matches](#tag/Matches)\n\n- [Players](#tag/Players)\n\n- [Rankings](#tag/Rankings)\n\n- [Rounds](#tag/Rounds)\n\n- [Stage Items](#tag/Stage-Items)\n\n- [Stage Item Inputs](#tag/Stage-Item-Inputs)\n\n- [Stages](#tag/Stages)\n\n- [Teams](#tag/Teams)\n\n- [Tournaments](#tag/Tournaments)\n\n- [Users](#tag/Users)\n\n### Links\nGitHub: <https://github.com/evroon/bracket>\n\nDocs: <https://docs.bracketapp.nl>\n\nDemo: <https://www.bracketapp.nl/demo>\n\nAPI docs (Redoc): <https://api.bracketapp.nl/redoc>\n\nAPI docs (Swagger UI): <https://api.bracketapp.nl/docs>\n",
     "license": {
       "name": "AGPL-3.0",
       "url": "https://www.gnu.org/licenses/agpl-3.0.en.html"
@@ -7417,6 +7900,57 @@
         ]
       }
     },
+    "/score/{token}/cards/{card_id}": {
+      "delete": {
+        "operationId": "delete_card_at_pitch_score__token__cards__card_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "card_id",
+            "required": true,
+            "schema": {
+              "title": "Card Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Card At Pitch",
+        "tags": [
+          "Score links"
+        ]
+      }
+    },
     "/score/{token}/matches/{match_id}": {
       "put": {
         "operationId": "enter_match_result_score__token__matches__match_id__put",
@@ -7473,6 +8007,68 @@
           }
         },
         "summary": "Enter Match Result",
+        "tags": [
+          "Score links"
+        ]
+      }
+    },
+    "/score/{token}/matches/{match_id}/cards": {
+      "post": {
+        "description": "A yellow or red card (classes from 13 years with public results).",
+        "operationId": "enter_card_at_pitch_score__token__matches__match_id__cards_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "match_id",
+            "required": true,
+            "schema": {
+              "title": "Match Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MatchCardBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchCardResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Enter Card At Pitch",
         "tags": [
           "Score links"
         ]
@@ -8097,6 +8693,62 @@
         "summary": "Get Available Inputs",
         "tags": [
           "Stages"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/cards/{card_id}": {
+      "delete": {
+        "operationId": "delete_match_card_tournaments__tournament_id__cards__card_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "card_id",
+            "required": true,
+            "schema": {
+              "title": "Card Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Delete Match Card",
+        "tags": [
+          "Discipline"
         ]
       }
     },
@@ -8992,6 +9644,111 @@
         ]
       }
     },
+    "/tournaments/{tournament_id}/discipline": {
+      "get": {
+        "description": "Cards, the suspensions that follow from them, the settings and the jury's log.",
+        "operationId": "get_tournament_discipline_tournaments__tournament_id__discipline_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisciplineOverviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Tournament Discipline",
+        "tags": [
+          "Discipline"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/discipline_settings": {
+      "put": {
+        "operationId": "update_discipline_settings_tournaments__tournament_id__discipline_settings_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisciplineSettingsBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Discipline Settings",
+        "tags": [
+          "Discipline"
+        ]
+      }
+    },
     "/tournaments/{tournament_id}/entry_fees": {
       "put": {
         "operationId": "update_entry_fees_tournaments__tournament_id__entry_fees_put",
@@ -9046,6 +9803,120 @@
         "summary": "Update Entry Fees",
         "tags": [
           "Registrations"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/jury_decisions": {
+      "post": {
+        "description": "Logs a decision of the jury; with a card, it can add or remove suspended matches.",
+        "operationId": "create_jury_decision_tournaments__tournament_id__jury_decisions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JuryDecisionBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Jury Decision",
+        "tags": [
+          "Discipline"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/jury_decisions/{decision_id}": {
+      "delete": {
+        "operationId": "delete_jury_decision_tournaments__tournament_id__jury_decisions__decision_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "decision_id",
+            "required": true,
+            "schema": {
+              "title": "Decision Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Delete Jury Decision",
+        "tags": [
+          "Discipline"
         ]
       }
     },
@@ -9322,6 +10193,72 @@
         "summary": "Update Match By Id",
         "tags": [
           "Matches"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/matches/{match_id}/cards": {
+      "post": {
+        "operationId": "create_match_card_tournaments__tournament_id__matches__match_id__cards_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "match_id",
+            "required": true,
+            "schema": {
+              "title": "Match Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MatchCardBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchCardResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Match Card",
+        "tags": [
+          "Discipline"
         ]
       }
     },

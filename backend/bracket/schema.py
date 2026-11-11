@@ -45,6 +45,9 @@ tournaments = Table(
     Column("min_rest_minutes", Integer, nullable=False, server_default="0"),
     Column("stage_buffer_minutes", Integer, nullable=False, server_default="10"),
     Column("walkover_goals", Integer, nullable=False, server_default="3"),
+    # Discipline (13+): matches suspended per red card; yellow cards that give a suspension
+    Column("suspension_matches_per_red", Integer, nullable=False, server_default="1"),
+    Column("yellow_cards_for_suspension", Integer, nullable=True),
     # Public banner, e.g. a weather warning: text, "INFO" or "WARNING", shown until (optional)
     Column("announcement_text", Text, nullable=True),
     Column("announcement_level", Text, nullable=True),
@@ -501,4 +504,55 @@ court_hosts = Table(
     ),
     Column("start_time", DateTimeTZ, nullable=False),
     Column("end_time", DateTimeTZ, nullable=False),
+)
+
+# Cards in a match (only classes from 13 years with public results)
+match_cards = Table(
+    "match_cards",
+    metadata,
+    Column("id", BigInteger, primary_key=True, index=True),
+    Column(
+        "tournament_id",
+        BigInteger,
+        ForeignKey("tournaments.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    ),
+    Column(
+        "match_id",
+        BigInteger,
+        ForeignKey("matches.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    ),
+    Column("team_id", BigInteger, ForeignKey("teams.id", ondelete="CASCADE"), nullable=False),
+    Column("player_name", Text, nullable=False),
+    Column("player_id", BigInteger, ForeignKey("players.id", ondelete="SET NULL"), nullable=True),
+    # YELLOW, YELLOW_RED (second yellow, counts as red) or RED
+    Column("card_type", Text, nullable=False),
+    Column("minute", Integer, nullable=True),
+    Column("note", Text, nullable=True),
+    Column("created", DateTimeTZ, nullable=False, server_default=func.now()),
+)
+
+# The jury's log; a decision about a card can change its suspension
+jury_decisions = Table(
+    "jury_decisions",
+    metadata,
+    Column("id", BigInteger, primary_key=True, index=True),
+    Column(
+        "tournament_id",
+        BigInteger,
+        ForeignKey("tournaments.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    ),
+    Column("match_id", BigInteger, ForeignKey("matches.id", ondelete="SET NULL"), nullable=True),
+    Column("team_id", BigInteger, ForeignKey("teams.id", ondelete="SET NULL"), nullable=True),
+    Column("card_id", BigInteger, ForeignKey("match_cards.id", ondelete="SET NULL"), nullable=True),
+    Column("text", Text, nullable=False),
+    # Matches added to (or removed from, when negative) the suspension of the card
+    Column("suspension_change", Integer, nullable=False, server_default="0"),
+    Column("decided_at", DateTimeTZ, nullable=False, server_default=func.now()),
+    Column("decided_by", BigInteger, ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
 )

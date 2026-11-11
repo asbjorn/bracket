@@ -258,6 +258,11 @@ export type CapacityWarning =
   | 'PLAYOFFS_IN_CHILDRENS_FOOTBALL';
 
 /**
+ * CardType
+ */
+export type CardType = 'YELLOW' | 'YELLOW_RED' | 'RED';
+
+/**
  * CategoriesResponse
  */
 export type CategoriesResponse = {
@@ -707,6 +712,46 @@ export type DemoUserToRegister = {
 };
 
 /**
+ * DisciplineOverview
+ */
+export type DisciplineOverview = {
+  /**
+   * Cards
+   */
+  cards: Array<MatchCard>;
+  /**
+   * Decisions
+   */
+  decisions: Array<JuryDecision>;
+  settings: DisciplineSettingsBody;
+  /**
+   * Suspensions
+   */
+  suspensions: Array<Suspension>;
+};
+
+/**
+ * DisciplineOverviewResponse
+ */
+export type DisciplineOverviewResponse = {
+  data: DisciplineOverview;
+};
+
+/**
+ * DisciplineSettingsBody
+ */
+export type DisciplineSettingsBody = {
+  /**
+   * Suspension Matches Per Red
+   */
+  suspension_matches_per_red: number;
+  /**
+   * Yellow Cards For Suspension
+   */
+  yellow_cards_for_suspension: number | null;
+};
+
+/**
  * DrawBody
  *
  * `pots`: the teams to draw, pot by pot (best teams first). One pot is a plain random draw.
@@ -878,6 +923,74 @@ export type IssueKind =
   | 'BEFORE_DEPENDENCY';
 
 /**
+ * JuryDecision
+ */
+export type JuryDecision = {
+  /**
+   * Card Id
+   */
+  card_id: number | null;
+  /**
+   * Decided At
+   */
+  decided_at: string;
+  /**
+   * Decided By
+   */
+  decided_by: number | null;
+  /**
+   * Id
+   */
+  id: number;
+  /**
+   * Match Id
+   */
+  match_id: number | null;
+  /**
+   * Suspension Change
+   */
+  suspension_change: number;
+  /**
+   * Team Id
+   */
+  team_id: number | null;
+  /**
+   * Text
+   */
+  text: string;
+  /**
+   * Tournament Id
+   */
+  tournament_id: number;
+};
+
+/**
+ * JuryDecisionBody
+ */
+export type JuryDecisionBody = {
+  /**
+   * Card Id
+   */
+  card_id: number | null;
+  /**
+   * Match Id
+   */
+  match_id: number | null;
+  /**
+   * Suspension Change
+   */
+  suspension_change: number;
+  /**
+   * Team Id
+   */
+  team_id: number | null;
+  /**
+   * Text
+   */
+  text: string;
+};
+
+/**
  * Match
  */
 export type Match = {
@@ -1035,6 +1148,83 @@ export type MatchBody = {
    * Stage Item Input2 Score
    */
   stage_item_input2_score: number;
+};
+
+/**
+ * MatchCard
+ */
+export type MatchCard = {
+  card_type: CardType;
+  /**
+   * Created
+   */
+  created: string;
+  /**
+   * Id
+   */
+  id: number;
+  /**
+   * Match Id
+   */
+  match_id: number;
+  /**
+   * Minute
+   */
+  minute: number | null;
+  /**
+   * Note
+   */
+  note: string | null;
+  /**
+   * Player Id
+   */
+  player_id: number | null;
+  /**
+   * Player Name
+   */
+  player_name: string;
+  /**
+   * Team Id
+   */
+  team_id: number;
+  /**
+   * Tournament Id
+   */
+  tournament_id: number;
+};
+
+/**
+ * MatchCardBody
+ */
+export type MatchCardBody = {
+  card_type: CardType;
+  /**
+   * Minute
+   */
+  minute: number | null;
+  /**
+   * Note
+   */
+  note: string | null;
+  /**
+   * Player Id
+   */
+  player_id: number | null;
+  /**
+   * Player Name
+   */
+  player_name: string;
+  /**
+   * Team Id
+   */
+  team_id: number;
+};
+
+/**
+ * MatchCardResponse
+ */
+export type MatchCardResponse = {
+  data: MatchCard;
 };
 
 /**
@@ -2426,6 +2616,10 @@ export type ScoreEntryMatch = {
    */
   assistant_names: Array<string>;
   /**
+   * Cards
+   */
+  cards: Array<MatchCard>;
+  /**
    * Category Name
    */
   category_name: string | null;
@@ -2437,6 +2631,10 @@ export type ScoreEntryMatch = {
    * Court Name
    */
   court_name: string | null;
+  /**
+   * Discipline Allowed
+   */
+  discipline_allowed: boolean;
   /**
    * Duration Minutes
    */
@@ -2482,6 +2680,10 @@ export type ScoreEntryMatch = {
    * Start Time
    */
   start_time: string | null;
+  /**
+   * Suspended Players
+   */
+  suspended_players: Array<SuspendedPlayer>;
   /**
    * Team1 Checked In
    */
@@ -3289,6 +3491,54 @@ export type SuggestedMatch = {
 };
 
 /**
+ * SuspendedPlayer
+ *
+ * For the pitch page and printed cards: who may not play in this match.
+ */
+export type SuspendedPlayer = {
+  /**
+   * Player Name
+   */
+  player_name: string;
+  /**
+   * Team Id
+   */
+  team_id: number;
+};
+
+/**
+ * Suspension
+ */
+export type Suspension = {
+  /**
+   * Card Id
+   */
+  card_id: number;
+  /**
+   * Match Ids
+   */
+  match_ids: Array<number>;
+  /**
+   * Matches
+   */
+  matches: number;
+  /**
+   * Player Name
+   */
+  player_name: string;
+  reason: SuspensionReason;
+  /**
+   * Team Id
+   */
+  team_id: number;
+};
+
+/**
+ * SuspensionReason
+ */
+export type SuspensionReason = 'RED_CARD' | 'YELLOW_CARDS';
+
+/**
  * Team
  */
 export type Team = {
@@ -4027,6 +4277,42 @@ export type GetScoreEntryScoreTokenGetResponses = {
 export type GetScoreEntryScoreTokenGetResponse =
   GetScoreEntryScoreTokenGetResponses[keyof GetScoreEntryScoreTokenGetResponses];
 
+export type DeleteCardAtPitchScoreTokenCardsCardIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Card Id
+     */
+    card_id: number;
+    /**
+     * Token
+     */
+    token: string;
+  };
+  query?: never;
+  url: '/score/{token}/cards/{card_id}';
+};
+
+export type DeleteCardAtPitchScoreTokenCardsCardIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteCardAtPitchScoreTokenCardsCardIdDeleteError =
+  DeleteCardAtPitchScoreTokenCardsCardIdDeleteErrors[keyof DeleteCardAtPitchScoreTokenCardsCardIdDeleteErrors];
+
+export type DeleteCardAtPitchScoreTokenCardsCardIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type DeleteCardAtPitchScoreTokenCardsCardIdDeleteResponse =
+  DeleteCardAtPitchScoreTokenCardsCardIdDeleteResponses[keyof DeleteCardAtPitchScoreTokenCardsCardIdDeleteResponses];
+
 export type EnterMatchResultScoreTokenMatchesMatchIdPutData = {
   body: ScoreEntryBody;
   path: {
@@ -4062,6 +4348,42 @@ export type EnterMatchResultScoreTokenMatchesMatchIdPutResponses = {
 
 export type EnterMatchResultScoreTokenMatchesMatchIdPutResponse =
   EnterMatchResultScoreTokenMatchesMatchIdPutResponses[keyof EnterMatchResultScoreTokenMatchesMatchIdPutResponses];
+
+export type EnterCardAtPitchScoreTokenMatchesMatchIdCardsPostData = {
+  body: MatchCardBody;
+  path: {
+    /**
+     * Match Id
+     */
+    match_id: number;
+    /**
+     * Token
+     */
+    token: string;
+  };
+  query?: never;
+  url: '/score/{token}/matches/{match_id}/cards';
+};
+
+export type EnterCardAtPitchScoreTokenMatchesMatchIdCardsPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type EnterCardAtPitchScoreTokenMatchesMatchIdCardsPostError =
+  EnterCardAtPitchScoreTokenMatchesMatchIdCardsPostErrors[keyof EnterCardAtPitchScoreTokenMatchesMatchIdCardsPostErrors];
+
+export type EnterCardAtPitchScoreTokenMatchesMatchIdCardsPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: MatchCardResponse;
+};
+
+export type EnterCardAtPitchScoreTokenMatchesMatchIdCardsPostResponse =
+  EnterCardAtPitchScoreTokenMatchesMatchIdCardsPostResponses[keyof EnterCardAtPitchScoreTokenMatchesMatchIdCardsPostResponses];
 
 export type EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutData = {
   body: WalkoverBody;
@@ -4448,6 +4770,42 @@ export type GetAvailableInputsTournamentsTournamentIdAvailableInputsGetResponses
 
 export type GetAvailableInputsTournamentsTournamentIdAvailableInputsGetResponse =
   GetAvailableInputsTournamentsTournamentIdAvailableInputsGetResponses[keyof GetAvailableInputsTournamentsTournamentIdAvailableInputsGetResponses];
+
+export type DeleteMatchCardTournamentsTournamentIdCardsCardIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+    /**
+     * Card Id
+     */
+    card_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/cards/{card_id}';
+};
+
+export type DeleteMatchCardTournamentsTournamentIdCardsCardIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteMatchCardTournamentsTournamentIdCardsCardIdDeleteError =
+  DeleteMatchCardTournamentsTournamentIdCardsCardIdDeleteErrors[keyof DeleteMatchCardTournamentsTournamentIdCardsCardIdDeleteErrors];
+
+export type DeleteMatchCardTournamentsTournamentIdCardsCardIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type DeleteMatchCardTournamentsTournamentIdCardsCardIdDeleteResponse =
+  DeleteMatchCardTournamentsTournamentIdCardsCardIdDeleteResponses[keyof DeleteMatchCardTournamentsTournamentIdCardsCardIdDeleteResponses];
 
 export type GetCategoriesTournamentsTournamentIdCategoriesGetData = {
   body?: never;
@@ -4995,6 +5353,70 @@ export type CreateCupStructureTournamentsTournamentIdCupSetupPostResponses = {
 export type CreateCupStructureTournamentsTournamentIdCupSetupPostResponse =
   CreateCupStructureTournamentsTournamentIdCupSetupPostResponses[keyof CreateCupStructureTournamentsTournamentIdCupSetupPostResponses];
 
+export type GetTournamentDisciplineTournamentsTournamentIdDisciplineGetData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/discipline';
+};
+
+export type GetTournamentDisciplineTournamentsTournamentIdDisciplineGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetTournamentDisciplineTournamentsTournamentIdDisciplineGetError =
+  GetTournamentDisciplineTournamentsTournamentIdDisciplineGetErrors[keyof GetTournamentDisciplineTournamentsTournamentIdDisciplineGetErrors];
+
+export type GetTournamentDisciplineTournamentsTournamentIdDisciplineGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: DisciplineOverviewResponse;
+};
+
+export type GetTournamentDisciplineTournamentsTournamentIdDisciplineGetResponse =
+  GetTournamentDisciplineTournamentsTournamentIdDisciplineGetResponses[keyof GetTournamentDisciplineTournamentsTournamentIdDisciplineGetResponses];
+
+export type UpdateDisciplineSettingsTournamentsTournamentIdDisciplineSettingsPutData = {
+  body: DisciplineSettingsBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/discipline_settings';
+};
+
+export type UpdateDisciplineSettingsTournamentsTournamentIdDisciplineSettingsPutErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateDisciplineSettingsTournamentsTournamentIdDisciplineSettingsPutError =
+  UpdateDisciplineSettingsTournamentsTournamentIdDisciplineSettingsPutErrors[keyof UpdateDisciplineSettingsTournamentsTournamentIdDisciplineSettingsPutErrors];
+
+export type UpdateDisciplineSettingsTournamentsTournamentIdDisciplineSettingsPutResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type UpdateDisciplineSettingsTournamentsTournamentIdDisciplineSettingsPutResponse =
+  UpdateDisciplineSettingsTournamentsTournamentIdDisciplineSettingsPutResponses[keyof UpdateDisciplineSettingsTournamentsTournamentIdDisciplineSettingsPutResponses];
+
 export type UpdateEntryFeesTournamentsTournamentIdEntryFeesPutData = {
   body: EntryFeeBody;
   path: {
@@ -5026,6 +5448,74 @@ export type UpdateEntryFeesTournamentsTournamentIdEntryFeesPutResponses = {
 
 export type UpdateEntryFeesTournamentsTournamentIdEntryFeesPutResponse =
   UpdateEntryFeesTournamentsTournamentIdEntryFeesPutResponses[keyof UpdateEntryFeesTournamentsTournamentIdEntryFeesPutResponses];
+
+export type CreateJuryDecisionTournamentsTournamentIdJuryDecisionsPostData = {
+  body: JuryDecisionBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/jury_decisions';
+};
+
+export type CreateJuryDecisionTournamentsTournamentIdJuryDecisionsPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateJuryDecisionTournamentsTournamentIdJuryDecisionsPostError =
+  CreateJuryDecisionTournamentsTournamentIdJuryDecisionsPostErrors[keyof CreateJuryDecisionTournamentsTournamentIdJuryDecisionsPostErrors];
+
+export type CreateJuryDecisionTournamentsTournamentIdJuryDecisionsPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type CreateJuryDecisionTournamentsTournamentIdJuryDecisionsPostResponse =
+  CreateJuryDecisionTournamentsTournamentIdJuryDecisionsPostResponses[keyof CreateJuryDecisionTournamentsTournamentIdJuryDecisionsPostResponses];
+
+export type DeleteJuryDecisionTournamentsTournamentIdJuryDecisionsDecisionIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+    /**
+     * Decision Id
+     */
+    decision_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/jury_decisions/{decision_id}';
+};
+
+export type DeleteJuryDecisionTournamentsTournamentIdJuryDecisionsDecisionIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteJuryDecisionTournamentsTournamentIdJuryDecisionsDecisionIdDeleteError =
+  DeleteJuryDecisionTournamentsTournamentIdJuryDecisionsDecisionIdDeleteErrors[keyof DeleteJuryDecisionTournamentsTournamentIdJuryDecisionsDecisionIdDeleteErrors];
+
+export type DeleteJuryDecisionTournamentsTournamentIdJuryDecisionsDecisionIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type DeleteJuryDecisionTournamentsTournamentIdJuryDecisionsDecisionIdDeleteResponse =
+  DeleteJuryDecisionTournamentsTournamentIdJuryDecisionsDecisionIdDeleteResponses[keyof DeleteJuryDecisionTournamentsTournamentIdJuryDecisionsDecisionIdDeleteResponses];
 
 export type UploadLogoTournamentsTournamentIdLogoPostData = {
   body?: BodyUploadLogoTournamentsTournamentIdLogoPost;
@@ -5194,6 +5684,42 @@ export type UpdateMatchByIdTournamentsTournamentIdMatchesMatchIdPutResponses = {
 
 export type UpdateMatchByIdTournamentsTournamentIdMatchesMatchIdPutResponse =
   UpdateMatchByIdTournamentsTournamentIdMatchesMatchIdPutResponses[keyof UpdateMatchByIdTournamentsTournamentIdMatchesMatchIdPutResponses];
+
+export type CreateMatchCardTournamentsTournamentIdMatchesMatchIdCardsPostData = {
+  body: MatchCardBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+    /**
+     * Match Id
+     */
+    match_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/matches/{match_id}/cards';
+};
+
+export type CreateMatchCardTournamentsTournamentIdMatchesMatchIdCardsPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateMatchCardTournamentsTournamentIdMatchesMatchIdCardsPostError =
+  CreateMatchCardTournamentsTournamentIdMatchesMatchIdCardsPostErrors[keyof CreateMatchCardTournamentsTournamentIdMatchesMatchIdCardsPostErrors];
+
+export type CreateMatchCardTournamentsTournamentIdMatchesMatchIdCardsPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: MatchCardResponse;
+};
+
+export type CreateMatchCardTournamentsTournamentIdMatchesMatchIdCardsPostResponse =
+  CreateMatchCardTournamentsTournamentIdMatchesMatchIdCardsPostResponses[keyof CreateMatchCardTournamentsTournamentIdMatchesMatchIdCardsPostResponses];
 
 export type SetMatchOfficialsTournamentsTournamentIdMatchesMatchIdOfficialsPutData = {
   body: MatchOfficialsBody;

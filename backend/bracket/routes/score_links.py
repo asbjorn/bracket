@@ -6,11 +6,14 @@ from starlette import status
 from bracket.config import config
 from bracket.logic.score_entry import (
     check_in_team,
+    delete_card,
+    enter_card,
     enter_result,
     enter_walkover,
     get_score_entry_view,
     score_link_dependency,
 )
+from bracket.models.db.discipline import MatchCardBody
 from bracket.models.db.score_link import (
     CheckInBody,
     MatchDayNoticeBody,
@@ -24,6 +27,7 @@ from bracket.models.db.tournament import Tournament
 from bracket.models.db.user import UserPublic
 from bracket.routes.auth import user_authenticated_for_tournament
 from bracket.routes.models import (
+    MatchCardResponse,
     MatchDayNoticeResponse,
     MatchDayNoticesResponse,
     ScoreEntryViewResponse,
@@ -41,7 +45,14 @@ from bracket.sql.score_links import (
     sql_revoke_score_link,
 )
 from bracket.sql.validation import check_foreign_keys_belong_to_tournament
-from bracket.utils.id_types import MatchDayNoticeId, MatchId, ScoreLinkId, TeamId, TournamentId
+from bracket.utils.id_types import (
+    MatchCardId,
+    MatchDayNoticeId,
+    MatchId,
+    ScoreLinkId,
+    TeamId,
+    TournamentId,
+)
 
 router = APIRouter(prefix=config.api_prefix)
 
@@ -150,4 +161,20 @@ async def check_in_team_at_pitch(
     team_id: TeamId, body: CheckInBody, link: ScoreLink = Depends(score_link_dependency)
 ) -> SuccessResponse:
     await check_in_team(link, team_id, body.checked_in)
+    return SuccessResponse()
+
+
+@router.post("/score/{token}/matches/{match_id}/cards", response_model=MatchCardResponse)
+async def enter_card_at_pitch(
+    match_id: MatchId, body: MatchCardBody, link: ScoreLink = Depends(score_link_dependency)
+) -> MatchCardResponse:
+    """A yellow or red card (classes from 13 years with public results)."""
+    return MatchCardResponse(data=await enter_card(link, match_id, body))
+
+
+@router.delete("/score/{token}/cards/{card_id}", response_model=SuccessResponse)
+async def delete_card_at_pitch(
+    card_id: MatchCardId, link: ScoreLink = Depends(score_link_dependency)
+) -> SuccessResponse:
+    await delete_card(link, card_id)
     return SuccessResponse()

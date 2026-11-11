@@ -8,6 +8,7 @@ import {
   IconBrowser,
   IconCalculator,
   IconCalendar,
+  IconCards,
   IconCategory,
   IconClipboardList,
   IconDots,
@@ -164,6 +165,11 @@ export function TournamentLinks({ tournament_id }: any) {
       icon: IconUserShield,
       label: t('officials_title'),
       link: `${tm_prefix}/officials`,
+    },
+    {
+      icon: IconCards,
+      label: t('discipline_title'),
+      link: `${tm_prefix}/discipline`,
     },
     {
       icon: IconBrackets,

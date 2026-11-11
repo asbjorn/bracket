@@ -6,8 +6,11 @@ to a tournament and optionally to one court; only those matches can be seen and 
 from fastapi import HTTPException, Request
 from starlette import status
 
+from bracket.logic.discipline import discipline_allowed
+from bracket.logic.discipline_service import check_card, get_suspended_players
 from bracket.logic.match_results import save_match
 from bracket.logic.walkovers import record_walkover, set_team_flag, team_of
+from bracket.models.db.discipline import MatchCard, MatchCardBody
 from bracket.models.db.match import MatchWithDetails, MatchWithDetailsDefinitive
 from bracket.models.db.official import MatchOfficialRole
 from bracket.models.db.score_link import (
@@ -20,11 +23,12 @@ from bracket.models.db.stage_item_inputs import StageItemInputFinal
 from bracket.models.db.tournament import TournamentStatus
 from bracket.sql.categories import get_all_categories_in_tournament
 from bracket.sql.courts import get_all_courts_in_tournament
+from bracket.sql.discipline import get_cards, sql_create_card, sql_delete_card
 from bracket.sql.officials import get_public_match_officials
 from bracket.sql.score_links import get_valid_score_link
 from bracket.sql.stages import get_full_tournament_details
 from bracket.sql.tournaments import sql_get_tournament
-from bracket.utils.id_types import MatchId, TeamId
+from bracket.utils.id_types import MatchCardId, MatchId, TeamId
 from bracket.utils.rate_limit import SlidingWindowLimiter
 
 # Per link and client: reading (the page refreshes) and writing (results, check-ins, notices).
@@ -53,9 +57,11 @@ async def get_link_matches(
 ) -> list[tuple[ScoreEntryMatch, MatchWithDetails | MatchWithDetailsDefinitive]]:
     """The scheduled matches the link gives access to, in order of time."""
     stages = await get_full_tournament_details(link.tournament_id)
-    categories = {c.id: c.name for c in await get_all_categories_in_tournament(link.tournament_id)}
+    categories = {c.id: c for c in await get_all_categories_in_tournament(link.tournament_id)}
     courts = {c.id: c.name for c in await get_all_courts_in_tournament(link.tournament_id)}
     officials = await get_public_match_officials(link.tournament_id)
+    cards = await get_cards(link.tournament_id)
+    suspended = await get_suspended_players(link.tournament_id)
 
     result = []
     for stage in stages:
@@ -66,6 +72,9 @@ async def get_link_matches(
                         continue
                     if link.court_id is not None and match.court_id != link.court_id:
                         continue
+                    category = (
+                        categories.get(stage.category_id) if stage.category_id is not None else None
+                    )
                     team1_id, team1_name = team_of(match.stage_item_input1)
                     team2_id, team2_name = team_of(match.stage_item_input2)
                     checked_in = {
@@ -80,11 +89,7 @@ async def get_link_matches(
                         court_name=courts.get(match.court_id),
                         start_time=match.start_time,
                         duration_minutes=match.duration_minutes,
-                        category_name=(
-                            categories.get(stage.category_id)
-                            if stage.category_id is not None
-                            else None
-                        ),
+                        category_name=category.name if category is not None else None,
                         stage_item_name=stage_item.name,
                         team1_id=team1_id,
                         team1_name=team1_name,
@@ -111,6 +116,9 @@ async def get_link_matches(
                             for o in officials
                             if o.match_id == match.id and o.role is MatchOfficialRole.ASSISTANT
                         ],
+                        discipline_allowed=discipline_allowed(category),
+                        cards=[card for card in cards if card.match_id == match.id],
+                        suspended_players=suspended.get(match.id, []),
                     )
                     result.append((entry, match))
     result.sort(key=lambda pair: (pair[0].start_time, pair[0].court_name or "", pair[0].id))
@@ -175,3 +183,18 @@ async def check_in_team(link: ScoreLink, team_id: TeamId, checked_in: bool) -> N
             status.HTTP_404_NOT_FOUND, "This team can't be checked in with this link"
         )
     await set_team_flag(link.tournament_id, team_id, checked_in=checked_in)
+
+
+async def enter_card(link: ScoreLink, match_id: MatchId, body: MatchCardBody) -> MatchCard:
+    await get_enterable_match(link, match_id)
+    await check_card(link.tournament_id, match_id, body)
+    return await sql_create_card(link.tournament_id, match_id, body)
+
+
+async def delete_card(link: ScoreLink, card_id: MatchCardId) -> None:
+    """Only cards of the link's matches (e.g. a card entered by mistake)."""
+    link_match_ids = {entry.id for entry, _ in await get_link_matches(link)}
+    card = next((c for c in await get_cards(link.tournament_id) if c.id == card_id), None)
+    if card is None or card.match_id not in link_match_ids:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "This card can't be changed with this link")
+    await sql_delete_card(link.tournament_id, card_id)

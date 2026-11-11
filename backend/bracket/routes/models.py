@@ -8,6 +8,7 @@ from bracket.logic.scheduling.stage_draw import DrawPlacement
 from bracket.models.db.category import Category
 from bracket.models.db.club import Club
 from bracket.models.db.court import Court
+from bracket.models.db.discipline import DisciplineOverview, MatchCard
 from bracket.models.db.match import Match, SuggestedMatch
 from bracket.models.db.official import Official, OfficialsOverview, PublicMatchOfficial
 from bracket.models.db.player import Player
@@ -124,6 +125,14 @@ class ScheduleProposalResponse(DataResponse[ScheduleProposal]):
 
 
 class PlanIssuesResponse(DataResponse[list[PlanIssueOut]]):
+    pass
+
+
+class DisciplineOverviewResponse(DataResponse[DisciplineOverview]):
+    pass
+
+
+class MatchCardResponse(DataResponse[MatchCard]):
     pass
 
 

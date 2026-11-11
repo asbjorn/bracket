@@ -1,4 +1,5 @@
 import {
+  Accordion,
   ActionIcon,
   Alert,
   Badge,
@@ -32,9 +33,11 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
 
+import { CardsEditor, SuspendedAlert } from '@components/discipline/cards_editor';
 import { Time } from '@components/utils/datetime';
 import { MatchResultType, ScoreEntryMatch } from '@openapi';
 import { requestSucceeded } from '@services/adapter';
+import { createCardAtPitch, deleteCardAtPitch } from '@services/discipline';
 import {
   checkInAtPitch,
   enterResult,
@@ -45,6 +48,13 @@ import {
 
 const RESULT_TYPES: MatchResultType[] = ['NORMAL', 'EXTRA_TIME', 'PENALTIES', 'WALKOVER'];
 const DELAY_CHOICES = [5, 10, 15, 30];
+
+function teamsOf(match: ScoreEntryMatch) {
+  return [
+    { id: match.team1_id as number, name: match.team1_name ?? '?' },
+    { id: match.team2_id as number, name: match.team2_name ?? '?' },
+  ];
+}
 
 function canBeEntered(match: ScoreEntryMatch) {
   return match.team1_id != null && match.team2_id != null;
@@ -472,6 +482,9 @@ export default function ScoreEntryPage() {
                 ) : null}
               </Group>
               {canBeEntered(selected) ? (
+                <SuspendedAlert suspended={selected.suspended_players} teams={teamsOf(selected)} />
+              ) : null}
+              {canBeEntered(selected) ? (
                 <CheckInRow
                   token={token}
                   match={selected}
@@ -493,6 +506,31 @@ export default function ScoreEntryPage() {
               ) : (
                 <Alert color="gray">{t('score_teams_unknown')}</Alert>
               )}
+              {canBeEntered(selected) && selected.discipline_allowed ? (
+                <Accordion variant="contained">
+                  <Accordion.Item value="cards">
+                    <Accordion.Control>
+                      {t('cards_title')}
+                      {selected.cards.length > 0 ? ` (${selected.cards.length})` : ''}
+                    </Accordion.Control>
+                    <Accordion.Panel>
+                      <CardsEditor
+                        cards={selected.cards}
+                        teams={teamsOf(selected)}
+                        onAdd={async (body) => {
+                          const response = await createCardAtPitch(token, selected.id, body);
+                          await swrView.mutate();
+                          return response;
+                        }}
+                        onDelete={async (cardId) => {
+                          await deleteCardAtPitch(token, cardId);
+                          await swrView.mutate();
+                        }}
+                      />
+                    </Accordion.Panel>
+                  </Accordion.Item>
+                </Accordion>
+              ) : null}
             </Stack>
           </Card>
         ) : (

@@ -3,6 +3,7 @@ from typing import Annotated, Self
 from heliclockter import datetime_utc
 from pydantic import BaseModel, Field, StringConstraints, ValidationError, model_validator
 
+from bracket.models.db.discipline import MatchCard, SuspendedPlayer
 from bracket.models.db.match import MatchBody, MatchResultType
 from bracket.models.db.shared import BaseModelORM
 from bracket.utils.id_types import (
@@ -68,6 +69,10 @@ class ScoreEntryMatch(BaseModel):
     # Names only, never contact details
     referee_name: str | None = None
     assistant_names: list[str] = []
+    # Discipline (13+ with public results): cards of the match and who sits it out
+    discipline_allowed: bool = False
+    cards: list[MatchCard] = []
+    suspended_players: list[SuspendedPlayer] = []
 
 
 class ScoreEntryView(BaseModel):

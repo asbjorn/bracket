@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { SWRResponse } from 'swr';
 
 import DeleteButton from '@components/buttons/delete';
+import { CardsEditor, SuspendedAlert } from '@components/discipline/cards_editor';
 import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
 import { TournamentMinimal } from '@components/utils/tournament';
 import {
@@ -23,6 +24,14 @@ import {
   RoundWithMatches,
   StagesWithStageItemsResponse,
 } from '@openapi';
+import { getCategories } from '@services/adapter';
+import {
+  categoryOfStageItem,
+  createCard,
+  deleteCard,
+  disciplineAllowed,
+  getDiscipline,
+} from '@services/discipline';
 import { getMatchLookup, getStageItemLookup } from '@services/lookups';
 import { deleteMatch, giveWalkover, updateMatch } from '@services/match';
 
@@ -64,16 +73,12 @@ function MatchModalForm({
   round,
 }: {
   tournamentData: TournamentMinimal;
-  match: MatchWithDetails | null;
+  match: MatchWithDetails;
   swrStagesResponse: SWRResponse<StagesWithStageItemsResponse>;
   swrUpcomingMatchesResponse: SWRResponse | null;
   setOpened: any;
   round: RoundWithMatches | null;
 }) {
-  if (match == null) {
-    return null;
-  }
-
   const { t } = useTranslation();
   const form = useForm({
     initialValues: {
@@ -121,6 +126,8 @@ function MatchModalForm({
 
   const stageItemsLookup = getStageItemLookup(swrStagesResponse);
   const matchesLookup = getMatchLookup(swrStagesResponse);
+  const categories = getCategories(tournamentData.id).data?.data ?? [];
+  const swrDiscipline = getDiscipline(tournamentData.id);
 
   const team1Name = formatMatchInput1(t, stageItemsLookup, matchesLookup, match);
   const team2Name = formatMatchInput2(t, stageItemsLookup, matchesLookup, match);
@@ -132,9 +139,25 @@ function MatchModalForm({
     { teamId: teamIdOf(match.stage_item_input2), name: team2Name },
   ];
   const canGiveWalkover = walkoverWinners.every((winner) => winner.teamId != null);
+  const matchTeams = walkoverWinners.map((winner) => ({
+    id: winner.teamId as number,
+    name: winner.name,
+  }));
+  // Cards only for classes from 13 years with public results (NFF)
+  const stageItemId = matchesLookup[match.id]?.stageItem?.id;
+  const allowsCards =
+    stageItemId != null &&
+    disciplineAllowed(
+      categoryOfStageItem(swrStagesResponse.data?.data ?? [], categories, stageItemId),
+    );
+  const suspendedHere = (swrDiscipline.data?.data.suspensions ?? [])
+    .filter((suspension) => suspension.match_ids.includes(match.id))
+    .map((suspension) => ({
+      team_id: suspension.team_id,
+      player_name: suspension.player_name,
+    }));
 
   async function walkover(winnerTeamId: number) {
-    if (match == null) return;
     const result = await giveWalkover(tournamentData.id, match.id, winnerTeamId);
     if (result == null) return;
     await swrStagesResponse.mutate();
@@ -321,6 +344,28 @@ function MatchModalForm({
           </Grid.Col>
         </Grid>
       </form>
+      {canGiveWalkover && allowsCards ? (
+        <>
+          <Divider mt="lg" />
+          <Text fw={500} mt="lg" mb="xs">
+            {t('cards_title')}
+          </Text>
+          <SuspendedAlert suspended={suspendedHere} teams={matchTeams} />
+          <CardsEditor
+            cards={(swrDiscipline.data?.data.cards ?? []).filter((c) => c.match_id === match.id)}
+            teams={matchTeams}
+            onAdd={async (body) => {
+              const response = await createCard(tournamentData.id, match.id, body);
+              await swrDiscipline.mutate();
+              return response;
+            }}
+            onDelete={async (cardId) => {
+              await deleteCard(tournamentData.id, cardId);
+              await swrDiscipline.mutate();
+            }}
+          />
+        </>
+      ) : null}
       {round && round.is_draft && (
         <MatchDeleteButton
           swrStagesResponse={swrStagesResponse}
@@ -355,14 +400,18 @@ export default function MatchModal({
   return (
     <>
       <Modal opened={opened} onClose={() => setOpened(false)} title={t('edit_match_modal_title')}>
-        <MatchModalForm
-          swrStagesResponse={swrStagesResponse}
-          swrUpcomingMatchesResponse={swrUpcomingMatchesResponse}
-          tournamentData={tournamentData}
-          match={match}
-          setOpened={setOpened}
-          round={round}
-        />
+        {/* Keyed by match: hooks and form state start fresh for every match */}
+        {match != null ? (
+          <MatchModalForm
+            key={match.id}
+            swrStagesResponse={swrStagesResponse}
+            swrUpcomingMatchesResponse={swrUpcomingMatchesResponse}
+            tournamentData={tournamentData}
+            match={match}
+            setOpened={setOpened}
+            round={round}
+          />
+        ) : null}
       </Modal>
     </>
   );

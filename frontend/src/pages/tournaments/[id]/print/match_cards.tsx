@@ -15,6 +15,7 @@ import { getTournamentIdFromRouter } from '@components/utils/util';
 import { MatchWithDetails, StageItemWithRounds } from '@openapi';
 import TournamentLayout from '@pages/tournaments/_tournament_layout';
 import { getCategories, getCourts, getStages } from '@services/adapter';
+import { getDiscipline } from '@services/discipline';
 import { getMatchOfficials, refereeNamesByMatch } from '@services/officials';
 import { getMatchLookup, getStageItemLookup } from '@services/lookups';
 
@@ -45,6 +46,7 @@ function MatchCard({
   team1,
   team2,
   referee,
+  suspended,
 }: {
   match: MatchWithDetails;
   stageItem: StageItemWithRounds;
@@ -52,6 +54,8 @@ function MatchCard({
   team1: string;
   team2: string;
   referee: string | null;
+  // Players who sit out this match (suspension)
+  suspended: string[];
 }) {
   const { t } = useTranslation();
   return (
@@ -85,6 +89,11 @@ function MatchCard({
             {t('referee_label')}: <b>{referee}</b>
           </Text>
         ) : null}
+        {suspended.length > 0 ? (
+          <Text size="sm" c="dark">
+            {t('suspended_players_title')}: <b>{suspended.join(', ')}</b>
+          </Text>
+        ) : null}
         <Text size="xs" c="dark">
           #{match.id} · {t('match_card_notes_label')}
         </Text>
@@ -104,6 +113,7 @@ export default function MatchCardsPage() {
   const swrStagesResponse = getStages(tournamentData.id);
   const courts = getCourts(tournamentData.id).data?.data ?? [];
   const referees = refereeNamesByMatch(getMatchOfficials(tournamentData.id).data?.data ?? []);
+  const discipline = getDiscipline(tournamentData.id).data?.data;
   const categories = getCategories(tournamentData.id).data?.data ?? [];
   const { filterValue, setFilterValue, filterCategoryId } = useCategoryFilter(categories);
   const [courtId, setCourtId] = useState<string | null>(null);
@@ -188,6 +198,9 @@ export default function MatchCardsPage() {
                 team1={formatMatchInput1(t, stageItemsLookup, matchesLookup, data.match)}
                 team2={formatMatchInput2(t, stageItemsLookup, matchesLookup, data.match)}
                 referee={referees[data.match.id] ?? null}
+                suspended={(discipline?.suspensions ?? [])
+                  .filter((suspension) => suspension.match_ids.includes(data.match.id))
+                  .map((suspension) => suspension.player_name)}
               />
             );
           })}
