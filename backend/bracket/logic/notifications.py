@@ -400,9 +400,6 @@ async def queue_registration_email(
     if len(recipients) < 1:
         return
     [recipient] = recipients
-    if await too_many_registration_emails(tournament_id, recipient.email):
-        logger.warning(f"Not confirming registration of team {team_id}: too many emails")
-        return
     texts = TEXTS[await get_language(tournament_id)]
     category = recipient.category_name or ""
     if waitlist_place is None:
@@ -414,9 +411,23 @@ async def queue_registration_email(
         tournament_id, recipient, subject_key, [line], personal=False
     )
     key = f"registration:{team_id}:{'waitlist' if waitlist_place is not None else 'registered'}"
-    await queue(
-        tournament_id, recipient, NotificationKind.REGISTRATION, key, subject, body, reply_to
-    )
+    async with database.transaction():
+        # Check and queue at once: concurrent sign-ups can't pass the limits together.
+        # Always the tournament first, then the address, so two locks can't deadlock.
+        await database.execute(
+            "SELECT pg_advisory_xact_lock(hashtext(:key))",
+            values={"key": f"registration-email:tournament:{tournament_id}"},
+        )
+        await database.execute(
+            "SELECT pg_advisory_xact_lock(hashtext(:key))",
+            values={"key": f"registration-email:address:{recipient.email.lower()}"},
+        )
+        if await too_many_registration_emails(tournament_id, recipient.email):
+            logger.warning(f"Not confirming registration of team {team_id}: too many emails")
+            return
+        await queue(
+            tournament_id, recipient, NotificationKind.REGISTRATION, key, subject, body, reply_to
+        )
 
 
 async def too_many_registration_emails(tournament_id: TournamentId, email: str) -> bool:

@@ -1,3 +1,4 @@
+import asyncio
 from email.message import EmailMessage
 
 import pytest
@@ -322,3 +323,30 @@ async def test_names_without_control_characters(
         HTTPMethod.POST, "categories", auth_context, json={"name": "G10\nBcc: x"}
     )
     assert "control characters" in str(response)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_registration_email_limit_holds_under_concurrency(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    """Six confirmations at once to one address: exactly three are queued."""
+    tournament_id = auth_context.tournament.id
+    sender = FakeSender()
+    try:
+        team_ids = await set_up_playable_cup(auth_context)
+        await add_contacts(auth_context, team_ids)
+        await database.execute(
+            team_registrations.update().where(team_registrations.c.tournament_id == tournament_id),
+            values={"contact_email": "same@example.org"},
+        )
+        set_email_sender(sender)
+        await asyncio.gather(
+            *(
+                queue_registration_email(tournament_id, team_ids[name], place)
+                for name in CONTACTS
+                for place in (None, 1)
+            )
+        )
+        assert await process_pending(sender) == 3
+    finally:
+        await clean_up(auth_context)
