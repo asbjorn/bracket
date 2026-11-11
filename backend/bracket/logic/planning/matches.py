@@ -12,6 +12,7 @@ from bracket.models.db.tournament import Tournament
 from bracket.models.db.util import StageWithStageItems
 from bracket.sql.courts import get_all_courts_in_tournament
 from bracket.sql.matches import (
+    sql_apply_default_timing,
     sql_reschedule_match_and_determine_duration_and_margin,
 )
 from bracket.sql.stages import get_full_tournament_details
@@ -20,9 +21,9 @@ from bracket.utils.id_types import CourtId, MatchId, TournamentId
 from bracket.utils.types import assert_some
 
 
-async def schedule_all_unscheduled_matches(
-    tournament_id: TournamentId, stages: list[StageWithStageItems]
-) -> None:
+async def schedule_all_unscheduled_matches(tournament_id: TournamentId) -> None:
+    await sql_apply_default_timing(tournament_id)
+    stages = await get_full_tournament_details(tournament_id)
     tournament = await sql_get_tournament(tournament_id)
     courts = await get_all_courts_in_tournament(tournament_id)
 
@@ -102,6 +103,7 @@ async def handle_match_reschedule(
     if body.old_position == body.new_position and body.old_court_id == body.new_court_id:
         return
 
+    await sql_apply_default_timing(tournament.id)
     stages = await get_full_tournament_details(tournament.id)
     scheduled_matches_old = get_scheduled_matches(stages)
 
@@ -136,6 +138,7 @@ async def handle_match_reschedule(
 
 
 async def update_start_times_of_matches(tournament_id: TournamentId) -> None:
+    await sql_apply_default_timing(tournament_id)
     stages = await get_full_tournament_details(tournament_id)
     tournament = await sql_get_tournament(tournament_id)
     courts = await get_all_courts_in_tournament(tournament_id)

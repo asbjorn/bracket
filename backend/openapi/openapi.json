@@ -140,9 +140,52 @@
             "title": "Created",
             "type": "string"
           },
+          "duration_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Minutes"
+          },
+          "game_format": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GameFormat"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "id": {
             "title": "Id",
             "type": "integer"
+          },
+          "margin_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Margin Minutes"
+          },
+          "min_rest_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Rest Minutes"
           },
           "name": {
             "title": "Name",
@@ -164,6 +207,10 @@
           "created",
           "age",
           "results_public",
+          "duration_minutes",
+          "margin_minutes",
+          "min_rest_minutes",
+          "game_format",
           "id"
         ],
         "title": "Category",
@@ -184,6 +231,55 @@
               }
             ],
             "title": "Age"
+          },
+          "duration_minutes": {
+            "anyOf": [
+              {
+                "maximum": 240.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Minutes"
+          },
+          "game_format": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GameFormat"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "margin_minutes": {
+            "anyOf": [
+              {
+                "maximum": 120.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Margin Minutes"
+          },
+          "min_rest_minutes": {
+            "anyOf": [
+              {
+                "maximum": 600.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Rest Minutes"
           },
           "name": {
             "maxLength": 50,
@@ -206,7 +302,11 @@
         "required": [
           "name",
           "age",
-          "results_public"
+          "results_public",
+          "duration_minutes",
+          "margin_minutes",
+          "min_rest_minutes",
+          "game_format"
         ],
         "title": "CategoryBody",
         "type": "object"
@@ -364,6 +464,16 @@
             "title": "Created",
             "type": "string"
           },
+          "game_format": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GameFormat"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "id": {
             "title": "Id",
             "type": "integer"
@@ -381,6 +491,7 @@
           "name",
           "created",
           "tournament_id",
+          "game_format",
           "id"
         ],
         "title": "Court",
@@ -388,15 +499,61 @@
       },
       "CourtBody": {
         "properties": {
+          "game_format": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GameFormat"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "name": {
             "title": "Name",
             "type": "string"
           }
         },
         "required": [
-          "name"
+          "name",
+          "game_format"
         ],
         "title": "CourtBody",
+        "type": "object"
+      },
+      "CourtsMultiBody": {
+        "description": "Creates courts \"<name_prefix> 1\", \"<name_prefix> 2\", ... continuing the numbering.",
+        "properties": {
+          "count": {
+            "maximum": 32.0,
+            "minimum": 1.0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "game_format": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GameFormat"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name_prefix": {
+            "default": "Court",
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Name Prefix",
+            "type": "string"
+          }
+        },
+        "required": [
+          "count",
+          "name_prefix",
+          "game_format"
+        ],
+        "title": "CourtsMultiBody",
         "type": "object"
       },
       "CourtsResponse": {
@@ -525,6 +682,18 @@
         ],
         "title": "FullTeamWithPlayers",
         "type": "object"
+      },
+      "GameFormat": {
+        "description": "NFF game formats (\"spilleformer\"); smaller formats are played on parts of a full pitch.",
+        "enum": [
+          "3v3",
+          "5v5",
+          "7v7",
+          "9v9",
+          "11v11"
+        ],
+        "title": "GameFormat",
+        "type": "string"
       },
       "HTTPValidationError": {
         "properties": {
@@ -3404,6 +3573,90 @@
         "title": "Tiebreaker",
         "type": "string"
       },
+      "TimeWindow": {
+        "properties": {
+          "end_time": {
+            "format": "date-time",
+            "title": "End Time",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "start_time": {
+            "format": "date-time",
+            "title": "Start Time",
+            "type": "string"
+          },
+          "tournament_id": {
+            "title": "Tournament Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "start_time",
+          "end_time",
+          "id",
+          "tournament_id"
+        ],
+        "title": "TimeWindow",
+        "type": "object"
+      },
+      "TimeWindowBody": {
+        "properties": {
+          "end_time": {
+            "format": "date-time",
+            "title": "End Time",
+            "type": "string"
+          },
+          "start_time": {
+            "format": "date-time",
+            "title": "Start Time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start_time",
+          "end_time"
+        ],
+        "title": "TimeWindowBody",
+        "type": "object"
+      },
+      "TimeWindowsBody": {
+        "description": "The periods in which matches can be played, e.g. 09:00-12:00 and 12:45-17:00 on both days.\nReplaces all existing time windows of the tournament.",
+        "properties": {
+          "time_windows": {
+            "items": {
+              "$ref": "#/components/schemas/TimeWindowBody"
+            },
+            "maxItems": 60,
+            "title": "Time Windows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "time_windows"
+        ],
+        "title": "TimeWindowsBody",
+        "type": "object"
+      },
+      "TimeWindowsResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/TimeWindow"
+            },
+            "title": "Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "TimeWindowsResponse",
+        "type": "object"
+      },
       "Token": {
         "properties": {
           "access_token": {
@@ -3494,6 +3747,12 @@
             "title": "Margin Minutes",
             "type": "integer"
           },
+          "min_rest_minutes": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Min Rest Minutes",
+            "type": "integer"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -3501,6 +3760,12 @@
           "players_can_be_in_multiple_teams": {
             "title": "Players Can Be In Multiple Teams",
             "type": "boolean"
+          },
+          "stage_buffer_minutes": {
+            "default": 10,
+            "minimum": 0.0,
+            "title": "Stage Buffer Minutes",
+            "type": "integer"
           },
           "start_time": {
             "format": "date-time",
@@ -3519,6 +3784,8 @@
           "start_time",
           "duration_minutes",
           "margin_minutes",
+          "min_rest_minutes",
+          "stage_buffer_minutes",
           "dashboard_public",
           "dashboard_endpoint",
           "logo_path",
@@ -3563,6 +3830,13 @@
             "title": "Margin Minutes",
             "type": "integer"
           },
+          "min_rest_minutes": {
+            "default": 0,
+            "maximum": 600.0,
+            "minimum": 0.0,
+            "title": "Min Rest Minutes",
+            "type": "integer"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -3570,6 +3844,13 @@
           "players_can_be_in_multiple_teams": {
             "title": "Players Can Be In Multiple Teams",
             "type": "boolean"
+          },
+          "stage_buffer_minutes": {
+            "default": 10,
+            "maximum": 600.0,
+            "minimum": 0.0,
+            "title": "Stage Buffer Minutes",
+            "type": "integer"
           },
           "start_time": {
             "format": "date-time",
@@ -3586,6 +3867,8 @@
           "auto_assign_courts",
           "duration_minutes",
           "margin_minutes",
+          "min_rest_minutes",
+          "stage_buffer_minutes",
           "club_id"
         ],
         "title": "TournamentBody",
@@ -3652,6 +3935,13 @@
             "title": "Margin Minutes",
             "type": "integer"
           },
+          "min_rest_minutes": {
+            "default": 0,
+            "maximum": 600.0,
+            "minimum": 0.0,
+            "title": "Min Rest Minutes",
+            "type": "integer"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -3659,6 +3949,13 @@
           "players_can_be_in_multiple_teams": {
             "title": "Players Can Be In Multiple Teams",
             "type": "boolean"
+          },
+          "stage_buffer_minutes": {
+            "default": 10,
+            "maximum": 600.0,
+            "minimum": 0.0,
+            "title": "Stage Buffer Minutes",
+            "type": "integer"
           },
           "start_time": {
             "format": "date-time",
@@ -3674,7 +3971,9 @@
           "players_can_be_in_multiple_teams",
           "auto_assign_courts",
           "duration_minutes",
-          "margin_minutes"
+          "margin_minutes",
+          "min_rest_minutes",
+          "stage_buffer_minutes"
         ],
         "title": "TournamentUpdateBody",
         "type": "object"
@@ -4983,6 +5282,64 @@
           }
         ],
         "summary": "Update Court By Id",
+        "tags": [
+          "Courts"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/courts_multi": {
+      "post": {
+        "description": "Creates `count` courts named \"<name_prefix> 1\", \"<name_prefix> 2\", etc.",
+        "operationId": "create_multiple_courts_tournaments__tournament_id__courts_multi_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CourtsMultiBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourtsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Multiple Courts",
         "tags": [
           "Courts"
         ]
@@ -7360,6 +7717,109 @@
         "summary": "Create Multiple Teams",
         "tags": [
           "Teams"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/time_windows": {
+      "get": {
+        "operationId": "get_tournament_time_windows_tournaments__tournament_id__time_windows_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeWindowsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Tournament Time Windows",
+        "tags": [
+          "Courts"
+        ]
+      },
+      "put": {
+        "description": "Sets the periods in which matches can be played, replacing the existing ones.",
+        "operationId": "replace_tournament_time_windows_tournaments__tournament_id__time_windows_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TimeWindowsBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeWindowsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Replace Tournament Time Windows",
+        "tags": [
+          "Courts"
         ]
       }
     },

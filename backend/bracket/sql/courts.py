@@ -19,13 +19,18 @@ async def update_court(
 ) -> list[Court]:
     query = """
         UPDATE courts
-        SET name = :name
+        SET name = :name, game_format = :game_format
         WHERE courts.tournament_id = :tournament_id
         AND courts.id = :court_id
         """
     result = await database.fetch_all(
         query=query,
-        values={"tournament_id": tournament_id, "court_id": court_id, "name": court_body.name},
+        values={
+            "tournament_id": tournament_id,
+            "court_id": court_id,
+            "name": court_body.name,
+            "game_format": court_body.game_format.value if court_body.game_format else None,
+        },
     )
     return [Court.model_validate(dict(x._mapping)) for x in result]
 

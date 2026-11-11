@@ -27,6 +27,7 @@ async def test_courts_endpoint(
                         "created": DUMMY_MOCK_TIME.isoformat().replace("+00:00", "Z"),
                         "id": court_inserted.id,
                         "name": "Court 1",
+                        "game_format": None,
                         "tournament_id": auth_context.tournament.id,
                     }
                 ],

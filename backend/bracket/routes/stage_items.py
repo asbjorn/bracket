@@ -40,6 +40,7 @@ from bracket.routes.util import disallow_archived_tournament, stage_item_depende
 from bracket.sql.categories import get_category_by_id
 from bracket.sql.courts import get_all_courts_in_tournament
 from bracket.sql.matches import (
+    sql_apply_default_timing,
     sql_create_match,
     sql_reschedule_match_and_determine_duration_and_margin,
 )
@@ -227,6 +228,7 @@ async def start_next_round(
             ),
         )
 
+    await sql_apply_default_timing(tournament_id)
     draft_round = await get_round_by_id(tournament_id, round_id)
     try:
         stages = await get_full_tournament_details(tournament_id)

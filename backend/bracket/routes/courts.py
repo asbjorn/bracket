@@ -5,18 +5,25 @@ from starlette import status
 from bracket.config import config
 from bracket.database import database
 from bracket.logic.subscriptions import check_requirement
-from bracket.models.db.court import Court, CourtBody, CourtToInsert
+from bracket.models.db.court import Court, CourtBody, CourtsMultiBody, CourtToInsert
+from bracket.models.db.time_window import TimeWindowsBody
 from bracket.models.db.tournament import Tournament
 from bracket.models.db.user import UserPublic
 from bracket.routes.auth import (
     user_authenticated_for_tournament,
     user_authenticated_or_public_dashboard,
 )
-from bracket.routes.models import CourtsResponse, SingleCourtResponse, SuccessResponse
+from bracket.routes.models import (
+    CourtsResponse,
+    SingleCourtResponse,
+    SuccessResponse,
+    TimeWindowsResponse,
+)
 from bracket.routes.util import disallow_archived_tournament
 from bracket.schema import courts
 from bracket.sql.courts import get_all_courts_in_tournament, sql_delete_court, update_court
 from bracket.sql.stages import get_full_tournament_details
+from bracket.sql.time_windows import get_time_windows, sql_replace_time_windows
 from bracket.utils.db import fetch_one_parsed
 from bracket.utils.id_types import CourtId, TournamentId
 from bracket.utils.types import assert_some
@@ -113,3 +120,65 @@ async def create_court(
             )
         )
     )
+
+
+def next_court_number(existing_names: list[str], prefix: str) -> int:
+    """
+    Continues the numbering of courts named "<prefix> <number>", e.g. after "Bane 3" comes 4.
+    """
+    numbers = [
+        int(name[len(prefix) :].strip())
+        for name in existing_names
+        if name.startswith(prefix) and name[len(prefix) :].strip().isdigit()
+    ]
+    return max(numbers, default=0) + 1
+
+
+@router.post("/tournaments/{tournament_id}/courts_multi", response_model=CourtsResponse)
+async def create_multiple_courts(
+    body: CourtsMultiBody,
+    tournament_id: TournamentId,
+    user: UserPublic = Depends(user_authenticated_for_tournament),
+    _: Tournament = Depends(disallow_archived_tournament),
+) -> CourtsResponse:
+    """
+    Creates `count` courts named "<name_prefix> 1", "<name_prefix> 2", etc.
+    """
+    existing_courts = await get_all_courts_in_tournament(tournament_id)
+    check_requirement(existing_courts, user, "max_courts", additions=body.count)
+
+    first = next_court_number([court.name for court in existing_courts], body.name_prefix)
+    async with database.transaction():
+        for number in range(first, first + body.count):
+            await database.execute(
+                query=courts.insert(),
+                values=CourtToInsert(
+                    name=f"{body.name_prefix} {number}",
+                    game_format=body.game_format,
+                    created=datetime_utc.now(),
+                    tournament_id=tournament_id,
+                ).model_dump(),
+            )
+    return CourtsResponse(data=await get_all_courts_in_tournament(tournament_id))
+
+
+@router.get("/tournaments/{tournament_id}/time_windows", response_model=TimeWindowsResponse)
+async def get_tournament_time_windows(
+    tournament_id: TournamentId,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+) -> TimeWindowsResponse:
+    return TimeWindowsResponse(data=await get_time_windows(tournament_id))
+
+
+@router.put("/tournaments/{tournament_id}/time_windows", response_model=TimeWindowsResponse)
+async def replace_tournament_time_windows(
+    body: TimeWindowsBody,
+    tournament_id: TournamentId,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+    __: Tournament = Depends(disallow_archived_tournament),
+) -> TimeWindowsResponse:
+    """
+    Sets the periods in which matches can be played, replacing the existing ones.
+    """
+    await sql_replace_time_windows(tournament_id, body.time_windows)
+    return TimeWindowsResponse(data=await get_time_windows(tournament_id))

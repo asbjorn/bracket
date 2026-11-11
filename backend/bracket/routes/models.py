@@ -13,6 +13,7 @@ from bracket.models.db.stage_item_inputs import (
     StageItemInputOptionTentative,
 )
 from bracket.models.db.team import FullTeamWithPlayers, Team
+from bracket.models.db.time_window import TimeWindow
 from bracket.models.db.tournament import Tournament
 from bracket.models.db.user import UserPublic
 from bracket.models.db.util import StageWithStageItems
@@ -95,6 +96,10 @@ class CourtsResponse(DataResponse[list[Court]]):
 
 
 class CategoriesResponse(DataResponse[list[Category]]):
+    pass
+
+
+class TimeWindowsResponse(DataResponse[list[TimeWindow]]):
     pass
 
 

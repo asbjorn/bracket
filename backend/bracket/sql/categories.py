@@ -3,6 +3,15 @@ from bracket.models.db.category import Category, CategoryBody
 from bracket.utils.id_types import CategoryId, TournamentId
 
 
+def timing_values(body: CategoryBody) -> dict[str, object]:
+    return {
+        "duration_minutes": body.duration_minutes,
+        "margin_minutes": body.margin_minutes,
+        "min_rest_minutes": body.min_rest_minutes,
+        "game_format": body.game_format.value if body.game_format is not None else None,
+    }
+
+
 async def get_all_categories_in_tournament(tournament_id: TournamentId) -> list[Category]:
     query = """
         SELECT *
@@ -31,8 +40,14 @@ async def get_category_by_id(
 
 async def sql_create_category(tournament_id: TournamentId, body: CategoryBody) -> Category:
     query = """
-        INSERT INTO categories (created, tournament_id, name, age, results_public)
-        VALUES (NOW(), :tournament_id, :name, :age, :results_public)
+        INSERT INTO categories (
+            created, tournament_id, name, age, results_public,
+            duration_minutes, margin_minutes, min_rest_minutes, game_format
+        )
+        VALUES (
+            NOW(), :tournament_id, :name, :age, :results_public,
+            :duration_minutes, :margin_minutes, :min_rest_minutes, :game_format
+        )
         RETURNING *
         """
     result = await database.fetch_one(
@@ -42,6 +57,7 @@ async def sql_create_category(tournament_id: TournamentId, body: CategoryBody) -
             "name": body.name,
             "age": body.age,
             "results_public": body.get_results_public(),
+            **timing_values(body),
         },
     )
     assert result is not None, "Could not create category"
@@ -53,7 +69,9 @@ async def sql_update_category(
 ) -> Category | None:
     query = """
         UPDATE categories
-        SET name = :name, age = :age, results_public = :results_public
+        SET name = :name, age = :age, results_public = :results_public,
+            duration_minutes = :duration_minutes, margin_minutes = :margin_minutes,
+            min_rest_minutes = :min_rest_minutes, game_format = :game_format
         WHERE categories.tournament_id = :tournament_id
         AND categories.id = :category_id
         RETURNING *
@@ -66,6 +84,7 @@ async def sql_update_category(
             "name": body.name,
             "age": body.age,
             "results_public": body.get_results_public(),
+            **timing_values(body),
         },
     )
     return Category.model_validate(dict(result._mapping)) if result is not None else None

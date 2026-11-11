@@ -20,6 +20,7 @@ from bracket.models.db.stage_item_inputs import (
 )
 from bracket.models.db.team import FullTeamWithPlayers
 from bracket.models.db.util import StageWithStageItems
+from bracket.sql.matches import sql_apply_default_timing
 from bracket.sql.rounds import get_next_round_name, sql_create_round
 from bracket.sql.stage_items import get_stage_item
 from bracket.utils.id_types import CategoryId, StageId, StageItemId, TournamentId
@@ -71,6 +72,8 @@ async def build_matches_for_stage_item(
                 400, f"Cannot automatically create matches for stage type {stage_item.type}"
             )
 
+    # Matches of an age class get the duration and margin of that class
+    await sql_apply_default_timing(tournament_id)
     await recalculate_ranking_for_stage_item(tournament_id, stage_item_with_rounds)
 
 

@@ -3,6 +3,7 @@ from typing import Annotated
 from heliclockter import datetime_utc
 from pydantic import Field, StringConstraints
 
+from bracket.models.db.game_format import GameFormat
 from bracket.models.db.shared import BaseModelORM
 from bracket.utils.id_types import CategoryId, TournamentId
 
@@ -21,6 +22,11 @@ class CategoryInsertable(BaseModelORM):
     created: datetime_utc
     age: int | None = None
     results_public: bool = True
+    # Overrides of the tournament defaults for matches of this class
+    duration_minutes: int | None = None
+    margin_minutes: int | None = None
+    min_rest_minutes: int | None = None
+    game_format: GameFormat | None = None
 
 
 class Category(CategoryInsertable):
@@ -38,6 +44,10 @@ class CategoryBody(BaseModelORM):
     name: Annotated[str, StringConstraints(min_length=1, max_length=50, strip_whitespace=True)]
     age: int | None = Field(None, ge=4, le=99)
     results_public: bool | None = None
+    duration_minutes: int | None = Field(None, ge=1, le=240)
+    margin_minutes: int | None = Field(None, ge=0, le=120)
+    min_rest_minutes: int | None = Field(None, ge=0, le=600)
+    game_format: GameFormat | None = None
 
     def get_results_public(self) -> bool:
         if self.results_public is not None:

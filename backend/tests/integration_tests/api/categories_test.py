@@ -118,6 +118,10 @@ async def test_update_category(
         "name": "G11",
         "age": 11,
         "results_public": True,
+        "duration_minutes": None,
+        "margin_minutes": None,
+        "min_rest_minutes": None,
+        "game_format": None,
         "created": None,
     }
 

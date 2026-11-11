@@ -5,6 +5,7 @@ from starlette import status
 
 from bracket.config import config
 from bracket.logic.category_warnings import get_warnings_per_category
+from bracket.logic.planning.matches import update_start_times_of_matches
 from bracket.logic.results_visibility import check_category_can_hide_results
 from bracket.logic.subscriptions import check_requirement
 from bracket.models.db.category import CategoryBody
@@ -112,6 +113,8 @@ async def update_category(
     if category is None:
         raise_category_not_found(category_id)
 
+    # The class may have changed the duration of its matches
+    await update_start_times_of_matches(tournament_id)
     return SingleCategoryResponse(data=category)
 
 

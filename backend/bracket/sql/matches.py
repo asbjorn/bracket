@@ -193,22 +193,49 @@ async def sql_reschedule_match(
     )
 
 
+async def sql_apply_default_timing(tournament_id: TournamentId) -> None:
+    """
+    Sets the duration and margin of every match of the tournament: the custom values of the
+    match if set, otherwise those of its age class, otherwise the tournament defaults.
+    """
+    query = """
+        UPDATE matches
+        SET
+            duration_minutes = COALESCE(
+                matches.custom_duration_minutes, c.duration_minutes, t.duration_minutes
+            ),
+            margin_minutes = COALESCE(
+                matches.custom_margin_minutes, c.margin_minutes, t.margin_minutes
+            )
+        FROM rounds r
+        JOIN stage_items si ON si.id = r.stage_item_id
+        JOIN stages st ON st.id = si.stage_id
+        JOIN tournaments t ON t.id = st.tournament_id
+        LEFT JOIN categories c ON c.id = st.category_id
+        WHERE r.id = matches.round_id
+        AND st.tournament_id = :tournament_id
+        """
+    await database.execute(query=query, values={"tournament_id": tournament_id})
+
+
 async def sql_reschedule_match_and_determine_duration_and_margin(
     court_id: CourtId | None,
     start_time: datetime_utc,
     position_in_schedule: int | None,
     match: Match,
-    tournament: Tournament,
+    tournament: Tournament,  # pylint: disable=unused-argument
 ) -> None:
+    """
+    Moves the match. Its duration and margin are expected to be up to date, see
+    `sql_apply_default_timing`.
+    """
     duration_minutes = (
-        tournament.duration_minutes
+        match.duration_minutes
         if match.custom_duration_minutes is None
         else match.custom_duration_minutes
     )
     margin_minutes = (
-        tournament.margin_minutes
-        if match.custom_margin_minutes is None
-        else match.custom_margin_minutes
+        match.margin_minutes if match.custom_margin_minutes is None else match.custom_margin_minutes
     )
     await sql_reschedule_match(
         match.id,

@@ -30,6 +30,10 @@ tournaments = Table(
     Column("auto_assign_courts", Boolean, nullable=False, server_default="f"),
     Column("duration_minutes", Integer, nullable=False, server_default="15"),
     Column("margin_minutes", Integer, nullable=False, server_default="5"),
+    # Scheduling: minimum time between the end of a team's match and its next match, and time
+    # between the last match of a stage and the first match of the next stage of a class
+    Column("min_rest_minutes", Integer, nullable=False, server_default="0"),
+    Column("stage_buffer_minutes", Integer, nullable=False, server_default="10"),
     Column(
         "status",
         Enum(
@@ -58,7 +62,30 @@ categories = Table(
     ),
     Column("age", Integer, nullable=True),
     Column("results_public", Boolean, nullable=False, server_default="t"),
+    # Overrides of the tournament defaults for matches of this class
+    Column("duration_minutes", Integer, nullable=True),
+    Column("margin_minutes", Integer, nullable=True),
+    Column("min_rest_minutes", Integer, nullable=True),
+    # e.g. "7v7": matches of this class are only scheduled on courts of this format
+    Column("game_format", Text, nullable=True),
     UniqueConstraint("tournament_id", "name"),
+)
+
+# The periods in which matches can be played, e.g. one per day; a lunch break is the gap between
+# two periods on the same day
+time_windows = Table(
+    "time_windows",
+    metadata,
+    Column("id", BigInteger, primary_key=True, index=True),
+    Column(
+        "tournament_id",
+        BigInteger,
+        ForeignKey("tournaments.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    ),
+    Column("start_time", DateTimeTZ, nullable=False),
+    Column("end_time", DateTimeTZ, nullable=False),
 )
 
 stages = Table(
@@ -273,6 +300,8 @@ courts = Table(
     metadata,
     Column("id", BigInteger, primary_key=True, index=True),
     Column("name", Text, nullable=False),
+    # e.g. "7v7"; courts without a format can be used for any class
+    Column("game_format", Text, nullable=True),
     Column("created", DateTimeTZ, nullable=False, server_default=func.now()),
     Column("tournament_id", BigInteger, ForeignKey("tournaments.id"), nullable=False, index=True),
 )
