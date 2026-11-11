@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from fastapi import HTTPException
 from starlette import status
 
+from bracket.database import database
 from bracket.logic.discipline import TeamMatch, compute_suspensions, discipline_allowed
 from bracket.models.db.discipline import (
     DisciplineOverview,
@@ -103,6 +104,24 @@ async def check_card(tournament_id: TournamentId, match_id: MatchId, body: Match
         raise bad_request("Cards are only kept for classes from 13 years with public results")
     if body.team_id not in match.team_ids:
         raise bad_request("This team doesn't play in this match")
+    if body.player_id is not None:
+        # The player must be in this tournament and in the team that gets the card
+        in_team = await database.fetch_val(
+            """
+            SELECT count(*)
+            FROM players_x_teams pt
+            JOIN players p ON p.id = pt.player_id
+            WHERE pt.player_id = :player_id AND pt.team_id = :team_id
+            AND p.tournament_id = :tournament_id
+            """,
+            values={
+                "player_id": body.player_id,
+                "team_id": body.team_id,
+                "tournament_id": tournament_id,
+            },
+        )
+        if not in_team:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Could not find the player in this team")
 
 
 async def check_jury_decision(tournament_id: TournamentId, body: JuryDecisionBody) -> None:

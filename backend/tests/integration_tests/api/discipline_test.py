@@ -1,8 +1,9 @@
 import pytest
 
 from bracket.database import database
-from bracket.schema import jury_decisions, match_cards
+from bracket.schema import jury_decisions, match_cards, tournaments
 from bracket.sql.stages import get_full_tournament_details
+from bracket.utils.dummy_records import DUMMY_PLAYER1, DUMMY_PLAYER2, DUMMY_TOURNAMENT
 from bracket.utils.http import HTTPMethod
 from bracket.utils.types import JsonDict
 from tests.integration_tests.api.cup_setup_test import G10, delete_cup
@@ -13,6 +14,11 @@ from tests.integration_tests.api.shared import (
     send_tournament_request,
 )
 from tests.integration_tests.models import AuthContext
+from tests.integration_tests.sql import (
+    inserted_player,
+    inserted_player_in_team,
+    inserted_tournament,
+)
 
 J16 = G10 | {"name": "J16", "age": 16}
 
@@ -180,5 +186,107 @@ async def test_cards_at_the_pitch(
         assert response == SUCCESS_RESPONSE
         response = await send_request(HTTPMethod.DELETE, f"score/{token}/cards/{card_id}")
         assert response == {"detail": "This card can't be changed with this link"}
+    finally:
+        await clean_up(auth_context)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_card_player_must_be_in_the_team(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    """A card can't refer to a player of another team or another tournament."""
+    tournament_id = auth_context.tournament.id
+    try:
+        teams = await set_up_playable_cup(auth_context, J16)
+        brann, lyn = teams["Brann"], teams["Lyn"]
+        [first, *_] = await matches_of_team(auth_context, brann)
+        async with (
+            inserted_tournament(
+                DUMMY_TOURNAMENT.model_copy(
+                    update={"club_id": auth_context.club.id, "dashboard_endpoint": None}
+                )
+            ) as other_tournament,
+            inserted_player(
+                DUMMY_PLAYER1.model_copy(update={"tournament_id": other_tournament.id})
+            ) as stranger,
+            inserted_player_in_team(
+                DUMMY_PLAYER1.model_copy(update={"tournament_id": tournament_id}), brann
+            ) as brann_player,
+            inserted_player_in_team(
+                DUMMY_PLAYER2.model_copy(update={"tournament_id": tournament_id}), lyn
+            ) as lyn_player,
+        ):
+            endpoint = f"matches/{first['id']}/cards"
+            for player_id in (stranger.id, lyn_player.id, 999_999_999):
+                response = await send_tournament_request(
+                    HTTPMethod.POST,
+                    endpoint,
+                    auth_context,
+                    json=red_card(brann) | {"player_id": player_id},
+                )
+                assert response == {"detail": "Could not find the player in this team"}
+
+            response = await send_tournament_request(
+                HTTPMethod.POST,
+                endpoint,
+                auth_context,
+                json=red_card(brann) | {"player_id": brann_player.id},
+            )
+            assert response["data"]["player_id"] == brann_player.id
+            await database.execute(
+                match_cards.delete().where(match_cards.c.tournament_id == tournament_id)
+            )
+    finally:
+        await clean_up(auth_context)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_no_changes_through_links_when_archived(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    tournament_id = auth_context.tournament.id
+    try:
+        teams = await set_up_playable_cup(auth_context, J16)
+        brann = teams["Brann"]
+        [first, *_] = await matches_of_team(auth_context, brann)
+        created = await send_tournament_request(
+            HTTPMethod.POST,
+            "score_links",
+            auth_context,
+            json={"name": "Hele cupen", "court_id": None, "valid_hours": 24},
+        )
+        token = created["data"]["token"]
+        card = await send_request(
+            HTTPMethod.POST, f"score/{token}/matches/{first['id']}/cards", json=red_card(brann)
+        )
+        card_id = card["data"]["id"]
+
+        await database.execute(
+            tournaments.update().where(tournaments.c.id == tournament_id),
+            values={"status": "ARCHIVED"},
+        )
+        try:
+            archived = {"detail": "The tournament is archived"}
+            writes = [
+                (HTTPMethod.DELETE, f"score/{token}/cards/{card_id}", None),
+                (HTTPMethod.POST, f"score/{token}/matches/{first['id']}/cards", red_card(brann)),
+                (
+                    HTTPMethod.PUT,
+                    f"score/{token}/matches/{first['id']}/walkover",
+                    {"winner_team_id": brann},
+                ),
+                (HTTPMethod.PUT, f"score/{token}/teams/{brann}/check_in", {"checked_in": True}),
+                (HTTPMethod.POST, f"score/{token}/notices", {"delay_minutes": 10, "message": ""}),
+            ]
+            for method, endpoint, body in writes:
+                assert await send_request(method, endpoint, json=body) == archived, endpoint
+            # Reading still works
+            view = await send_request(HTTPMethod.GET, f"score/{token}")
+            assert len(view["data"]["matches"]) > 0
+        finally:
+            await database.execute(
+                tournaments.update().where(tournaments.c.id == tournament_id),
+                values={"status": "OPEN"},
+            )
     finally:
         await clean_up(auth_context)

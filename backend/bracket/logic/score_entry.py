@@ -49,6 +49,11 @@ async def score_link_dependency(token: str, request: Request) -> ScoreLink:
         )
     limiter = score_link_reads if request.method == "GET" else score_link_writes
     limiter.check(f"{link.id}:{client}")
+    if request.method != "GET":
+        # Every change through a link (results, cards, check-in, notices): not when archived
+        tournament = await sql_get_tournament(link.tournament_id)
+        if tournament.status is TournamentStatus.ARCHIVED:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "The tournament is archived")
     return link
 
 
@@ -142,11 +147,7 @@ async def get_score_entry_view(link: ScoreLink) -> ScoreEntryView:
 async def get_enterable_match(
     link: ScoreLink, match_id: MatchId
 ) -> tuple[ScoreEntryMatch, MatchWithDetails | MatchWithDetailsDefinitive]:
-    """A match of the link whose teams are known, in a tournament that isn't archived."""
-    tournament = await sql_get_tournament(link.tournament_id)
-    if tournament.status is TournamentStatus.ARCHIVED:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "The tournament is archived")
-
+    """A match of the link whose teams are known (archived: see `score_link_dependency`)."""
     found = next((pair for pair in await get_link_matches(link) if pair[0].id == match_id), None)
     if found is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "This match can't be entered with this link")
