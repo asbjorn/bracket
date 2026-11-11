@@ -130,7 +130,8 @@ async def inserted_class_with_played_match(
             )
         )
         await database.execute(
-            "UPDATE stage_item_inputs SET points = 3, wins = 1 WHERE id = :id",
+            "UPDATE stage_item_inputs SET points = 3, wins = 1, goals_for = 3, goals_against = 1, "
+            "position = 1 WHERE id = :id",
             values={"id": inputs[0].id},
         )
         yield ClassWithPlayedMatch(
@@ -178,20 +179,26 @@ async def test_public_dashboard_hides_results_of_private_classes(
     assert public_g10_match["stage_item_input2_score"] == 0
     assert public_g10_match["stage_item_input1"]["points"] == "0.0"
     assert public_g10_match["stage_item_input1"]["wins"] == 0
-    assert find_input(public, g10.input_ids[0])["points"] == "0.0"
-    assert find_input(public, g10.input_ids[0])["wins"] == 0
+    public_g10_input = find_input(public, g10.input_ids[0])
+    assert public_g10_input["points"] == "0.0"
+    assert public_g10_input["wins"] == 0
+    assert public_g10_input["goals_for"] == 0
+    assert public_g10_input["goals_against"] == 0
+    assert public_g10_input["position"] is None
 
     # Youth class: everything is public
     public_j14_match = find_match(public, j14.match_id)
     assert public_j14_match["stage_item_input1_score"] == 3
     assert public_j14_match["stage_item_input2_score"] == 1
     assert find_input(public, j14.input_ids[0])["wins"] == 1
+    assert find_input(public, j14.input_ids[0])["position"] == 1
 
     # The organiser always sees the results
     organiser_g10_match = find_match(organiser, g10.match_id)
     assert organiser_g10_match["stage_item_input1_score"] == 3
     assert organiser_g10_match["stage_item_input2_score"] == 1
     assert find_input(organiser, g10.input_ids[0])["wins"] == 1
+    assert find_input(organiser, g10.input_ids[0])["position"] == 1
 
 
 @pytest.mark.parametrize(

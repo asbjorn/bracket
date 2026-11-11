@@ -1533,6 +1533,18 @@
             "title": "Position",
             "type": "integer"
           },
+          "tiebreakers": {
+            "default": [
+              "GOAL_DIFFERENCE",
+              "GOALS_SCORED",
+              "HEAD_TO_HEAD"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Tiebreaker"
+            },
+            "title": "Tiebreakers",
+            "type": "array"
+          },
           "tournament_id": {
             "title": "Tournament Id",
             "type": "integer"
@@ -1550,6 +1562,7 @@
           "loss_points",
           "add_score_points",
           "position",
+          "tiebreakers",
           "id",
           "created"
         ],
@@ -1590,6 +1603,13 @@
             "title": "Position",
             "type": "integer"
           },
+          "tiebreakers": {
+            "items": {
+              "$ref": "#/components/schemas/Tiebreaker"
+            },
+            "title": "Tiebreakers",
+            "type": "array"
+          },
           "win_points": {
             "anyOf": [
               {
@@ -1608,7 +1628,8 @@
           "draw_points",
           "loss_points",
           "add_score_points",
-          "position"
+          "position",
+          "tiebreakers"
         ],
         "title": "RankingBody",
         "type": "object"
@@ -1630,7 +1651,7 @@
                 "type": "string"
               }
             ],
-            "default": "0.5",
+            "default": "1.0",
             "title": "Draw Points"
           },
           "loss_points": {
@@ -1646,6 +1667,18 @@
             "default": "0.0",
             "title": "Loss Points"
           },
+          "tiebreakers": {
+            "default": [
+              "GOAL_DIFFERENCE",
+              "GOALS_SCORED",
+              "HEAD_TO_HEAD"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Tiebreaker"
+            },
+            "title": "Tiebreakers",
+            "type": "array"
+          },
           "win_points": {
             "anyOf": [
               {
@@ -1656,7 +1689,7 @@
                 "type": "string"
               }
             ],
-            "default": "1.0",
+            "default": "3.0",
             "title": "Win Points"
           }
         },
@@ -1664,7 +1697,8 @@
           "win_points",
           "draw_points",
           "loss_points",
-          "add_score_points"
+          "add_score_points",
+          "tiebreakers"
         ],
         "title": "RankingCreateBody",
         "type": "object"
@@ -1963,6 +1997,16 @@
             "title": "Draws",
             "type": "integer"
           },
+          "goals_against": {
+            "default": 0,
+            "title": "Goals Against",
+            "type": "integer"
+          },
+          "goals_for": {
+            "default": 0,
+            "title": "Goals For",
+            "type": "integer"
+          },
           "id": {
             "title": "Id",
             "type": "integer"
@@ -1977,6 +2021,17 @@
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Points",
             "type": "string"
+          },
+          "position": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position"
           },
           "slot": {
             "title": "Slot",
@@ -2020,6 +2075,9 @@
           "wins",
           "draws",
           "losses",
+          "goals_for",
+          "goals_against",
+          "position",
           "id",
           "slot",
           "tournament_id",
@@ -2038,6 +2096,16 @@
             "title": "Draws",
             "type": "integer"
           },
+          "goals_against": {
+            "default": 0,
+            "title": "Goals Against",
+            "type": "integer"
+          },
+          "goals_for": {
+            "default": 0,
+            "title": "Goals For",
+            "type": "integer"
+          },
           "id": {
             "title": "Id",
             "type": "integer"
@@ -2052,6 +2120,17 @@
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Points",
             "type": "string"
+          },
+          "position": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position"
           },
           "slot": {
             "title": "Slot",
@@ -2112,6 +2191,9 @@
           "wins",
           "draws",
           "losses",
+          "goals_for",
+          "goals_against",
+          "position",
           "id",
           "slot",
           "tournament_id",
@@ -2198,6 +2280,16 @@
             "title": "Draws",
             "type": "integer"
           },
+          "goals_against": {
+            "default": 0,
+            "title": "Goals Against",
+            "type": "integer"
+          },
+          "goals_for": {
+            "default": 0,
+            "title": "Goals For",
+            "type": "integer"
+          },
           "id": {
             "title": "Id",
             "type": "integer"
@@ -2212,6 +2304,17 @@
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Points",
             "type": "string"
+          },
+          "position": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position"
           },
           "slot": {
             "title": "Slot",
@@ -2256,6 +2359,9 @@
           "wins",
           "draws",
           "losses",
+          "goals_for",
+          "goals_against",
+          "position",
           "id",
           "slot",
           "tournament_id",
@@ -2802,6 +2908,16 @@
         ],
         "title": "TeamsWithPlayersResponse",
         "type": "object"
+      },
+      "Tiebreaker": {
+        "description": "Criteria to order teams with the same number of points, applied in the configured order.",
+        "enum": [
+          "GOAL_DIFFERENCE",
+          "GOALS_SCORED",
+          "HEAD_TO_HEAD"
+        ],
+        "title": "Tiebreaker",
+        "type": "string"
       },
       "Token": {
         "properties": {

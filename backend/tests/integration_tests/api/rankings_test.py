@@ -4,7 +4,7 @@ from unittest.mock import ANY
 import pytest
 
 from bracket.database import database
-from bracket.models.db.ranking import Ranking
+from bracket.models.db.ranking import Ranking, Tiebreaker
 from bracket.schema import rankings
 from bracket.sql.rankings import (
     get_all_rankings_in_tournament,
@@ -35,6 +35,7 @@ async def test_rankings_endpoint(
                     "draw_points": "0.5",
                     "loss_points": "0.0",
                     "add_score_points": False,
+                    "tiebreakers": ["GOAL_DIFFERENCE", "GOALS_SCORED", "HEAD_TO_HEAD"],
                     "tournament_id": auth_context.tournament.id,
                 }
             ],
@@ -49,6 +50,21 @@ async def test_create_ranking(
     assert response.get("success") is True, response
 
     tournament_id = auth_context.tournament.id
+    [new_ranking] = [
+        r for r in await get_all_rankings_in_tournament(tournament_id) if r.position != 0
+    ]
+    # Football defaults: 3 points for a win, 1 for a draw, tiebreakers after points
+    assert (new_ranking.win_points, new_ranking.draw_points, new_ranking.loss_points) == (
+        Decimal("3"),
+        Decimal("1"),
+        Decimal("0"),
+    )
+    assert new_ranking.tiebreakers == [
+        Tiebreaker.GOAL_DIFFERENCE,
+        Tiebreaker.GOALS_SCORED,
+        Tiebreaker.HEAD_TO_HEAD,
+    ]
+
     for ranking in await get_all_rankings_in_tournament(tournament_id):
         if ranking.position != 0:
             await sql_delete_ranking(tournament_id, ranking.id)
@@ -82,6 +98,7 @@ async def test_update_ranking(
         "loss_points": "6.0",
         "add_score_points": True,
         "position": 42,
+        "tiebreakers": ["HEAD_TO_HEAD", "GOAL_DIFFERENCE"],
     }
     async with inserted_team(
         DUMMY_TEAM1.model_copy(update={"tournament_id": auth_context.tournament.id})
@@ -99,3 +116,15 @@ async def test_update_ranking(
             )
             assert response["success"] is True
             assert updated_ranking.win_points == Decimal("7.5")
+            assert updated_ranking.tiebreakers == [
+                Tiebreaker.HEAD_TO_HEAD,
+                Tiebreaker.GOAL_DIFFERENCE,
+            ]
+
+            duplicate = await send_tournament_request(
+                HTTPMethod.PUT,
+                f"rankings/{ranking_inserted.id}",
+                auth_context,
+                json=body | {"tiebreakers": ["HEAD_TO_HEAD", "HEAD_TO_HEAD"]},
+            )
+            assert "Each tiebreaker can only be used once" in str(duplicate["detail"])

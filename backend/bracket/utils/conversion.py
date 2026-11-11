@@ -13,6 +13,9 @@ def _map_to_str(value: Any) -> Any:
             return value.value
         case datetime_tz():
             return value.isoformat()
+        case list():
+            # Postgres array literal, e.g. for ranking tiebreakers
+            return "{" + ",".join(str(_map_to_str(item)) for item in value) + "}"
     return value
 
 

@@ -3,6 +3,7 @@ from collections import defaultdict
 from decimal import Decimal
 
 from bracket.logic.ranking.statistics import START_ELO, TeamStatistics
+from bracket.logic.ranking.tiebreakers import order_by_ranking
 from bracket.models.db.match import MatchWithDetailsDefinitive
 from bracket.models.db.ranking import Ranking
 from bracket.models.db.stage_item import StageType
@@ -25,6 +26,9 @@ def set_statistics_for_stage_item_input(
 ) -> None:
     is_team1 = team_index == 0
     team_score = match.stage_item_input1_score if is_team1 else match.stage_item_input2_score
+    opponent_score = match.stage_item_input2_score if is_team1 else match.stage_item_input1_score
+    stats[stage_item_input_id].goals_for += team_score
+    stats[stage_item_input_id].goals_against += opponent_score
     was_draw = match.stage_item_input1_score == match.stage_item_input2_score
     has_won = not was_draw and team_score == max(
         match.stage_item_input1_score, match.stage_item_input2_score
@@ -60,6 +64,19 @@ def set_statistics_for_stage_item_input(
             raise ValueError(f"Unsupported stage type: {stage_item.type}")
 
 
+def get_played_matches(stage_item: StageItemWithRounds) -> list[MatchWithDetailsDefinitive]:
+    """
+    Matches that have not been played yet (e.g. 0-0 placeholders) don't count in rankings.
+    """
+    return [
+        match
+        for round_ in stage_item.rounds
+        if not round_.is_draft
+        for match in round_.matches
+        if isinstance(match, MatchWithDetailsDefinitive) and match.played
+    ]
+
+
 def determine_ranking_for_stage_item(
     stage_item: StageItemWithRounds,
     ranking: Ranking,
@@ -72,15 +89,7 @@ def determine_ranking_for_stage_item(
         if stage_item.type is StageType.SWISS:
             stats.points = START_ELO
 
-    # Matches that have not been played yet (e.g. 0-0 placeholders) don't count.
-    matches = [
-        match
-        for round_ in stage_item.rounds
-        if not round_.is_draft
-        for match in round_.matches
-        if isinstance(match, MatchWithDetailsDefinitive) and match.played
-    ]
-    for match in matches:
+    for match in get_played_matches(stage_item):
         for team_index, stage_item_input in enumerate(match.stage_item_inputs):
             set_statistics_for_stage_item_input(
                 team_index,
@@ -98,8 +107,25 @@ def determine_team_ranking_for_stage_item(
     stage_item: StageItemWithRounds,
     ranking: Ranking,
 ) -> list[tuple[StageItemInputId, TeamStatistics]]:
-    team_ranking = determine_ranking_for_stage_item(stage_item, ranking)
-    return sorted(team_ranking.items(), key=lambda x: x[1].points, reverse=True)
+    """
+    The inputs of the stage item from first to last place, with `position` set (1 = first).
+
+    Teams are ordered by points and then by the tiebreakers of the ranking. Swiss uses an ELO
+    rating as points, so tiebreakers don't apply there. Teams that are equal on everything keep
+    the order of their slots.
+    """
+    stats = determine_ranking_for_stage_item(stage_item, ranking)
+    input_ids = [input_.id for input_ in sorted(stage_item.inputs, key=lambda i: i.slot)]
+    ordered = order_by_ranking(
+        input_ids,
+        stats,
+        get_played_matches(stage_item),
+        ranking,
+        use_tiebreakers=stage_item.type is not StageType.SWISS,
+    )
+    for position, input_id in enumerate(ordered, start=1):
+        stats[input_id].position = position
+    return [(input_id, stats[input_id]) for input_id in ordered]
 
 
 async def recalculate_ranking_for_stage_item(
@@ -116,9 +142,9 @@ async def recalculate_ranking_for_stage_item(
         if stage_item_input.team_id is not None
     }
 
-    elo_per_input = determine_ranking_for_stage_item(stage_item, ranking)
+    stats_per_input = dict(determine_team_ranking_for_stage_item(stage_item, ranking))
 
     for stage_item_input_id in team_x_stage_item_input_lookup.values():
         await update_team_stats(
-            tournament_id, stage_item_input_id, elo_per_input[stage_item_input_id]
+            tournament_id, stage_item_input_id, stats_per_input[stage_item_input_id]
         )

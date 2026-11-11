@@ -7,8 +7,12 @@ import { EmptyTableInfo } from '@components/no_content/empty_table_info';
 import { formatStageItemInput } from '@components/utils/stage_item_input';
 import { StageItemInputFinal, StageItemWithRounds } from '@openapi';
 import { WinDistributionTitle } from './players';
-import { ThNotSortable, ThSortable, getTableState, sortTableEntries } from './table';
+import { ThNotSortable } from './table';
 import TableLayoutLarge from './table_large';
+
+function formatGoalDifference(difference: number) {
+  return difference > 0 ? `+${difference}` : `${difference}`;
+}
 
 export function StandingsTableForStageItem({
   teams_with_inputs,
@@ -24,28 +28,40 @@ export function StandingsTableForStageItem({
   maxTeamsToDisplay: number;
 }) {
   const { t } = useTranslation();
-  const tableState = getTableState('points', false);
+  const isSwiss = stageItem.type === 'SWISS';
 
   const minPoints = Math.min(...teams_with_inputs.map((input) => parseFloat(input.points)));
   const maxPoints = Math.max(...teams_with_inputs.map((input) => parseFloat(input.points)));
 
-  const rows = teams_with_inputs
-    .sort((p1: StageItemInputFinal, p2: StageItemInputFinal) => (p1.points > p2.points ? 1 : -1))
-    .sort((p1: StageItemInputFinal, p2: StageItemInputFinal) =>
-      sortTableEntries(p1, p2, tableState),
+  // The backend determines the position, including the tiebreakers of the ranking
+  const rows = [...teams_with_inputs]
+    .sort(
+      (p1: StageItemInputFinal, p2: StageItemInputFinal) =>
+        (p1.position ?? Number.MAX_SAFE_INTEGER) - (p2.position ?? Number.MAX_SAFE_INTEGER) ||
+        parseFloat(p2.points) - parseFloat(p1.points),
     )
     .slice(0, maxTeamsToDisplay)
     .map((team_with_input, index) => (
       <Table.Tr key={team_with_input.id}>
-        <Table.Td style={{ width: '2rem' }}>{index + 1}</Table.Td>
+        <Table.Td style={{ width: '2rem' }}>{team_with_input.position ?? index + 1}</Table.Td>
         <Table.Td style={{ width: '20rem' }}>
           <Text truncate="end" lineClamp={1} inherit>
             {formatStageItemInput(team_with_input, stageItemsLookup)}
           </Text>
         </Table.Td>
-        <Table.Td visibleFrom="sm" style={{ minWidth: '8rem' }}>
-          <Text truncate="end" lineClamp={1} inherit>
-            {team_with_input.points}
+        {isSwiss ? null : (
+          <>
+            <Table.Td visibleFrom="sm" style={{ minWidth: '6rem' }}>
+              {team_with_input.goals_for}–{team_with_input.goals_against}
+            </Table.Td>
+            <Table.Td visibleFrom="sm" style={{ minWidth: '4rem' }}>
+              {formatGoalDifference(team_with_input.goals_for - team_with_input.goals_against)}
+            </Table.Td>
+          </>
+        )}
+        <Table.Td style={{ minWidth: '6rem' }}>
+          <Text truncate="end" lineClamp={1} inherit fw={700}>
+            {parseFloat(team_with_input.points)}
           </Text>
         </Table.Td>
         {stageItem.type === 'SWISS' ? (
@@ -78,23 +94,17 @@ export function StandingsTableForStageItem({
       <Table.Thead>
         <Table.Tr>
           <ThNotSortable>#</ThNotSortable>
-          <ThSortable state={tableState} field="name">
-            {t('name_table_header')}
-          </ThSortable>
-          {stageItem.type === 'SWISS' ? (
+          <ThNotSortable>{t('name_table_header')}</ThNotSortable>
+          {isSwiss ? (
             <>
-              <ThSortable visibleFrom="sm" state={tableState} field="points">
-                {t('elo_score')}
-              </ThSortable>
-              <ThSortable state={tableState} field="elo_score">
-                {t('elo_score')}
-              </ThSortable>
+              <ThNotSortable>{t('elo_score')}</ThNotSortable>
+              <ThNotSortable>{t('elo_score')}</ThNotSortable>
             </>
           ) : (
             <>
-              <ThSortable visibleFrom="sm" state={tableState} field="points">
-                {t('points_table_header')}
-              </ThSortable>
+              <ThNotSortable visibleFrom="sm">{t('goals_table_header')}</ThNotSortable>
+              <ThNotSortable visibleFrom="sm">{t('goal_difference_table_header')}</ThNotSortable>
+              <ThNotSortable>{t('points_table_header')}</ThNotSortable>
               <ThNotSortable>
                 <WinDistributionTitle />
               </ThNotSortable>

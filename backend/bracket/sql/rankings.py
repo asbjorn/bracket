@@ -52,7 +52,8 @@ async def sql_update_ranking(
             win_points = :win_points,
             draw_points = :draw_points,
             loss_points = :loss_points,
-            add_score_points = :add_score_points
+            add_score_points = :add_score_points,
+            tiebreakers = :tiebreakers
         WHERE rankings.tournament_id = :tournament_id
         AND rankings.id = :ranking_id
         """
@@ -66,6 +67,7 @@ async def sql_update_ranking(
             "loss_points": float(ranking_body.loss_points),
             "add_score_points": ranking_body.add_score_points,
             "position": ranking_body.position,
+            "tiebreakers": [str(tiebreaker.value) for tiebreaker in ranking_body.tiebreakers],
         },
     )
     return [Ranking.model_validate(dict(x._mapping)) for x in result]
@@ -83,14 +85,23 @@ async def sql_create_ranking(
 ) -> None:
     query = """
         INSERT INTO rankings
-        (tournament_id, position, win_points, draw_points, loss_points, add_score_points)
+        (
+            tournament_id,
+            position,
+            win_points,
+            draw_points,
+            loss_points,
+            add_score_points,
+            tiebreakers
+        )
         VALUES (
             :tournament_id,
             :position,
             :win_points,
             :draw_points,
             :loss_points,
-            :add_score_points
+            :add_score_points,
+            :tiebreakers
         )
         """
 
@@ -103,5 +114,6 @@ async def sql_create_ranking(
             "loss_points": float(ranking_body.loss_points),
             "add_score_points": ranking_body.add_score_points,
             "position": position,
+            "tiebreakers": [str(tiebreaker.value) for tiebreaker in ranking_body.tiebreakers],
         },
     )

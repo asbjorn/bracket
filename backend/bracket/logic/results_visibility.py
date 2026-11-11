@@ -24,7 +24,15 @@ from bracket.utils.id_types import CategoryId
 
 def without_statistics(stage_item_input: StageItemInput) -> StageItemInput:
     return stage_item_input.model_copy(
-        update={"points": Decimal("0.0"), "wins": 0, "draws": 0, "losses": 0}
+        update={
+            "points": Decimal("0.0"),
+            "wins": 0,
+            "draws": 0,
+            "losses": 0,
+            "goals_for": 0,
+            "goals_against": 0,
+            "position": None,
+        }
     )
 
 

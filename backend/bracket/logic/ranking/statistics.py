@@ -10,3 +10,10 @@ class TeamStatistics(BaseModel):
     draws: int = 0
     losses: int = 0
     points: Decimal = Decimal("0.00")
+    goals_for: int = 0
+    goals_against: int = 0
+    position: int | None = None
+
+    @property
+    def goal_difference(self) -> int:
+        return self.goals_for - self.goals_against

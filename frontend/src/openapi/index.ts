@@ -383,6 +383,7 @@ export type {
   TeamBody,
   TeamMultiBody,
   TeamsWithPlayersResponse,
+  Tiebreaker,
   Token,
   TokenResponse,
   Tournament,

@@ -1,3 +1,4 @@
+import { Tiebreaker } from '@openapi';
 import { createAxios, handleRequestError } from './adapter';
 
 export async function createRanking(tournament_id: number) {
@@ -14,6 +15,7 @@ export async function editRanking(
   loss_points: string,
   add_score_points: boolean,
   position: number,
+  tiebreakers: Tiebreaker[],
 ) {
   return createAxios()
     .put(`tournaments/${tournament_id}/rankings/${ranking_id}`, {
@@ -22,6 +24,7 @@ export async function editRanking(
       loss_points,
       add_score_points,
       position,
+      tiebreakers,
     })
     .catch((response: any) => handleRequestError(response));
 }

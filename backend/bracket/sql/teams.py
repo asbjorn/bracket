@@ -108,7 +108,10 @@ async def update_team_stats(
             wins = :wins,
             draws = :draws,
             losses = :losses,
-            points = :points
+            points = :points,
+            goals_for = :goals_for,
+            goals_against = :goals_against,
+            position = :position
         WHERE stage_item_inputs.tournament_id = :tournament_id
         AND stage_item_inputs.id = :stage_item_input_id
         """
@@ -121,6 +124,9 @@ async def update_team_stats(
             "draws": team_statistics.draws,
             "losses": team_statistics.losses,
             "points": float(team_statistics.points),
+            "goals_for": team_statistics.goals_for,
+            "goals_against": team_statistics.goals_against,
+            "position": team_statistics.position,
         },
     )
 

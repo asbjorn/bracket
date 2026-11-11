@@ -1,4 +1,13 @@
-import { Accordion, Badge, Button, Center, Checkbox, Container, NumberInput } from '@mantine/core';
+import {
+  Accordion,
+  Badge,
+  Button,
+  Center,
+  Checkbox,
+  Container,
+  MultiSelect,
+  NumberInput,
+} from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useTranslation } from 'react-i18next';
 import { SWRResponse } from 'swr';
@@ -9,10 +18,13 @@ import RequestErrorAlert from '@components/utils/error_alert';
 import { TableSkeletonSingleColumn } from '@components/utils/skeletons';
 import { Translator } from '@components/utils/types';
 import { getTournamentIdFromRouter } from '@components/utils/util';
-import { Ranking, RankingsResponse, Tournament } from '@openapi';
+import { Ranking, RankingsResponse, Tiebreaker, Tournament } from '@openapi';
 import TournamentLayout from '@pages/tournaments/_tournament_layout';
 import { getRankings, getTournamentById } from '@services/adapter';
 import { createRanking, deleteRanking, editRanking } from '@services/ranking';
+
+// In the order a user would typically use them; the selected order is what counts
+const TIEBREAKERS: Tiebreaker[] = ['GOAL_DIFFERENCE', 'GOALS_SCORED', 'HEAD_TO_HEAD'];
 
 function RankingDeleteButton({
   t,
@@ -64,6 +76,7 @@ function EditRankingForm({
       loss_points: ranking.loss_points,
       add_score_points: ranking.add_score_points,
       position: ranking.position,
+      tiebreakers: ranking.tiebreakers,
     },
     validate: {},
   });
@@ -80,6 +93,7 @@ function EditRankingForm({
           values.loss_points,
           values.add_score_points,
           values.position,
+          values.tiebreakers,
         );
         await swrRankingsResponse.mutate();
       })}
@@ -118,6 +132,16 @@ function EditRankingForm({
             mt="lg"
             label={t('add_score_points_label')}
             {...form.getInputProps('add_score_points', { type: 'checkbox' })}
+          />
+          <MultiSelect
+            mt="lg"
+            label={t('tiebreakers_label')}
+            description={t('tiebreakers_description')}
+            data={TIEBREAKERS.map((tiebreaker) => ({
+              value: tiebreaker,
+              label: t(`tiebreaker_${tiebreaker.toLowerCase()}`),
+            }))}
+            {...form.getInputProps('tiebreakers')}
           />
           <Button fullWidth style={{ marginTop: 16 }} color="green" type="submit">
             {`${t('save_button')} ${rankingTitle}`}

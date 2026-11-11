@@ -1,4 +1,5 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, Table, UniqueConstraint, func
+from sqlalchemy import Column, ForeignKey, Integer, String, Table, UniqueConstraint, func, text
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import declarative_base  # type: ignore[attr-defined]
 from sqlalchemy.sql.sqltypes import BigInteger, Boolean, DateTime, Enum, Float, Text
 
@@ -112,6 +113,10 @@ stage_item_inputs = Table(
     Column("wins", Integer, nullable=False, server_default="0"),
     Column("draws", Integer, nullable=False, server_default="0"),
     Column("losses", Integer, nullable=False, server_default="0"),
+    Column("goals_for", Integer, nullable=False, server_default="0"),
+    Column("goals_against", Integer, nullable=False, server_default="0"),
+    # Place in the ranking of the stage item (1 = first), after applying the tiebreakers
+    Column("position", Integer, nullable=True),
     UniqueConstraint("stage_item_id", "team_id"),
     UniqueConstraint("stage_item_id", "winner_from_stage_item_id", "winner_position"),
 )
@@ -258,4 +263,11 @@ rankings = Table(
     Column("draw_points", Float, nullable=False),
     Column("loss_points", Float, nullable=False),
     Column("add_score_points", Boolean, nullable=False),
+    # Applied in this order when teams have the same number of points
+    Column(
+        "tiebreakers",
+        ARRAY(Text),
+        nullable=False,
+        server_default=text("'{GOAL_DIFFERENCE,GOALS_SCORED,HEAD_TO_HEAD}'::text[]"),
+    ),
 )

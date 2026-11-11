@@ -822,6 +822,10 @@ export type Ranking = {
    */
   position: number;
   /**
+   * Tiebreakers
+   */
+  tiebreakers: Array<Tiebreaker>;
+  /**
    * Tournament Id
    */
   tournament_id: number;
@@ -852,6 +856,10 @@ export type RankingBody = {
    */
   position: number;
   /**
+   * Tiebreakers
+   */
+  tiebreakers: Array<Tiebreaker>;
+  /**
    * Win Points
    */
   win_points: number | string;
@@ -873,6 +881,10 @@ export type RankingCreateBody = {
    * Loss Points
    */
   loss_points: number | string;
+  /**
+   * Tiebreakers
+   */
+  tiebreakers: Array<Tiebreaker>;
   /**
    * Win Points
    */
@@ -1048,6 +1060,14 @@ export type StageItemInputEmpty = {
    */
   draws: number;
   /**
+   * Goals Against
+   */
+  goals_against: number;
+  /**
+   * Goals For
+   */
+  goals_for: number;
+  /**
    * Id
    */
   id: number;
@@ -1059,6 +1079,10 @@ export type StageItemInputEmpty = {
    * Points
    */
   points: string;
+  /**
+   * Position
+   */
+  position: number | null;
   /**
    * Slot
    */
@@ -1098,6 +1122,14 @@ export type StageItemInputFinal = {
    */
   draws: number;
   /**
+   * Goals Against
+   */
+  goals_against: number;
+  /**
+   * Goals For
+   */
+  goals_for: number;
+  /**
    * Id
    */
   id: number;
@@ -1109,6 +1141,10 @@ export type StageItemInputFinal = {
    * Points
    */
   points: string;
+  /**
+   * Position
+   */
+  position: number | null;
   /**
    * Slot
    */
@@ -1193,6 +1229,14 @@ export type StageItemInputTentative = {
    */
   draws: number;
   /**
+   * Goals Against
+   */
+  goals_against: number;
+  /**
+   * Goals For
+   */
+  goals_for: number;
+  /**
    * Id
    */
   id: number;
@@ -1204,6 +1248,10 @@ export type StageItemInputTentative = {
    * Points
    */
   points: string;
+  /**
+   * Position
+   */
+  position: number | null;
   /**
    * Slot
    */
@@ -1556,6 +1604,13 @@ export type TeamMultiBody = {
 export type TeamsWithPlayersResponse = {
   data: PaginatedTeams;
 };
+
+/**
+ * Tiebreaker
+ *
+ * Criteria to order teams with the same number of points, applied in the configured order.
+ */
+export type Tiebreaker = 'GOAL_DIFFERENCE' | 'GOALS_SCORED' | 'HEAD_TO_HEAD';
 
 /**
  * Token
