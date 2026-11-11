@@ -95,6 +95,9 @@ import type {
   GetCategoriesTournamentsTournamentIdCategoriesGetData,
   GetCategoriesTournamentsTournamentIdCategoriesGetErrors,
   GetCategoriesTournamentsTournamentIdCategoriesGetResponses,
+  GetCategoryWarningsTournamentsTournamentIdCategoryWarningsGetData,
+  GetCategoryWarningsTournamentsTournamentIdCategoryWarningsGetErrors,
+  GetCategoryWarningsTournamentsTournamentIdCategoryWarningsGetResponses,
   GetClubsClubsGetData,
   GetClubsClubsGetResponses,
   GetCourtsTournamentsTournamentIdCourtsGetData,
@@ -581,6 +584,32 @@ export const updateCategoryTournamentsTournamentIdCategoriesCategoryIdPut = <
       'Content-Type': 'application/json',
       ...options.headers,
     },
+  });
+
+/**
+ * Get Category Warnings
+ *
+ * Checks every age class against the NFF rules, e.g. at least 3 matches per team for the
+ * 13-year class and younger.
+ */
+export const getCategoryWarningsTournamentsTournamentIdCategoryWarningsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetCategoryWarningsTournamentsTournamentIdCategoryWarningsGetData, ThrowOnError>,
+): RequestResult<
+  GetCategoryWarningsTournamentsTournamentIdCategoryWarningsGetResponses,
+  GetCategoryWarningsTournamentsTournamentIdCategoryWarningsGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetCategoryWarningsTournamentsTournamentIdCategoryWarningsGetResponses,
+    GetCategoryWarningsTournamentsTournamentIdCategoryWarningsGetErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/category_warnings',
+    ...options,
   });
 
 /**

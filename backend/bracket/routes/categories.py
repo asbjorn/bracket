@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
 from bracket.config import config
+from bracket.logic.category_warnings import get_warnings_per_category
 from bracket.logic.results_visibility import check_category_can_hide_results
 from bracket.logic.subscriptions import check_requirement
 from bracket.models.db.category import CategoryBody
@@ -13,7 +14,12 @@ from bracket.routes.auth import (
     user_authenticated_for_tournament,
     user_authenticated_or_public_dashboard,
 )
-from bracket.routes.models import CategoriesResponse, SingleCategoryResponse, SuccessResponse
+from bracket.routes.models import (
+    CategoriesResponse,
+    CategoryWarningsResponse,
+    SingleCategoryResponse,
+    SuccessResponse,
+)
 from bracket.routes.util import disallow_archived_tournament
 from bracket.sql.categories import (
     get_all_categories_in_tournament,
@@ -23,6 +29,7 @@ from bracket.sql.categories import (
     sql_update_category,
 )
 from bracket.sql.stages import get_full_tournament_details
+from bracket.sql.teams import get_teams_with_members
 from bracket.utils.errors import (
     ForeignKey,
     UniqueIndex,
@@ -47,6 +54,26 @@ async def get_categories(
     _: UserPublic | None = Depends(user_authenticated_or_public_dashboard),
 ) -> CategoriesResponse:
     return CategoriesResponse(data=await get_all_categories_in_tournament(tournament_id))
+
+
+@router.get(
+    "/tournaments/{tournament_id}/category_warnings", response_model=CategoryWarningsResponse
+)
+async def get_category_warnings(
+    tournament_id: TournamentId,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+) -> CategoryWarningsResponse:
+    """
+    Checks every age class against the NFF rules, e.g. at least 3 matches per team for the
+    13-year class and younger.
+    """
+    return CategoryWarningsResponse(
+        data=get_warnings_per_category(
+            await get_all_categories_in_tournament(tournament_id),
+            await get_teams_with_members(tournament_id),
+            await get_full_tournament_details(tournament_id),
+        )
+    )
 
 
 @router.post("/tournaments/{tournament_id}/categories", response_model=SingleCategoryResponse)

@@ -1,8 +1,10 @@
 import { Group, Stack } from '@mantine/core';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Builder from '@components/builder/builder';
 import { CreateStageButtonLarge } from '@components/buttons/create_stage';
+import { CategoryWarnings } from '@components/info/category_warnings';
 import ActivateNextStageModal from '@components/modals/activate_next_stage_modal';
 import ActivatePreviousStageModal from '@components/modals/activate_previous_stage_modal';
 import { NoContent } from '@components/no_content/empty_table_info';
@@ -14,6 +16,7 @@ import TournamentLayout from '@pages/tournaments/_tournament_layout';
 import {
   getAvailableStageItemInputs,
   getCategories,
+  getCategoryWarnings,
   getRankings,
   getRankingsPerStageItem,
   getStages,
@@ -28,6 +31,7 @@ export default function StagesPage() {
   const swrTournamentResponse = getTournamentById(tournamentData.id);
   const swrAvailableInputsResponse = getAvailableStageItemInputs(tournamentData.id);
   const swrCategoriesResponse = getCategories(tournamentData.id);
+  const swrWarningsResponse = getCategoryWarnings(tournamentData.id);
   const tournamentDataFull =
     swrTournamentResponse.data != null ? swrTournamentResponse.data.data : null;
   const rankings = swrRankingsResponse.data != null ? swrRankingsResponse.data.data : [];
@@ -43,12 +47,21 @@ export default function StagesPage() {
   );
   const stages = allStages.filter((stage) => (stage.category_id ?? null) === categoryId);
   const swrRankingsPerStageItemResponse = getRankingsPerStageItem(tournamentData.id, categoryId);
+  // Warnings depend on the structure of the stages, so check again after every change
+  useEffect(() => {
+    swrWarningsResponse.mutate();
+  }, [swrStagesResponse.data]);
+  const warnings =
+    categoryId == null ? [] : (swrWarningsResponse.data?.data[`${categoryId}`] ?? []);
   const categorySelector = (
-    <CategorySelector
-      options={options}
-      selectedValue={selectedValue}
-      setSelectedValue={setSelectedValue}
-    />
+    <Stack gap="xs">
+      <CategorySelector
+        options={options}
+        selectedValue={selectedValue}
+        setSelectedValue={setSelectedValue}
+      />
+      <CategoryWarnings warnings={warnings} />
+    </Stack>
   );
 
   let content;

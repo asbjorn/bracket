@@ -118,6 +118,38 @@ export type CategoryBody = {
 };
 
 /**
+ * CategoryWarning
+ */
+export type CategoryWarning = {
+  code: CategoryWarningCode;
+  /**
+   * Minimum Matches
+   */
+  minimum_matches: number | null;
+  /**
+   * Team Names
+   */
+  team_names: Array<string>;
+};
+
+/**
+ * CategoryWarningCode
+ */
+export type CategoryWarningCode = 'TOO_FEW_MATCHES' | 'UNPLACED_TEAMS' | 'CHILDREN_RESULTS_PUBLIC';
+
+/**
+ * CategoryWarningsResponse
+ */
+export type CategoryWarningsResponse = {
+  /**
+   * Data
+   */
+  data: {
+    [key: string]: Array<CategoryWarning>;
+  };
+};
+
+/**
  * Club
  */
 export type Club = {
@@ -2328,6 +2360,38 @@ export type UpdateCategoryTournamentsTournamentIdCategoriesCategoryIdPutResponse
 
 export type UpdateCategoryTournamentsTournamentIdCategoriesCategoryIdPutResponse =
   UpdateCategoryTournamentsTournamentIdCategoriesCategoryIdPutResponses[keyof UpdateCategoryTournamentsTournamentIdCategoriesCategoryIdPutResponses];
+
+export type GetCategoryWarningsTournamentsTournamentIdCategoryWarningsGetData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/category_warnings';
+};
+
+export type GetCategoryWarningsTournamentsTournamentIdCategoryWarningsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetCategoryWarningsTournamentsTournamentIdCategoryWarningsGetError =
+  GetCategoryWarningsTournamentsTournamentIdCategoryWarningsGetErrors[keyof GetCategoryWarningsTournamentsTournamentIdCategoryWarningsGetErrors];
+
+export type GetCategoryWarningsTournamentsTournamentIdCategoryWarningsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: CategoryWarningsResponse;
+};
+
+export type GetCategoryWarningsTournamentsTournamentIdCategoryWarningsGetResponse =
+  GetCategoryWarningsTournamentsTournamentIdCategoryWarningsGetResponses[keyof GetCategoryWarningsTournamentsTournamentIdCategoryWarningsGetResponses];
 
 export type ChangeStatusTournamentsTournamentIdChangeStatusPostData = {
   body: TournamentChangeStatusBody;

@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+from bracket.logic.category_warnings import CategoryWarning
 from bracket.logic.scheduling.handle_stage_activation import StageItemInputUpdate
 from bracket.models.db.category import Category
 from bracket.models.db.club import Club
@@ -16,7 +17,7 @@ from bracket.models.db.tournament import Tournament
 from bracket.models.db.user import UserPublic
 from bracket.models.db.util import StageWithStageItems
 from bracket.routes.auth import Token
-from bracket.utils.id_types import StageId, StageItemId
+from bracket.utils.id_types import CategoryId, StageId, StageItemId
 
 
 class SuccessResponse(BaseModel):
@@ -98,6 +99,10 @@ class CategoriesResponse(DataResponse[list[Category]]):
 
 
 class SingleCategoryResponse(DataResponse[Category]):
+    pass
+
+
+class CategoryWarningsResponse(DataResponse[dict[CategoryId, list[CategoryWarning]]]):
     pass
 
 

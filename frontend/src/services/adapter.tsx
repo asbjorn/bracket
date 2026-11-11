@@ -8,6 +8,7 @@ import { TournamentFilter } from '@components/utils/tournament';
 import { Pagination } from '@components/utils/util';
 import {
   CategoriesResponse,
+  CategoryWarningsResponse,
   ClubsResponse,
   CourtsResponse,
   PlayersResponse,
@@ -219,6 +220,10 @@ export function getRankingsPerStageItem(
 ): SWRResponse<StageRankingResponse> {
   const query = category_id == null ? '' : `?category_id=${category_id}`;
   return useSWR(`tournaments/${tournament_id}/next_stage_rankings${query}`, fetcher);
+}
+
+export function getCategoryWarnings(tournament_id: number): SWRResponse<CategoryWarningsResponse> {
+  return useSWR(`tournaments/${tournament_id}/category_warnings`, fetcher);
 }
 
 export function getCategories(tournament_id: number | null): SWRResponse<CategoriesResponse> {

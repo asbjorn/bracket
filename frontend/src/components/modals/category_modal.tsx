@@ -22,12 +22,14 @@ export default function CategoryModal({
   tournamentId,
   category,
   swrCategoriesResponse,
+  onSaved,
   opened,
   setOpened,
 }: {
   tournamentId: number;
   category: Category | null;
   swrCategoriesResponse: SWRResponse<CategoriesResponse>;
+  onSaved: () => void;
   opened: boolean;
   setOpened: (opened: boolean) => void;
 }) {
@@ -62,6 +64,7 @@ export default function CategoryModal({
               : await updateCategory(tournamentId, category.id, body);
           if (requestSucceeded(result)) {
             await swrCategoriesResponse.mutate();
+            onSaved();
             form.reset();
             setOpened(false);
           }

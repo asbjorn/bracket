@@ -395,3 +395,25 @@ async def test_winner_of_other_category_cannot_be_input(
 
         available = await send_tournament_request(HTTPMethod.GET, "available_inputs", auth_context)
         assert available["data"][str(j14_playoff_stage.id)] == []
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_category_warnings_endpoint(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    tournament_id = auth_context.tournament.id
+    async with (
+        inserted_category(category_g10(tournament_id)) as g10,
+        inserted_team(
+            DUMMY_TEAM1.model_copy(update={"tournament_id": tournament_id, "category_id": g10.id})
+        ),
+    ):
+        response = await send_tournament_request(HTTPMethod.GET, "category_warnings", auth_context)
+
+    assert response == {
+        "data": {
+            str(g10.id): [
+                {"code": "UNPLACED_TEAMS", "minimum_matches": None, "team_names": ["Team 1"]}
+            ]
+        }
+    }

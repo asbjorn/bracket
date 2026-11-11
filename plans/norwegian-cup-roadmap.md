@@ -59,6 +59,18 @@ Each item is tagged **[Fix]**, **[Core]**, **[Feature]** or **[Nice]**, and **�
 
 ### Phase 1 — Core domain model: age classes and children's mode
 
+**Status (2026-11-11): items 7–9 done** (commits 1a–1d on branch `phase-0-norwegian`).
+
+- **Classes are optional.** A tournament without classes works as before.
+- **Hidden results.** Classes with hidden results:
+  - only allow round robin groups
+  - don't allow advancing by placing, so the bracket can't reveal results
+  - are hidden server-side for anonymous visitors, and in the dashboard UI for everyone
+- **Rankings** only count played matches.
+- **Deferred:**
+  - Match duration and margin per class moves to Phase 3, where the new scheduler owns all timing.
+  - Item 10 (team metadata): club and contact fields are deferred to Phase 6 (registration), since contact details must stay out of the public teams API.
+
 7. **[Core] Age classes (`categories` table under tournament)**
    - Fields: name ("G10", "J12"), birth year or age, game format (3v3/5v5/7v7/9v9/11v11), default match duration and margin, results visibility, minimum matches per team, ranking config.
    - Teams belong to one class.

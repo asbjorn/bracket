@@ -211,6 +211,67 @@
         "title": "CategoryBody",
         "type": "object"
       },
+      "CategoryWarning": {
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/CategoryWarningCode"
+          },
+          "minimum_matches": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Matches"
+          },
+          "team_names": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Team Names",
+            "type": "array"
+          }
+        },
+        "required": [
+          "code",
+          "minimum_matches",
+          "team_names"
+        ],
+        "title": "CategoryWarning",
+        "type": "object"
+      },
+      "CategoryWarningCode": {
+        "enum": [
+          "TOO_FEW_MATCHES",
+          "UNPLACED_TEAMS",
+          "CHILDREN_RESULTS_PUBLIC"
+        ],
+        "title": "CategoryWarningCode",
+        "type": "string"
+      },
+      "CategoryWarningsResponse": {
+        "properties": {
+          "data": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/CategoryWarning"
+              },
+              "type": "array"
+            },
+            "title": "Data",
+            "type": "object"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "CategoryWarningsResponse",
+        "type": "object"
+      },
       "Club": {
         "properties": {
           "created": {
@@ -3998,6 +4059,54 @@
           }
         ],
         "summary": "Update Category",
+        "tags": [
+          "Categories"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/category_warnings": {
+      "get": {
+        "description": "Checks every age class against the NFF rules, e.g. at least 3 matches per team for the\n13-year class and younger.",
+        "operationId": "get_category_warnings_tournaments__tournament_id__category_warnings_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryWarningsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Category Warnings",
         "tags": [
           "Categories"
         ]
