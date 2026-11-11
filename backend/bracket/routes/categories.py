@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
 from bracket.config import config
+from bracket.logic.results_visibility import check_category_can_hide_results
 from bracket.logic.subscriptions import check_requirement
 from bracket.models.db.category import CategoryBody
 from bracket.models.db.tournament import Tournament
@@ -21,6 +22,7 @@ from bracket.sql.categories import (
     sql_delete_category,
     sql_update_category,
 )
+from bracket.sql.stages import get_full_tournament_details
 from bracket.utils.errors import (
     ForeignKey,
     UniqueIndex,
@@ -73,6 +75,10 @@ async def update_category(
     _: UserPublic = Depends(user_authenticated_for_tournament),
     __: Tournament = Depends(disallow_archived_tournament),
 ) -> SingleCategoryResponse:
+    if not category_body.get_results_public():
+        stages = await get_full_tournament_details(tournament_id)
+        check_category_can_hide_results(stages, category_id)
+
     with check_unique_constraint_violation({UniqueIndex.categories_tournament_id_name_key}):
         category = await sql_update_category(tournament_id, category_id, category_body)
 

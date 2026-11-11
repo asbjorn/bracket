@@ -7,11 +7,17 @@ match has been played.
 """
 
 from decimal import Decimal
+from typing import NoReturn
+
+from fastapi import HTTPException
+from starlette import status
 
 from bracket.models.db.category import Category
 from bracket.models.db.match import MatchWithDetails, MatchWithDetailsDefinitive
+from bracket.models.db.stage_item import StageType
 from bracket.models.db.stage_item_inputs import StageItemInput
 from bracket.models.db.util import RoundWithMatches, StageItemWithRounds, StageWithStageItems
+from bracket.utils.id_types import CategoryId
 
 
 def without_statistics(stage_item_input: StageItemInput) -> StageItemInput:
@@ -60,3 +66,52 @@ def hide_results_of_private_categories(
         else stage
         for stage in stages
     ]
+
+
+ONLY_ROUND_ROBIN_WHEN_HIDDEN = (
+    "Classes with hidden results only support round robin groups, "
+    "because knockout and swiss rounds reveal the results"
+)
+NO_ADVANCING_WHEN_HIDDEN = (
+    "In classes with hidden results, teams can't advance based on their placing, "
+    "because that reveals the results"
+)
+
+
+def raise_bad_request(detail: str) -> NoReturn:
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
+
+
+def check_stage_item_type_allowed(category: Category | None, stage_type: StageType) -> None:
+    """
+    Hiding scores is not enough when the structure itself reveals results: the winner of a
+    knockout match appears in the next round, and swiss pairs teams by results. NFF children's
+    football has no playoffs or rankings anyway, so classes with hidden results only get round
+    robin groups (fixed schedules).
+    """
+    if category is not None and not category.results_public and stage_type != StageType.ROUND_ROBIN:
+        raise_bad_request(ONLY_ROUND_ROBIN_WHEN_HIDDEN)
+
+
+def check_advancing_allowed(category: Category | None) -> None:
+    """
+    Teams advancing by placing (e.g. "1st of group A") would reveal the group's table.
+    """
+    if category is not None and not category.results_public:
+        raise_bad_request(NO_ADVANCING_WHEN_HIDDEN)
+
+
+def check_category_can_hide_results(
+    stages: list[StageWithStageItems], category_id: CategoryId
+) -> None:
+    """
+    Before hiding the results of a class, its existing structure must not reveal them.
+    """
+    for stage in stages:
+        if stage.category_id != category_id:
+            continue
+        for stage_item in stage.stage_items:
+            if stage_item.type != StageType.ROUND_ROBIN:
+                raise_bad_request(ONLY_ROUND_ROBIN_WHEN_HIDDEN)
+            if any(input_.winner_from_stage_item_id is not None for input_ in stage_item.inputs):
+                raise_bad_request(NO_ADVANCING_WHEN_HIDDEN)

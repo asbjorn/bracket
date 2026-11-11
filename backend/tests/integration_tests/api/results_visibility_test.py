@@ -16,11 +16,13 @@ from bracket.utils.dummy_records import (
     DUMMY_MOCK_TIME,
     DUMMY_ROUND1,
     DUMMY_STAGE1,
+    DUMMY_STAGE2,
     DUMMY_STAGE_ITEM1,
+    DUMMY_STAGE_ITEM3,
     DUMMY_TEAM1,
 )
 from bracket.utils.http import HTTPMethod
-from bracket.utils.id_types import MatchId, RoundId, StageItemInputId
+from bracket.utils.id_types import CategoryId, MatchId, RoundId, StageItemId, StageItemInputId
 from bracket.utils.types import JsonDict
 from tests.integration_tests.api.shared import (
     SUCCESS_RESPONSE,
@@ -41,6 +43,8 @@ from tests.integration_tests.sql import (
 
 
 class ClassWithPlayedMatch(NamedTuple):
+    category_id: CategoryId
+    stage_item_id: StageItemId
     match_id: MatchId
     round_id: RoundId
     input_ids: tuple[StageItemInputId, StageItemInputId]
@@ -129,7 +133,9 @@ async def inserted_class_with_played_match(
             "UPDATE stage_item_inputs SET points = 3, wins = 1 WHERE id = :id",
             values={"id": inputs[0].id},
         )
-        yield ClassWithPlayedMatch(match.id, round_.id, (inputs[0].id, inputs[1].id))
+        yield ClassWithPlayedMatch(
+            category.id, stage_item.id, match.id, round_.id, (inputs[0].id, inputs[1].id)
+        )
 
 
 def find_match(response: JsonDict, match_id: MatchId) -> JsonDict:
@@ -224,3 +230,151 @@ async def test_update_match_played(
             database, Match, matches.select().where(matches.c.id == g10.match_id)
         )
         assert match.played is expected_played
+
+
+ONLY_ROUND_ROBIN = {
+    "detail": "Classes with hidden results only support round robin groups, "
+    "because knockout and swiss rounds reveal the results"
+}
+NO_ADVANCING = {
+    "detail": "In classes with hidden results, teams can't advance based on their placing, "
+    "because that reveals the results"
+}
+
+
+@pytest.mark.parametrize("stage_type", ["SINGLE_ELIMINATION", "SWISS"])
+@pytest.mark.asyncio(loop_scope="session")
+async def test_hidden_class_only_allows_round_robin(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext, stage_type: str
+) -> None:
+    tournament_id = auth_context.tournament.id
+    async with (
+        inserted_category(
+            CategoryInsertable(
+                tournament_id=tournament_id,
+                name="G10",
+                created=DUMMY_MOCK_TIME,
+                results_public=False,
+            )
+        ) as g10,
+        inserted_stage(
+            DUMMY_STAGE1.model_copy(update={"tournament_id": tournament_id, "category_id": g10.id})
+        ) as stage,
+    ):
+        response = await send_tournament_request(
+            HTTPMethod.POST,
+            "stage_items",
+            auth_context,
+            json={"stage_id": stage.id, "type": stage_type, "team_count": 4},
+        )
+
+    assert response == ONLY_ROUND_ROBIN
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_hidden_class_teams_cannot_advance_by_placing(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    tournament_id = auth_context.tournament.id
+    async with (
+        inserted_class_with_played_match(auth_context, "G10", results_public=False) as g10,
+        inserted_stage(
+            DUMMY_STAGE2.model_copy(
+                update={"tournament_id": tournament_id, "category_id": g10.category_id}
+            )
+        ) as next_stage,
+        inserted_stage_item(
+            DUMMY_STAGE_ITEM1.model_copy(
+                update={"stage_id": next_stage.id, "ranking_id": auth_context.ranking.id}
+            )
+        ) as next_group,
+        inserted_stage_item_input(
+            StageItemInputInsertable(
+                slot=0, team_id=None, tournament_id=tournament_id, stage_item_id=next_group.id
+            )
+        ) as next_input,
+    ):
+        response = await send_tournament_request(
+            HTTPMethod.PUT,
+            f"stage_items/{next_group.id}/inputs/{next_input.id}",
+            auth_context,
+            json={"winner_from_stage_item_id": g10.stage_item_id, "winner_position": 1},
+        )
+        assert response == NO_ADVANCING
+
+        # Only teams are offered as inputs, no "1st of group A"
+        available = await send_tournament_request(HTTPMethod.GET, "available_inputs", auth_context)
+        assert all("team_id" in option for option in available["data"][str(next_stage.id)])
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_cannot_hide_results_of_class_with_knockout(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    tournament_id = auth_context.tournament.id
+    async with (
+        inserted_class_with_played_match(auth_context, "J13", results_public=True) as j13,
+        inserted_stage(
+            DUMMY_STAGE2.model_copy(
+                update={"tournament_id": tournament_id, "category_id": j13.category_id}
+            )
+        ) as playoff_stage,
+        inserted_stage_item(
+            DUMMY_STAGE_ITEM3.model_copy(
+                update={"stage_id": playoff_stage.id, "ranking_id": auth_context.ranking.id}
+            )
+        ),
+    ):
+        response = await send_tournament_request(
+            HTTPMethod.PUT,
+            f"categories/{j13.category_id}",
+            auth_context,
+            json={"name": "J13", "results_public": False},
+        )
+    assert response == ONLY_ROUND_ROBIN
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_cannot_hide_results_of_class_with_advancing_teams(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    tournament_id = auth_context.tournament.id
+    async with (
+        inserted_class_with_played_match(auth_context, "J13", results_public=True) as j13,
+        inserted_stage(
+            DUMMY_STAGE2.model_copy(
+                update={"tournament_id": tournament_id, "category_id": j13.category_id}
+            )
+        ) as next_stage,
+        inserted_stage_item(
+            DUMMY_STAGE_ITEM1.model_copy(
+                update={"stage_id": next_stage.id, "ranking_id": auth_context.ranking.id}
+            )
+        ) as next_group,
+        inserted_stage_item_input(
+            StageItemInputInsertable(
+                slot=0, team_id=None, tournament_id=tournament_id, stage_item_id=next_group.id
+            )
+        ) as next_input,
+    ):
+        await database.execute(
+            "UPDATE stage_item_inputs SET winner_from_stage_item_id = :from_id, "
+            "winner_position = 1 WHERE id = :id",
+            values={"from_id": j13.stage_item_id, "id": next_input.id},
+        )
+        response = await send_tournament_request(
+            HTTPMethod.PUT,
+            f"categories/{j13.category_id}",
+            auth_context,
+            json={"name": "J13", "results_public": False},
+        )
+        assert response == NO_ADVANCING
+
+        # Making results public (or keeping them public) is always possible
+        response = await send_tournament_request(
+            HTTPMethod.PUT,
+            f"categories/{j13.category_id}",
+            auth_context,
+            json={"name": "J13 renamed", "results_public": True},
+        )
+        assert response["data"]["name"] == "J13 renamed"

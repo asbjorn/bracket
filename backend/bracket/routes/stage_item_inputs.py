@@ -3,6 +3,7 @@ from starlette import status
 
 from bracket.config import config
 from bracket.database import database
+from bracket.logic.results_visibility import check_advancing_allowed
 from bracket.models.db.stage_item_inputs import (
     StageItemInput,
     StageItemInputUpdateBody,
@@ -17,6 +18,7 @@ from bracket.routes.auth import (
 )
 from bracket.routes.models import SuccessResponse
 from bracket.routes.util import disallow_archived_tournament, stage_item_dependency
+from bracket.sql.categories import get_category_by_id
 from bracket.sql.stage_item_inputs import get_stage_item_input_by_id
 from bracket.sql.stages import get_full_tournament_details
 from bracket.sql.teams import get_team_by_id
@@ -72,6 +74,10 @@ async def validate_stage_item_update(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Teams can only advance to stages of the same class",
+            )
+        if target_stage.category_id is not None:
+            check_advancing_allowed(
+                await get_category_by_id(tournament_id, target_stage.category_id)
             )
 
     if isinstance(stage_item_input_body, StageItemInputUpdateBodyFinal):

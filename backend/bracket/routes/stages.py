@@ -174,7 +174,9 @@ async def get_available_inputs(
 ) -> StageItemInputOptionsResponse:
     stages = await get_full_tournament_details(tournament_id)
     teams = await get_teams_with_members(tournament_id)
-    return StageItemInputOptionsResponse(data=determine_available_inputs(teams, stages))
+    categories = await get_all_categories_in_tournament(tournament_id)
+    hidden = frozenset(category.id for category in categories if not category.results_public)
+    return StageItemInputOptionsResponse(data=determine_available_inputs(teams, stages, hidden))
 
 
 @router.get("/tournaments/{tournament_id}/next_stage_rankings")

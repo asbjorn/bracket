@@ -22,7 +22,7 @@ from bracket.models.db.team import FullTeamWithPlayers
 from bracket.models.db.util import StageWithStageItems
 from bracket.sql.rounds import get_next_round_name, sql_create_round
 from bracket.sql.stage_items import get_stage_item
-from bracket.utils.id_types import StageId, StageItemId, TournamentId
+from bracket.utils.id_types import CategoryId, StageId, StageItemId, TournamentId
 
 
 async def create_rounds_for_new_stage_item(
@@ -73,6 +73,7 @@ async def build_matches_for_stage_item(stage_item: StageItem, tournament_id: Tou
 def determine_available_inputs(
     teams: list[FullTeamWithPlayers],
     stages: list[StageWithStageItems],
+    categories_with_hidden_results: frozenset[CategoryId] = frozenset(),
 ) -> dict[StageId, list[StageItemInputOptionTentative | StageItemInputOptionFinal]]:
     """
     Returns available inputs per stage.
@@ -82,14 +83,21 @@ def determine_available_inputs(
     - Previous ROUND_ROBIN or SWISS stage items (tentative options)
 
     Age classes (categories) are independent: a stage only gets teams and previous stage items
-    of its own class. Stages and teams without a class form their own group.
+    of its own class. Stages and teams without a class form their own group. In classes with
+    hidden results, teams can't advance by placing, so only teams are offered.
     """
     results: dict[StageId, list[StageItemInputOptionTentative | StageItemInputOptionFinal]] = {}
     for category_id in {stage.category_id for stage in stages}:
-        results |= determine_available_inputs_for_category(
+        category_results = determine_available_inputs_for_category(
             [team for team in teams if team.category_id == category_id],
             [stage for stage in stages if stage.category_id == category_id],
         )
+        for stage_id, options in category_results.items():
+            results[stage_id] = (
+                [option for option in options if isinstance(option, StageItemInputOptionFinal)]
+                if category_id in categories_with_hidden_results
+                else options
+            )
     return results
 
 

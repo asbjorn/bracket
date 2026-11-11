@@ -15,6 +15,7 @@ from bracket.logic.ranking.calculation import recalculate_ranking_for_stage_item
 from bracket.logic.ranking.elimination import (
     update_inputs_in_complete_elimination_stage_item,
 )
+from bracket.logic.results_visibility import check_stage_item_type_allowed
 from bracket.logic.scheduling.builder import (
     build_matches_for_stage_item,
 )
@@ -36,6 +37,7 @@ from bracket.routes.auth import (
 )
 from bracket.routes.models import SuccessResponse
 from bracket.routes.util import disallow_archived_tournament, stage_item_dependency
+from bracket.sql.categories import get_category_by_id
 from bracket.sql.courts import get_all_courts_in_tournament
 from bracket.sql.matches import (
     sql_create_match,
@@ -92,6 +94,14 @@ async def create_stage_item(
     stages = await get_full_tournament_details(tournament_id)
     existing_stage_items = [stage_item for stage in stages for stage_item in stage.stage_items]
     check_requirement(existing_stage_items, user, "max_stage_items")
+
+    [stage] = [stage for stage in stages if stage.id == stage_body.stage_id]
+    category = (
+        await get_category_by_id(tournament_id, stage.category_id)
+        if stage.category_id is not None
+        else None
+    )
+    check_stage_item_type_allowed(category, stage_body.type)
 
     stage_item = await sql_create_stage_item_with_empty_inputs(tournament_id, stage_body)
     await build_matches_for_stage_item(stage_item, tournament_id)
