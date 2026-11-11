@@ -100,6 +100,8 @@ async def test_cup_setup_creates_everything(
             ("Gruppespill", 2),  # J14: 8 teams in groups of 4
             ("Sluttspill", 2),  # J14: A and B
         ]
+        # Each class starts in its group stage: "next stage" then goes to the playoffs
+        assert [s.is_active for s in stages] == [True, True, False]
         g10_groups, j14_groups, j14_playoffs = (
             sorted(s.stage_items, key=lambda item: item.name) for s in stages
         )

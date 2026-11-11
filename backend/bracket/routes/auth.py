@@ -186,11 +186,10 @@ async def user_authenticated_or_public_dashboard_by_endpoint_name(
     token: str = Depends(oauth2_scheme), endpoint_name: str | None = None
 ) -> UserPublic | None:
     if endpoint_name is not None:
+        # Unknown and private cups look the same from outside: "not found"
         if await sql_get_tournament_by_endpoint_name(endpoint_name) is None:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials",
-                headers={"WWW-Authenticate": "Bearer"},
+                status_code=status.HTTP_404_NOT_FOUND, detail="Could not find this cup"
             )
         return None
 

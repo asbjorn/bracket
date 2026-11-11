@@ -9,7 +9,7 @@ import {
   getStageItemCategoryLookup,
   useCategoryFilter,
 } from '@components/utils/category';
-import { Time } from '@components/utils/datetime';
+import { Time, formatDayTime } from '@components/utils/datetime';
 import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
 import { getTournamentIdFromRouter } from '@components/utils/util';
 import { MatchWithDetails, StageItemWithRounds } from '@openapi';
@@ -108,7 +108,7 @@ function MatchCard({
 }
 
 export default function MatchCardsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { tournamentData } = getTournamentIdFromRouter();
   const swrStagesResponse = getStages(tournamentData.id);
   const courts = getCourts(tournamentData.id).data?.data ?? [];
@@ -175,7 +175,7 @@ export default function MatchCardsPage() {
               placeholder={t('all_days_label')}
               data={days.map((value) => ({
                 value,
-                label: dayjs(value).format('dddd D. MMMM'),
+                label: formatDayTime(`${value}T12:00:00`, i18n.resolvedLanguage, 'long_day'),
               }))}
               value={day}
               onChange={setDay}

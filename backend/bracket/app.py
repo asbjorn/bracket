@@ -47,6 +47,7 @@ from bracket.routes import (
 from bracket.utils.alembic import alembic_run_migrations
 from bracket.utils.asyncio import AsyncioTasksManager
 from bracket.utils.db_init import init_db_when_empty
+from bracket.utils.error_codes import ERROR_CODE_HEADER, error_code_headers
 from bracket.utils.logging import logger
 
 init_sentry()
@@ -154,6 +155,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=[ERROR_CODE_HEADER],
 )
 
 
@@ -170,7 +172,9 @@ async def add_process_time_header(request: Request, call_next: RequestResponseEn
 
 @app.exception_handler(HTTPException)
 async def validation_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
-    return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
+    # Keep headers such as WWW-Authenticate, and add a code for errors shown to users
+    headers = {**(exc.headers or {}), **error_code_headers(exc.detail)}
+    return JSONResponse({"detail": exc.detail}, status_code=exc.status_code, headers=headers)
 
 
 @app.exception_handler(Exception)

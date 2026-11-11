@@ -15,13 +15,13 @@ import {
   Title,
 } from '@mantine/core';
 import { IconInfoCircle, IconTrash } from '@tabler/icons-react';
-import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { CardIcon } from '@components/discipline/cards_editor';
 import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
 import { getTournamentIdFromRouter } from '@components/utils/util';
+import { formatDayTime } from '@components/utils/datetime';
 import { DisciplineOverview, MatchWithDetails, StageWithStageItems } from '@openapi';
 import TournamentLayout from '@pages/tournaments/_tournament_layout';
 import { getStages, requestSucceeded } from '@services/adapter';
@@ -202,7 +202,7 @@ function JuryForm({
 }
 
 export default function DisciplinePage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { tournamentData } = getTournamentIdFromRouter();
   const tournamentId = tournamentData.id;
   const swrDiscipline = getDiscipline(tournamentId);
@@ -220,7 +220,10 @@ export default function DisciplinePage() {
   const matchLabel = (matchId: number) => {
     const match = matchOf(matchId);
     if (match == null) return `#${matchId}`;
-    const time = match.start_time != null ? dayjs(match.start_time).format('ddd HH:mm') : '';
+    const time =
+      match.start_time != null
+        ? formatDayTime(match.start_time, i18n.resolvedLanguage, 'weekday_time')
+        : '';
     const team1 = formatMatchInput1(t, stageItemsLookup, matchesLookup, match);
     const team2 = formatMatchInput2(t, stageItemsLookup, matchesLookup, match);
     return `${time} ${team1} – ${team2}`.trim();
@@ -354,7 +357,11 @@ export default function DisciplinePage() {
                 <Group justify="space-between" align="start" wrap="nowrap">
                   <Stack gap={4}>
                     <Text size="xs" c="dimmed">
-                      {dayjs(decision.decided_at).format('ddd D. MMM HH:mm')}
+                      {formatDayTime(
+                        decision.decided_at,
+                        i18n.resolvedLanguage,
+                        'weekday_date_time',
+                      )}
                       {decision.card_id != null ? ` · ${cardLabel(decision.card_id)}` : ''}
                       {decision.suspension_change !== 0
                         ? ` · ${t('jury_change_badge', {

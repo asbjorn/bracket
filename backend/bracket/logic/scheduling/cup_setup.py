@@ -29,7 +29,11 @@ from bracket.models.db.user import UserPublic
 from bracket.sql.categories import get_all_categories_in_tournament, sql_create_category
 from bracket.sql.courts import get_all_courts_in_tournament, sql_create_courts
 from bracket.sql.stage_items import sql_create_stage_item_with_empty_inputs
-from bracket.sql.stages import get_full_tournament_details, sql_create_stage
+from bracket.sql.stages import (
+    get_full_tournament_details,
+    sql_activate_next_stage,
+    sql_create_stage,
+)
 from bracket.sql.time_windows import sql_replace_time_windows
 from bracket.utils.id_types import TournamentId
 from bracket.utils.text import SingleLine
@@ -143,6 +147,9 @@ async def create_class(
             tournament_id, cup_class.time_windows, category_id=category.id
         )
     group_stage = await sql_create_stage(tournament_id, category.id, names.group_stage)
+    # The group stage is where the class starts: active from the beginning, so the first
+    # "next stage" goes to the playoffs
+    await sql_activate_next_stage(group_stage.id, tournament_id, category.id)
     group_sizes = split_into_groups(cup_class.team_count, cup_class.group_size)
     for index, size in enumerate(group_sizes):
         group = await sql_create_stage_item_with_empty_inputs(

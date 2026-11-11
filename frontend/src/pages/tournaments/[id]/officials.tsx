@@ -32,7 +32,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { NoContent } from '@components/no_content/empty_table_info';
-import { Time } from '@components/utils/datetime';
+import { Time, formatDayTime } from '@components/utils/datetime';
 import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
 import { getTournamentIdFromRouter } from '@components/utils/util';
 import { contentLanguage } from '@components/utils/language';
@@ -440,7 +440,7 @@ function AssignmentTab({
   courts: Court[];
   refresh: Refresh;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [courtFilter, setCourtFilter] = useState<string | null>(null);
   const [onlyMissing, setOnlyMissing] = useState(false);
   const referees = overview.officials.filter((o) => o.role === 'REFEREE');
@@ -529,7 +529,7 @@ function AssignmentTab({
                     <Table.Td>
                       {row.match.start_time != null ? (
                         <Text fw={500}>
-                          {dayjs(row.match.start_time).format('ddd')}{' '}
+                          {formatDayTime(row.match.start_time, i18n.resolvedLanguage, 'weekday')}{' '}
                           <Time datetime={row.match.start_time} />
                         </Text>
                       ) : (
@@ -596,7 +596,7 @@ function HostsTab({
   courts: Court[];
   refresh: Refresh;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const name = (id: number) => overview.officials.find((o) => o.id === id)?.name ?? '?';
   const court = (id: number) => courts.find((c) => c.id === id)?.name ?? '?';
   return (
@@ -620,7 +620,7 @@ function HostsTab({
               <Table.Tr key={host.id}>
                 <Table.Td>{court(host.court_id)}</Table.Td>
                 <Table.Td>
-                  {dayjs(host.start_time).format('ddd HH:mm')}–
+                  {formatDayTime(host.start_time, i18n.resolvedLanguage, 'weekday_time')}–
                   {dayjs(host.end_time).format('HH:mm')}
                 </Table.Td>
                 <Table.Td fw={500}>{name(host.official_id)}</Table.Td>
@@ -703,7 +703,7 @@ function FeesTab({
 }
 
 export default function OfficialsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { tournamentData } = getTournamentIdFromRouter();
   const tournamentId = tournamentData.id;
   const swrOverview = getOfficialsOverview(tournamentId);
@@ -735,7 +735,9 @@ export default function OfficialsPage() {
     const row = rows.find((r) => r.match.id === matchId);
     if (row == null) return matchId != null ? `#${matchId}` : '';
     const time =
-      row.match.start_time != null ? dayjs(row.match.start_time).format('ddd HH:mm') : '';
+      row.match.start_time != null
+        ? formatDayTime(row.match.start_time, i18n.resolvedLanguage, 'weekday_time')
+        : '';
     return `${time} ${row.match.court?.name ?? ''}: ${row.team1} – ${row.team2}`.trim();
   };
   const refresh = () => swrOverview.mutate();

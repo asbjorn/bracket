@@ -2,7 +2,7 @@ import { Alert, Button, Container, Grid, Modal, Title } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { FaArrowRight } from '@react-icons/all-files/fa/FaArrowRight';
 import { IconAlertCircle, IconSquareArrowRight } from '@tabler/icons-react';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SWRResponse } from 'swr';
 
@@ -23,7 +23,7 @@ function UpdatesToStageItemInputsTable({
   return updates
     .sort((si1, si2) => (si1.stage_item_input.slot > si2.stage_item_input.slot ? 1 : -1))
     .map((update) => (
-      <Grid>
+      <Grid key={update.stage_item_input.id}>
         <Grid.Col span={{ sm: 6 }}>
           {formatStageItemInput(update.stage_item_input, stageItemsLookup)}
         </Grid.Col>
@@ -58,12 +58,12 @@ function UpdatesToStageItemInputsTables({
     .filter((item) => item.stageItem != null)
     .sort((si1, si2) => (si1.stageItem.name > si2.stageItem.name ? 1 : -1))
     .map((item) => (
-      <>
+      <Fragment key={item.stageItem.id}>
         <Title size="h2" mt="1rem">
           {item.stageItem.name}
         </Title>
         <UpdatesToStageItemInputsTable updates={item.updates} stageItemsLookup={stageItemsLookup} />
-      </>
+      </Fragment>
     ));
 }
 
@@ -81,6 +81,9 @@ export default function ActivateNextStageModal({
   const { t } = useTranslation();
   const [opened, setOpened] = useState(false);
   const stageItemsLookup = getStageItemLookup(swrStagesResponse);
+  const hasUpdates = Object.values(swrRankingsPerStageItemResponse.data?.data ?? {}).some(
+    (updates) => updates.length > 0,
+  );
 
   const form = useForm({
     initialValues: {},
@@ -102,7 +105,10 @@ export default function ActivateNextStageModal({
           })}
         >
           <Alert icon={<IconAlertCircle size={16} />} color="gray" radius="lg">
-            {t('active_next_stage_modal_description')}
+            {/* Only promise that teams are placed when the next stage takes teams from this one */}
+            {hasUpdates
+              ? t('active_next_stage_modal_description')
+              : t('active_next_stage_modal_description_no_updates')}
           </Alert>
 
           <Container mt="1rem">

@@ -85,3 +85,32 @@ export function spansMultipleDays(datetimes: string[]) {
 export function compareDateTime(datetime1: string, datetime2: string) {
   return parseISO(datetime1).getTime() - parseISO(datetime2).getTime();
 }
+
+/**
+ * Plain-text dates for labels, select options and exports, in the UI language (dayjs would use
+ * its global locale, which is English unless set). `language` is e.g. i18n.resolvedLanguage.
+ */
+export function formatDayTime(
+  datetime: string,
+  language: string | undefined,
+  kind: 'weekday' | 'weekday_time' | 'weekday_date_time' | 'long_day',
+): string {
+  const lang = language ?? 'en';
+  const date = parseISO(datetime);
+  const weekday = new Intl.DateTimeFormat(lang, { weekday: 'short' }).format(date);
+  const time = new Intl.DateTimeFormat(lang, timeOptions).format(date);
+  switch (kind) {
+    case 'weekday':
+      return weekday;
+    case 'weekday_time':
+      return `${weekday} ${time}`;
+    case 'weekday_date_time':
+      return `${new Intl.DateTimeFormat(lang, { weekday: 'short', day: 'numeric', month: 'short' }).format(date)} ${time}`;
+    case 'long_day':
+      return new Intl.DateTimeFormat(lang, {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+      }).format(date);
+  }
+}

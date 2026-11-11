@@ -1,3 +1,4 @@
+import itertools
 import random
 from collections import Counter
 
@@ -97,3 +98,52 @@ def test_random_but_reproducible() -> None:
 def test_too_many_teams() -> None:
     with pytest.raises(ValueError, match="more teams than free places"):
         draw_groups([teams(1, 9)], empty_groups(4, 4), random.Random(0))
+
+
+def test_clubs_apart_when_pot_is_larger_than_groups() -> None:
+    """
+    Regression (browser test, J13): 2 pots of 4 teams, 2 groups of 4. Two clubs each have one
+    team in each pot; solving pot rounds one at a time put both teams of a club together.
+    """
+    gneist = [DrawTeam(1, "gneist"), DrawTeam(5, "gneist")]
+    viking = [DrawTeam(2, "viking"), DrawTeam(6, "viking")]
+    pots = [[gneist[0], viking[0], DrawTeam(3, "a"), DrawTeam(4, "b")]]
+    pots.append([gneist[1], viking[1], DrawTeam(7, "c"), DrawTeam(8, "d")])
+    for seed in range(50):
+        groups = empty_groups(4, 4)
+        group_of = groups_of(draw_groups(pots, groups, random.Random(seed)))
+        assert group_of[1] != group_of[5], seed
+        assert group_of[2] != group_of[6], seed
+        # Still two teams of each pot per group
+        assert sorted(Counter(group_of[t.id] for t in pots[0]).values()) == [2, 2]
+
+
+def best_possible_club_clashes(all_teams: list[DrawTeam], sizes: list[int]) -> int:
+    """Brute force: the fewest same-club pairs over every split of the teams into groups."""
+    best = None
+    for assignment in itertools.product(range(len(sizes)), repeat=len(all_teams)):
+        if [assignment.count(g) for g in range(len(sizes))] != sizes:
+            continue
+        pairs = 0
+        for g in range(len(sizes)):
+            clubs = [team.club for team, a in zip(all_teams, assignment, strict=True) if a == g]
+            pairs += sum(clubs.count(c) * (clubs.count(c) - 1) // 2 for c in set(clubs))
+        best = pairs if best is None else min(best, pairs)
+    assert best is not None
+    return best
+
+
+def test_club_separation_is_optimal_on_small_cases() -> None:
+    rng = random.Random(11)
+    for case in range(150):
+        sizes = rng.choice([[3, 3], [4, 4], [3, 3, 2], [4, 3], [2, 2, 2]])
+        count = sum(sizes)
+        drawn_teams = [DrawTeam(i, rng.choice("abcd")) for i in range(count)]
+        pot_count = rng.choice([1, 2])
+        pots = [drawn_teams[i::pot_count] for i in range(pot_count)]
+        groups = empty_groups(*sizes)
+        draw_groups(pots, groups, random.Random(case))
+        drawn = sum(
+            g.clubs.count(c) * (g.clubs.count(c) - 1) // 2 for g in groups for c in set(g.clubs)
+        )
+        assert drawn == best_possible_club_clashes(drawn_teams, sizes), case

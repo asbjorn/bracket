@@ -50,7 +50,12 @@ export function handleRequestError(response: AxiosError) {
     const { detail } = response.response.data;
     let message: string;
 
-    if (Array.isArray(detail)) {
+    // Errors with a code (X-Error-Code) are shown in the user's language
+    // @ts-ignore
+    const code: string | undefined = response.response.headers?.['x-error-code'];
+    if (code != null && i18n.exists(`server_error_${code}`)) {
+      message = i18n.t(`server_error_${code}`);
+    } else if (Array.isArray(detail)) {
       const firstError = detail[0];
       message = `${firstError.loc.slice(1).join(' - ')}: ${firstError.msg}`;
     } else {

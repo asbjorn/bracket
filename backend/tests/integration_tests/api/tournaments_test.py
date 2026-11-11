@@ -14,6 +14,7 @@ from bracket.utils.http import HTTPMethod
 from bracket.utils.types import assert_some
 from tests.integration_tests.api.shared import (
     SUCCESS_RESPONSE,
+    get_root_uvicorn_url,
     send_auth_request,
     send_request,
     send_tournament_request,
@@ -292,3 +293,27 @@ async def test_delete_tournament_with_participating_clubs(
         assert await send_tournament_request(HTTPMethod.DELETE, "", context) == SUCCESS_RESPONSE
 
     await sql_delete_tournament(tournament_inserted.id)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_unknown_cup_endpoint_is_not_found(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    """The public cup page of an unknown (or private) cup: a clear 404, not an auth error."""
+    response = await send_auth_request(
+        HTTPMethod.GET, "tournaments?endpoint_name=no-such-cup", auth_context
+    )
+    assert response == {"detail": "Could not find this cup"}
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_error_code_header(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    async with aiohttp.ClientSession() as session:
+        async with session.get(
+            f"{get_root_uvicorn_url()}tournaments?endpoint_name=no-such-cup",
+            headers={"Authorization": "bearer "},
+        ) as response:
+            assert response.status == 404
+            assert response.headers["X-Error-Code"] == "cup_not_found"
