@@ -195,6 +195,16 @@ The target workflow:
 
 ### Phase 5 — Match-day operations and public experience
 
+**Status (2026-11-11): items 27–31 done** (commits 5a–5e on branch `phase-0-norwegian`).
+
+- **Roles:** only club owners can rename or delete a club and delete a tournament; collaborators run everything else, including match day. Matches and rounds are now looked up within their tournament (this closed a cross-tournament hole).
+- **Result links:** per court or for the whole cup, with a QR code. They expire (8 h to 7 days) and can be revoked; only a hash of the token is stored. Rate-limited, and no changes are possible through a link once the cup is archived.
+- **Pitch page `/score/:token`:** mobile-first: current match, big score buttons, result type, walkover, cards, check-in, and delay reports that show up on the planning page.
+- **Walkover, withdraw, check-in:** the walkover score is a tournament setting. A withdrawn team's remaining matches become walkovers and the schedule stays as it is.
+- **Public pages:** schedules per class, team, court and day (team search), a big-screen rotation, an announcement banner, a rules page, an iCal feed per team, QR posters. Classes with hidden results show only "Spilt".
+- **Printing:** print CSS for all schedules, tables and rules, plus match cards with score boxes. No server-side PDF.
+- **Not done yet:** delays reported from a pitch don't move the schedule (the organiser uses the delay tool). Rate limits are per process.
+
 27. **[Feature] Roles and score entry**
     - Enforce OWNER vs COLLABORATOR (the relation exists but is not checked today).
     - Add a **score-keeper** role.
@@ -213,6 +223,17 @@ The target workflow:
     - Start with print CSS; add server-side PDF only if needed.
 
 ### Phase 6 — Administration
+
+**Status (2026-11-11): items 32–37 done** (commits 6a–6e on branch `phase-0-norwegian`, plus security fixes).
+
+- **Registration:** classes can be opened with a deadline, a team limit, a waitlist and an entry fee. Public sign-up form with a honeypot, a rate limit, the owner's subscription limit, and serialised count-and-insert. Contact details are organiser only. The "Påmeldinger" page shows status, paid, squad reported, one-click "move up" from the waitlist, and a CSV export that is safe against formula injection. Waitlisted and rejected teams are left out everywhere.
+- **Entry-fee calculator:** (fixed + per team × teams) × (1 + margin) ÷ teams, rounded up to 50 kr, and applied to chosen classes.
+- **Officials:** referees, assistants and match hosts per court block. Conflicts: double booking, own club, unavailable. Fee summary with CSV; only names are shown publicly.
+- **Discipline (13+ with public results):** cards, automatic suspensions (tournament settings) and a jury log that can change suspensions. Cards can be entered from the match form and the pitch page, with warnings about suspended players.
+- **Application to the district:** a page with the cup facts (organiser, contact, jury chair, venue, rules) and a live text for FIKS built from the cup, with copy and print buttons.
+- **Email:** an SMTP sender configured by environment variables. Without it, the UI offers to copy the addresses or open the email program with everyone in BCC. Emails are queued with a dedupe key, so nothing is sent twice, sent in the background and retried.
+  - Kinds: sign-up confirmation (a fixed text, so it can't be used to relay spam), a place from the waitlist, announcements (opt-in) and "email the new times" (only to teams whose times changed).
+- **Not done yet:** officials aren't linked to players, so a referee playing in another match at the same time isn't detected. Rules are plain text.
 
 32. **[Feature] Registration**
     - Public sign-up form per class, with a registration deadline.
