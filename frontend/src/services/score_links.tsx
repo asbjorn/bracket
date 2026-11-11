@@ -49,10 +49,20 @@ export async function resolveNotice(tournament_id: number, notice_id: number) {
 
 // Without an account: the token in the link is the key
 
+/**
+ * The link was refused by the server (revoked, expired or never existed). Anything else, such
+ * as no network on the pitch, a server restart or "too many requests", is temporary.
+ */
+export function isLinkRefused(error: any): boolean {
+  return [401, 403, 404].includes(error?.response?.status);
+}
+
 export function getScoreEntry(token: string): SWRResponse<ScoreEntryViewResponse> {
   return useSWR(`score/${token}`, fetcher, {
     refreshInterval: 30_000,
-    shouldRetryOnError: false,
+    // Keep trying after a temporary problem; a refused link won't start working by itself
+    shouldRetryOnError: (error: Error) => !isLinkRefused(error),
+    errorRetryInterval: 10_000,
   });
 }
 

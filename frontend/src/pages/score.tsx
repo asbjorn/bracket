@@ -28,6 +28,7 @@ import {
   IconUser,
   IconUserCheck,
   IconUserShield,
+  IconWifiOff,
 } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -43,6 +44,7 @@ import {
   enterResult,
   enterWalkover,
   getScoreEntry,
+  isLinkRefused,
   reportFromPitch,
 } from '@services/score_links';
 
@@ -438,7 +440,9 @@ export default function ScoreEntryPage() {
   const [delayOpened, setDelayOpened] = useState(false);
   const [showPlayed, setShowPlayed] = useState(false);
 
-  if (swrView.error != null) {
+  // Only a link the server refuses ends the page. A failed refresh keeps the last data on
+  // screen, so a score being typed isn't lost when the connection drops for a moment.
+  if (swrView.data == null && swrView.error != null && isLinkRefused(swrView.error)) {
     return (
       <Container size="xs" py="xl">
         <Alert color="red" icon={<IconAlertTriangle />} title={t('score_link_invalid_title')}>
@@ -450,7 +454,10 @@ export default function ScoreEntryPage() {
   if (swrView.data == null) {
     return (
       <Center h="60vh">
-        <Loader />
+        <Stack align="center">
+          <Loader />
+          {swrView.error != null ? <Text c="dimmed">{t('score_connection_retrying')}</Text> : null}
+        </Stack>
       </Center>
     );
   }
@@ -465,6 +472,13 @@ export default function ScoreEntryPage() {
   return (
     <Container size="xs" py="md" px="sm">
       <Stack>
+        {swrView.error != null ? (
+          <Alert color="orange" icon={<IconWifiOff size={18} />} py="xs">
+            {isLinkRefused(swrView.error)
+              ? t('score_link_refused_now')
+              : t('score_connection_retrying')}
+          </Alert>
+        ) : null}
         <Group justify="space-between" wrap="nowrap">
           <Stack gap={0} style={{ minWidth: 0 }}>
             <Title order={3} lh={1.2}>

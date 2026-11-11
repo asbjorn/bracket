@@ -841,5 +841,7 @@
     "club_delete_confirm_button": "Yes, delete the club",
     "participating_club_select_placeholder": "Choose or type a club",
     "club_select_create": "+ New club «{{name}}»",
-    "club_select_nothing_found": "No clubs found"
+    "club_select_nothing_found": "No clubs found",
+    "score_connection_retrying": "Lost connection - trying again…",
+    "score_link_refused_now": "This link doesn't work any more. What you see may be out of date; results can't be saved."
 }

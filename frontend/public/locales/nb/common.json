@@ -841,5 +841,7 @@
     "club_delete_confirm_button": "Ja, slett klubben",
     "participating_club_select_placeholder": "Velg eller skriv en klubb",
     "club_select_create": "+ Ny klubb «{{name}}»",
-    "club_select_nothing_found": "Ingen klubber funnet"
+    "club_select_nothing_found": "Ingen klubber funnet",
+    "score_connection_retrying": "Mistet forbindelsen – prøver igjen…",
+    "score_link_refused_now": "Lenken virker ikke lenger. Det du ser kan være utdatert, og resultater kan ikke lagres."
 }
