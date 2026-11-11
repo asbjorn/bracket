@@ -11,10 +11,12 @@ import {
   Textarea,
 } from '@mantine/core';
 import { DateTimePicker } from '@mantine/dates';
+import { IconArrowRight } from '@tabler/icons-react';
 import { showNotification } from '@mantine/notifications';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 
 import { getBaseURL } from '@components/utils/util';
 import { AnnouncementLevel, Tournament } from '@openapi';
@@ -193,6 +195,21 @@ export function PublicInfoSettings({ tournament }: { tournament: Tournament }) {
       </Fieldset>
       <Fieldset legend={t('rules_title')} mt="lg" radius="md">
         <RulesEditor tournamentId={tournament.id} />
+      </Fieldset>
+      <Fieldset legend={t('application_title')} mt="lg" radius="md">
+        <Group justify="space-between">
+          <Text size="sm" c="dimmed" maw="32rem">
+            {t('application_description')}
+          </Text>
+          <Button
+            component={Link}
+            to={`/tournaments/${tournament.id}/application`}
+            variant="light"
+            rightSection={<IconArrowRight size={18} />}
+          >
+            {t('application_open_button')}
+          </Button>
+        </Group>
       </Fieldset>
     </>
   );

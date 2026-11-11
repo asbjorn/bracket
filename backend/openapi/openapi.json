@@ -82,6 +82,96 @@
         "title": "AnnouncementResponse",
         "type": "object"
       },
+      "ApplicationClass": {
+        "properties": {
+          "age": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "duration_minutes": {
+            "title": "Duration Minutes",
+            "type": "integer"
+          },
+          "entry_fee": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Fee"
+          },
+          "game_format": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GameFormat"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_playoffs": {
+            "title": "Has Playoffs",
+            "type": "boolean"
+          },
+          "margin_minutes": {
+            "title": "Margin Minutes",
+            "type": "integer"
+          },
+          "match_count": {
+            "title": "Match Count",
+            "type": "integer"
+          },
+          "max_teams": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Teams"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "results_public": {
+            "title": "Results Public",
+            "type": "boolean"
+          },
+          "team_count": {
+            "title": "Team Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "age",
+          "game_format",
+          "duration_minutes",
+          "margin_minutes",
+          "team_count",
+          "max_teams",
+          "entry_fee",
+          "results_public",
+          "has_playoffs",
+          "match_count"
+        ],
+        "title": "ApplicationClass",
+        "type": "object"
+      },
       "BlockAssignmentBody": {
         "description": "All scheduled matches on a court that start in [start_time, end_time) get this referee.",
         "properties": {
@@ -987,6 +1077,30 @@
         "title": "CourtBody",
         "type": "object"
       },
+      "CourtCount": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "game_format": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GameFormat"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "game_format",
+          "count"
+        ],
+        "title": "CourtCount",
+        "type": "object"
+      },
       "CourtHost": {
         "properties": {
           "court_id": {
@@ -1438,6 +1552,81 @@
           "yellow_cards_for_suspension"
         ],
         "title": "DisciplineSettingsBody",
+        "type": "object"
+      },
+      "DistrictApplication": {
+        "properties": {
+          "classes": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicationClass"
+            },
+            "title": "Classes",
+            "type": "array"
+          },
+          "courts": {
+            "items": {
+              "$ref": "#/components/schemas/CourtCount"
+            },
+            "title": "Courts",
+            "type": "array"
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/PlayingDay"
+            },
+            "title": "Days",
+            "type": "array"
+          },
+          "details": {
+            "$ref": "#/components/schemas/TournamentDetails"
+          },
+          "match_count": {
+            "title": "Match Count",
+            "type": "integer"
+          },
+          "rules_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rules Text"
+          },
+          "team_count": {
+            "title": "Team Count",
+            "type": "integer"
+          },
+          "tournament_name": {
+            "title": "Tournament Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tournament_name",
+          "details",
+          "days",
+          "courts",
+          "classes",
+          "team_count",
+          "match_count",
+          "rules_text"
+        ],
+        "title": "DistrictApplication",
+        "type": "object"
+      },
+      "DistrictApplicationResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DistrictApplication"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "DistrictApplicationResponse",
         "type": "object"
       },
       "DrawBody": {
@@ -3873,6 +4062,39 @@
           "data"
         ],
         "title": "PlayersResponse",
+        "type": "object"
+      },
+      "PlayingDay": {
+        "description": "A day of the cup in Norwegian time, with its playing hours, e.g. [\"09:00-12:00\"].",
+        "properties": {
+          "day": {
+            "format": "date",
+            "title": "Day",
+            "type": "string"
+          },
+          "first_start": {
+            "title": "First Start",
+            "type": "string"
+          },
+          "last_end": {
+            "title": "Last End",
+            "type": "string"
+          },
+          "windows": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Windows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "day",
+          "first_start",
+          "last_end",
+          "windows"
+        ],
+        "title": "PlayingDay",
         "type": "object"
       },
       "PlayoffBody": {
@@ -7271,6 +7493,132 @@
         "title": "TournamentChangeStatusBody",
         "type": "object"
       },
+      "TournamentDetails": {
+        "description": "Cup facts the district (krets) asks for that Bracket doesn't know otherwise. Contact details\nare personal data and only shown to the organiser.",
+        "properties": {
+          "contact_email": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Email"
+          },
+          "contact_name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Name"
+          },
+          "contact_phone": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Phone"
+          },
+          "jury_chair_name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jury Chair Name"
+          },
+          "jury_chair_phone": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jury Chair Phone"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "organiser_club": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organiser Club"
+          },
+          "rules_summary": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rules Summary"
+          },
+          "venue": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Venue"
+          }
+        },
+        "required": [
+          "organiser_club",
+          "contact_name",
+          "contact_phone",
+          "contact_email",
+          "jury_chair_name",
+          "jury_chair_phone",
+          "venue",
+          "rules_summary",
+          "notes"
+        ],
+        "title": "TournamentDetails",
+        "type": "object"
+      },
       "TournamentResponse": {
         "properties": {
           "data": {
@@ -7584,7 +7932,7 @@
     }
   },
   "info": {
-    "description": "\n### Description\nThis API allows you to do everything the frontend of [Bracket](https://github.com/evroon/bracket)\nallows you to do (the frontend uses this API as well).\n\nFore more information, see the [documentation](https://docs.bracketapp.nl).\n\n### Table of Contents\n*(links only work for [ReDoc](https://api.bracketapp.nl/redoc), not for Swagger UI)*\n\n- [Auth](#tag/Auth)\n\n- [Capacity](#tag/Capacity)\n\n- [Cup setup](#tag/Cup-setup)\n\n- [Draw](#tag/Draw)\n\n- [Officials](#tag/Officials)\n\n- [Discipline](#tag/Discipline)\n\n- [Public info](#tag/Public-info)\n\n- [Registrations](#tag/Registrations)\n\n- [Score links](#tag/Score-links)\n\n- [Categories](#tag/Categories)\n\n- [Clubs](#tag/Clubs)\n\n- [Courts](#tag/Courts)\n\n- [Internals](#tag/Internals)\n\n- [Matches](#tag/Matches)\n\n- [Players](#tag/Players)\n\n- [Rankings](#tag/Rankings)\n\n- [Rounds](#tag/Rounds)\n\n- [Stage Items](#tag/Stage-Items)\n\n- [Stage Item Inputs](#tag/Stage-Item-Inputs)\n\n- [Stages](#tag/Stages)\n\n- [Teams](#tag/Teams)\n\n- [Tournaments](#tag/Tournaments)\n\n- [Users](#tag/Users)\n\n### Links\nGitHub: <https://github.com/evroon/bracket>\n\nDocs: <https://docs.bracketapp.nl>\n\nDemo: <https://www.bracketapp.nl/demo>\n\nAPI docs (Redoc): <https://api.bracketapp.nl/redoc>\n\nAPI docs (Swagger UI): <https://api.bracketapp.nl/docs>\n",
+    "description": "\n### Description\nThis API allows you to do everything the frontend of [Bracket](https://github.com/evroon/bracket)\nallows you to do (the frontend uses this API as well).\n\nFore more information, see the [documentation](https://docs.bracketapp.nl).\n\n### Table of Contents\n*(links only work for [ReDoc](https://api.bracketapp.nl/redoc), not for Swagger UI)*\n\n- [Auth](#tag/Auth)\n\n- [Capacity](#tag/Capacity)\n\n- [Cup setup](#tag/Cup-setup)\n\n- [District application](#tag/District-application)\n\n- [Draw](#tag/Draw)\n\n- [Officials](#tag/Officials)\n\n- [Discipline](#tag/Discipline)\n\n- [Public info](#tag/Public-info)\n\n- [Registrations](#tag/Registrations)\n\n- [Score links](#tag/Score-links)\n\n- [Categories](#tag/Categories)\n\n- [Clubs](#tag/Clubs)\n\n- [Courts](#tag/Courts)\n\n- [Internals](#tag/Internals)\n\n- [Matches](#tag/Matches)\n\n- [Players](#tag/Players)\n\n- [Rankings](#tag/Rankings)\n\n- [Rounds](#tag/Rounds)\n\n- [Stage Items](#tag/Stage-Items)\n\n- [Stage Item Inputs](#tag/Stage-Item-Inputs)\n\n- [Stages](#tag/Stages)\n\n- [Teams](#tag/Teams)\n\n- [Tournaments](#tag/Tournaments)\n\n- [Users](#tag/Users)\n\n### Links\nGitHub: <https://github.com/evroon/bracket>\n\nDocs: <https://docs.bracketapp.nl>\n\nDemo: <https://www.bracketapp.nl/demo>\n\nAPI docs (Redoc): <https://api.bracketapp.nl/redoc>\n\nAPI docs (Swagger UI): <https://api.bracketapp.nl/docs>\n",
     "license": {
       "name": "AGPL-3.0",
       "url": "https://www.gnu.org/licenses/agpl-3.0.en.html"
@@ -9644,6 +9992,63 @@
         ]
       }
     },
+    "/tournaments/{tournament_id}/details": {
+      "put": {
+        "operationId": "update_tournament_details_tournaments__tournament_id__details_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TournamentDetails"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Tournament Details",
+        "tags": [
+          "District application"
+        ]
+      }
+    },
     "/tournaments/{tournament_id}/discipline": {
       "get": {
         "description": "Cards, the suspensions that follow from them, the settings and the jury's log.",
@@ -9746,6 +10151,54 @@
         "summary": "Update Discipline Settings",
         "tags": [
           "Discipline"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/district_application": {
+      "get": {
+        "description": "Summary of the cup for the application to the district (krets): playing days, courts,\nclasses, teams and matches, plus the facts entered by the organiser. Organiser only.",
+        "operationId": "get_tournament_district_application_tournaments__tournament_id__district_application_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DistrictApplicationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Tournament District Application",
+        "tags": [
+          "District application"
         ]
       }
     },

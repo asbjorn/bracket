@@ -225,6 +225,9 @@ import type {
   GetTournamentDisciplineTournamentsTournamentIdDisciplineGetData,
   GetTournamentDisciplineTournamentsTournamentIdDisciplineGetErrors,
   GetTournamentDisciplineTournamentsTournamentIdDisciplineGetResponses,
+  GetTournamentDistrictApplicationTournamentsTournamentIdDistrictApplicationGetData,
+  GetTournamentDistrictApplicationTournamentsTournamentIdDistrictApplicationGetErrors,
+  GetTournamentDistrictApplicationTournamentsTournamentIdDistrictApplicationGetResponses,
   GetTournamentOfficialsTournamentsTournamentIdOfficialsGetData,
   GetTournamentOfficialsTournamentsTournamentIdOfficialsGetErrors,
   GetTournamentOfficialsTournamentsTournamentIdOfficialsGetResponses,
@@ -361,6 +364,9 @@ import type {
   UpdateTournamentByIdTournamentsTournamentIdPutData,
   UpdateTournamentByIdTournamentsTournamentIdPutErrors,
   UpdateTournamentByIdTournamentsTournamentIdPutResponses,
+  UpdateTournamentDetailsTournamentsTournamentIdDetailsPutData,
+  UpdateTournamentDetailsTournamentsTournamentIdDetailsPutErrors,
+  UpdateTournamentDetailsTournamentsTournamentIdDetailsPutResponses,
   UpdateTournamentRulesTournamentsTournamentIdRulesPutData,
   UpdateTournamentRulesTournamentsTournamentIdRulesPutErrors,
   UpdateTournamentRulesTournamentsTournamentIdRulesPutResponses,
@@ -1359,6 +1365,33 @@ export const createCupStructureTournamentsTournamentIdCupSetupPost = <
   });
 
 /**
+ * Update Tournament Details
+ */
+export const updateTournamentDetailsTournamentsTournamentIdDetailsPut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<UpdateTournamentDetailsTournamentsTournamentIdDetailsPutData, ThrowOnError>,
+): RequestResult<
+  UpdateTournamentDetailsTournamentsTournamentIdDetailsPutResponses,
+  UpdateTournamentDetailsTournamentsTournamentIdDetailsPutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    UpdateTournamentDetailsTournamentsTournamentIdDetailsPutResponses,
+    UpdateTournamentDetailsTournamentsTournamentIdDetailsPutErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/details',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
  * Get Tournament Discipline
  *
  * Cards, the suspensions that follow from them, the settings and the jury's log.
@@ -1411,6 +1444,35 @@ export const updateDisciplineSettingsTournamentsTournamentIdDisciplineSettingsPu
       'Content-Type': 'application/json',
       ...options.headers,
     },
+  });
+
+/**
+ * Get Tournament District Application
+ *
+ * Summary of the cup for the application to the district (krets): playing days, courts,
+ * classes, teams and matches, plus the facts entered by the organiser. Organiser only.
+ */
+export const getTournamentDistrictApplicationTournamentsTournamentIdDistrictApplicationGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    GetTournamentDistrictApplicationTournamentsTournamentIdDistrictApplicationGetData,
+    ThrowOnError
+  >,
+): RequestResult<
+  GetTournamentDistrictApplicationTournamentsTournamentIdDistrictApplicationGetResponses,
+  GetTournamentDistrictApplicationTournamentsTournamentIdDistrictApplicationGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetTournamentDistrictApplicationTournamentsTournamentIdDistrictApplicationGetResponses,
+    GetTournamentDistrictApplicationTournamentsTournamentIdDistrictApplicationGetErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/district_application',
+    ...options,
   });
 
 /**

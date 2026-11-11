@@ -9,6 +9,7 @@ from bracket.models.db.category import Category
 from bracket.models.db.club import Club
 from bracket.models.db.court import Court
 from bracket.models.db.discipline import DisciplineOverview, MatchCard
+from bracket.models.db.district_application import DistrictApplication
 from bracket.models.db.match import Match, SuggestedMatch
 from bracket.models.db.official import Official, OfficialsOverview, PublicMatchOfficial
 from bracket.models.db.player import Player
@@ -181,6 +182,10 @@ class PublicNoticesResponse(DataResponse[PublicNotices]):
 
 
 class RulesResponse(DataResponse[Rules]):
+    pass
+
+
+class DistrictApplicationResponse(DataResponse[DistrictApplication]):
     pass
 
 

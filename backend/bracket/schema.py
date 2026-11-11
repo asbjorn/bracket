@@ -556,3 +556,26 @@ jury_decisions = Table(
     Column("decided_at", DateTimeTZ, nullable=False, server_default=func.now()),
     Column("decided_by", BigInteger, ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
 )
+
+
+# Cup facts that are only needed for the application to the district (krets), e.g. the jury.
+# Contact details are personal data: organiser only.
+tournament_details = Table(
+    "tournament_details",
+    metadata,
+    Column(
+        "tournament_id",
+        BigInteger,
+        ForeignKey("tournaments.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    Column("organiser_club", Text, nullable=True),
+    Column("contact_name", Text, nullable=True),
+    Column("contact_phone", Text, nullable=True),
+    Column("contact_email", Text, nullable=True),
+    Column("jury_chair_name", Text, nullable=True),
+    Column("jury_chair_phone", Text, nullable=True),
+    Column("venue", Text, nullable=True),
+    Column("rules_summary", Text, nullable=True),
+    Column("notes", Text, nullable=True),
+)

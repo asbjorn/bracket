@@ -43,6 +43,53 @@ export type AnnouncementResponse = {
 };
 
 /**
+ * ApplicationClass
+ */
+export type ApplicationClass = {
+  /**
+   * Age
+   */
+  age: number | null;
+  /**
+   * Duration Minutes
+   */
+  duration_minutes: number;
+  /**
+   * Entry Fee
+   */
+  entry_fee: number | null;
+  game_format: GameFormat | null;
+  /**
+   * Has Playoffs
+   */
+  has_playoffs: boolean;
+  /**
+   * Margin Minutes
+   */
+  margin_minutes: number;
+  /**
+   * Match Count
+   */
+  match_count: number;
+  /**
+   * Max Teams
+   */
+  max_teams: number | null;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Results Public
+   */
+  results_public: boolean;
+  /**
+   * Team Count
+   */
+  team_count: number;
+};
+
+/**
  * BlockAssignmentBody
  *
  * All scheduled matches on a court that start in [start_time, end_time) get this referee.
@@ -509,6 +556,17 @@ export type CourtBody = {
 };
 
 /**
+ * CourtCount
+ */
+export type CourtCount = {
+  /**
+   * Count
+   */
+  count: number;
+  game_format: GameFormat | null;
+};
+
+/**
  * CourtHost
  */
 export type CourtHost = {
@@ -749,6 +807,48 @@ export type DisciplineSettingsBody = {
    * Yellow Cards For Suspension
    */
   yellow_cards_for_suspension: number | null;
+};
+
+/**
+ * DistrictApplication
+ */
+export type DistrictApplication = {
+  /**
+   * Classes
+   */
+  classes: Array<ApplicationClass>;
+  /**
+   * Courts
+   */
+  courts: Array<CourtCount>;
+  /**
+   * Days
+   */
+  days: Array<PlayingDay>;
+  details: TournamentDetails;
+  /**
+   * Match Count
+   */
+  match_count: number;
+  /**
+   * Rules Text
+   */
+  rules_text: string | null;
+  /**
+   * Team Count
+   */
+  team_count: number;
+  /**
+   * Tournament Name
+   */
+  tournament_name: string;
+};
+
+/**
+ * DistrictApplicationResponse
+ */
+export type DistrictApplicationResponse = {
+  data: DistrictApplication;
 };
 
 /**
@@ -1960,6 +2060,30 @@ export type PlayerMultiBody = {
  */
 export type PlayersResponse = {
   data: PaginatedPlayers;
+};
+
+/**
+ * PlayingDay
+ *
+ * A day of the cup in Norwegian time, with its playing hours, e.g. ["09:00-12:00"].
+ */
+export type PlayingDay = {
+  /**
+   * Day
+   */
+  day: string;
+  /**
+   * First Start
+   */
+  first_start: string;
+  /**
+   * Last End
+   */
+  last_end: string;
+  /**
+   * Windows
+   */
+  windows: Array<string>;
 };
 
 /**
@@ -3876,6 +4000,51 @@ export type TournamentChangeStatusBody = {
 };
 
 /**
+ * TournamentDetails
+ *
+ * Cup facts the district (krets) asks for that Bracket doesn't know otherwise. Contact details
+ * are personal data and only shown to the organiser.
+ */
+export type TournamentDetails = {
+  /**
+   * Contact Email
+   */
+  contact_email: string | null;
+  /**
+   * Contact Name
+   */
+  contact_name: string | null;
+  /**
+   * Contact Phone
+   */
+  contact_phone: string | null;
+  /**
+   * Jury Chair Name
+   */
+  jury_chair_name: string | null;
+  /**
+   * Jury Chair Phone
+   */
+  jury_chair_phone: string | null;
+  /**
+   * Notes
+   */
+  notes: string | null;
+  /**
+   * Organiser Club
+   */
+  organiser_club: string | null;
+  /**
+   * Rules Summary
+   */
+  rules_summary: string | null;
+  /**
+   * Venue
+   */
+  venue: string | null;
+};
+
+/**
  * TournamentResponse
  */
 export type TournamentResponse = {
@@ -5353,6 +5522,38 @@ export type CreateCupStructureTournamentsTournamentIdCupSetupPostResponses = {
 export type CreateCupStructureTournamentsTournamentIdCupSetupPostResponse =
   CreateCupStructureTournamentsTournamentIdCupSetupPostResponses[keyof CreateCupStructureTournamentsTournamentIdCupSetupPostResponses];
 
+export type UpdateTournamentDetailsTournamentsTournamentIdDetailsPutData = {
+  body: TournamentDetails;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/details';
+};
+
+export type UpdateTournamentDetailsTournamentsTournamentIdDetailsPutErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateTournamentDetailsTournamentsTournamentIdDetailsPutError =
+  UpdateTournamentDetailsTournamentsTournamentIdDetailsPutErrors[keyof UpdateTournamentDetailsTournamentsTournamentIdDetailsPutErrors];
+
+export type UpdateTournamentDetailsTournamentsTournamentIdDetailsPutResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type UpdateTournamentDetailsTournamentsTournamentIdDetailsPutResponse =
+  UpdateTournamentDetailsTournamentsTournamentIdDetailsPutResponses[keyof UpdateTournamentDetailsTournamentsTournamentIdDetailsPutResponses];
+
 export type GetTournamentDisciplineTournamentsTournamentIdDisciplineGetData = {
   body?: never;
   path: {
@@ -5416,6 +5617,39 @@ export type UpdateDisciplineSettingsTournamentsTournamentIdDisciplineSettingsPut
 
 export type UpdateDisciplineSettingsTournamentsTournamentIdDisciplineSettingsPutResponse =
   UpdateDisciplineSettingsTournamentsTournamentIdDisciplineSettingsPutResponses[keyof UpdateDisciplineSettingsTournamentsTournamentIdDisciplineSettingsPutResponses];
+
+export type GetTournamentDistrictApplicationTournamentsTournamentIdDistrictApplicationGetData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/district_application';
+};
+
+export type GetTournamentDistrictApplicationTournamentsTournamentIdDistrictApplicationGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetTournamentDistrictApplicationTournamentsTournamentIdDistrictApplicationGetError =
+  GetTournamentDistrictApplicationTournamentsTournamentIdDistrictApplicationGetErrors[keyof GetTournamentDistrictApplicationTournamentsTournamentIdDistrictApplicationGetErrors];
+
+export type GetTournamentDistrictApplicationTournamentsTournamentIdDistrictApplicationGetResponses =
+  {
+    /**
+     * Successful Response
+     */
+    200: DistrictApplicationResponse;
+  };
+
+export type GetTournamentDistrictApplicationTournamentsTournamentIdDistrictApplicationGetResponse =
+  GetTournamentDistrictApplicationTournamentsTournamentIdDistrictApplicationGetResponses[keyof GetTournamentDistrictApplicationTournamentsTournamentIdDistrictApplicationGetResponses];
 
 export type UpdateEntryFeesTournamentsTournamentIdEntryFeesPutData = {
   body: EntryFeeBody;

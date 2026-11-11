@@ -43,6 +43,7 @@ import CategoriesPage from './pages/tournaments/[id]/categories';
 import SchedulePage from './pages/tournaments/[id]/schedule';
 import SettingsPage from './pages/tournaments/[id]/settings';
 import CupSetupPage from './pages/tournaments/[id]/setup';
+import DistrictApplicationPage from './pages/tournaments/[id]/application';
 import DrawPage from './pages/tournaments/[id]/draw';
 import RegistrationsPage from './pages/tournaments/[id]/registrations';
 import OfficialsPage from './pages/tournaments/[id]/officials';
@@ -112,6 +113,7 @@ createRoot(document.getElementById('root')!).render(
                     <Route path="rankings" element={<RankingsPage />} />
                     <Route path="settings" element={<SettingsPage />} />
                     <Route path="setup" element={<CupSetupPage />} />
+                    <Route path="application" element={<DistrictApplicationPage />} />
                     <Route path="draw" element={<DrawPage />} />
                     <Route path="registrations" element={<RegistrationsPage />} />
                     <Route path="officials" element={<OfficialsPage />} />
