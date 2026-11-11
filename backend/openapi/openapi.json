@@ -457,6 +457,19 @@
         "title": "ClubsResponse",
         "type": "object"
       },
+      "CountResponse": {
+        "properties": {
+          "data": {
+            "title": "Data",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "CountResponse",
+        "type": "object"
+      },
       "Court": {
         "properties": {
           "created": {
@@ -570,6 +583,40 @@
           "data"
         ],
         "title": "CourtsResponse",
+        "type": "object"
+      },
+      "DelayBody": {
+        "description": "Moves all matches that haven't been played yet and start at or after `from_time`.",
+        "properties": {
+          "court_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Court Id"
+          },
+          "from_time": {
+            "format": "date-time",
+            "title": "From Time",
+            "type": "string"
+          },
+          "minutes": {
+            "maximum": 600.0,
+            "minimum": -240.0,
+            "title": "Minutes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "minutes",
+          "from_time",
+          "court_id"
+        ],
+        "title": "DelayBody",
         "type": "object"
       },
       "DemoUserToRegister": {
@@ -731,6 +778,18 @@
         },
         "title": "HTTPValidationError",
         "type": "object"
+      },
+      "IssueKind": {
+        "enum": [
+          "TEAM_OVERLAP",
+          "TOO_LITTLE_REST",
+          "COURT_OVERLAP",
+          "WRONG_GAME_FORMAT",
+          "OUTSIDE_TIME_WINDOWS",
+          "BEFORE_DEPENDENCY"
+        ],
+        "title": "IssueKind",
+        "type": "string"
       },
       "Match": {
         "properties": {
@@ -1798,6 +1857,51 @@
           "teams"
         ],
         "title": "PaginatedTeams",
+        "type": "object"
+      },
+      "PlanIssueOut": {
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/IssueKind"
+          },
+          "match_id": {
+            "title": "Match Id",
+            "type": "integer"
+          },
+          "other_match_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Other Match Id"
+          }
+        },
+        "required": [
+          "match_id",
+          "kind",
+          "other_match_id"
+        ],
+        "title": "PlanIssueOut",
+        "type": "object"
+      },
+      "PlanIssuesResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PlanIssueOut"
+            },
+            "title": "Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "PlanIssuesResponse",
         "type": "object"
       },
       "Player": {
@@ -6710,6 +6814,112 @@
           }
         ],
         "summary": "Apply Match Schedule",
+        "tags": [
+          "Matches"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/schedule/delay": {
+      "post": {
+        "description": "When the cup runs late: moves the remaining matches (of one court or all) by some minutes.\nReturns the number of matches that moved.",
+        "operationId": "delay_schedule_tournaments__tournament_id__schedule_delay_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DelayBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Delay Schedule",
+        "tags": [
+          "Matches"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/schedule/issues": {
+      "get": {
+        "description": "Problems in the current plan: overlapping matches, too little rest, matches outside the\ntime windows or on a court of the wrong format, knockout matches before their feeders.",
+        "operationId": "get_schedule_issues_tournaments__tournament_id__schedule_issues_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanIssuesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Schedule Issues",
         "tags": [
           "Matches"
         ]

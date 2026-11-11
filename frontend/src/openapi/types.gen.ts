@@ -231,6 +231,16 @@ export type ClubsResponse = {
 };
 
 /**
+ * CountResponse
+ */
+export type CountResponse = {
+  /**
+   * Data
+   */
+  data: number;
+};
+
+/**
  * Court
  */
 export type Court = {
@@ -289,6 +299,26 @@ export type CourtsResponse = {
    * Data
    */
   data: Array<Court>;
+};
+
+/**
+ * DelayBody
+ *
+ * Moves all matches that haven't been played yet and start at or after `from_time`.
+ */
+export type DelayBody = {
+  /**
+   * Court Id
+   */
+  court_id: number | null;
+  /**
+   * From Time
+   */
+  from_time: string;
+  /**
+   * Minutes
+   */
+  minutes: number;
 };
 
 /**
@@ -386,6 +416,17 @@ export type HttpValidationError = {
    */
   detail?: Array<ValidationError>;
 };
+
+/**
+ * IssueKind
+ */
+export type IssueKind =
+  | 'TEAM_OVERLAP'
+  | 'TOO_LITTLE_REST'
+  | 'COURT_OVERLAP'
+  | 'WRONG_GAME_FORMAT'
+  | 'OUTSIDE_TIME_WINDOWS'
+  | 'BEFORE_DEPENDENCY';
 
 /**
  * Match
@@ -866,6 +907,31 @@ export type PaginatedTeams = {
    * Teams
    */
   teams: Array<FullTeamWithPlayers>;
+};
+
+/**
+ * PlanIssueOut
+ */
+export type PlanIssueOut = {
+  kind: IssueKind;
+  /**
+   * Match Id
+   */
+  match_id: number;
+  /**
+   * Other Match Id
+   */
+  other_match_id: number | null;
+};
+
+/**
+ * PlanIssuesResponse
+ */
+export type PlanIssuesResponse = {
+  /**
+   * Data
+   */
+  data: Array<PlanIssueOut>;
 };
 
 /**
@@ -3835,6 +3901,70 @@ export type ApplyMatchScheduleTournamentsTournamentIdScheduleApplyPostResponses 
 
 export type ApplyMatchScheduleTournamentsTournamentIdScheduleApplyPostResponse =
   ApplyMatchScheduleTournamentsTournamentIdScheduleApplyPostResponses[keyof ApplyMatchScheduleTournamentsTournamentIdScheduleApplyPostResponses];
+
+export type DelayScheduleTournamentsTournamentIdScheduleDelayPostData = {
+  body: DelayBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/schedule/delay';
+};
+
+export type DelayScheduleTournamentsTournamentIdScheduleDelayPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DelayScheduleTournamentsTournamentIdScheduleDelayPostError =
+  DelayScheduleTournamentsTournamentIdScheduleDelayPostErrors[keyof DelayScheduleTournamentsTournamentIdScheduleDelayPostErrors];
+
+export type DelayScheduleTournamentsTournamentIdScheduleDelayPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: CountResponse;
+};
+
+export type DelayScheduleTournamentsTournamentIdScheduleDelayPostResponse =
+  DelayScheduleTournamentsTournamentIdScheduleDelayPostResponses[keyof DelayScheduleTournamentsTournamentIdScheduleDelayPostResponses];
+
+export type GetScheduleIssuesTournamentsTournamentIdScheduleIssuesGetData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/schedule/issues';
+};
+
+export type GetScheduleIssuesTournamentsTournamentIdScheduleIssuesGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetScheduleIssuesTournamentsTournamentIdScheduleIssuesGetError =
+  GetScheduleIssuesTournamentsTournamentIdScheduleIssuesGetErrors[keyof GetScheduleIssuesTournamentsTournamentIdScheduleIssuesGetErrors];
+
+export type GetScheduleIssuesTournamentsTournamentIdScheduleIssuesGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: PlanIssuesResponse;
+};
+
+export type GetScheduleIssuesTournamentsTournamentIdScheduleIssuesGetResponse =
+  GetScheduleIssuesTournamentsTournamentIdScheduleIssuesGetResponses[keyof GetScheduleIssuesTournamentsTournamentIdScheduleIssuesGetResponses];
 
 export type ProposeMatchScheduleTournamentsTournamentIdScheduleProposePostData = {
   body?: never;

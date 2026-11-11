@@ -269,3 +269,67 @@ async def test_propose_and_apply_schedule(
                     await sql_delete_stage_item_with_foreign_keys(item.id)
             await database.execute(courts.delete())
             await database.execute(time_windows.delete())
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_delay_and_plan_issues(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    tournament_id = auth_context.tournament.id
+    async with inserted_stage(
+        DUMMY_STAGE1.model_copy(update={"tournament_id": tournament_id})
+    ) as stage:
+        response = await send_tournament_request(
+            HTTPMethod.POST,
+            "stage_items",
+            auth_context,
+            json={"stage_id": stage.id, "type": "ROUND_ROBIN", "team_count": 4},
+        )
+        assert response == SUCCESS_RESPONSE
+        await send_tournament_request(
+            HTTPMethod.POST, "courts_multi", auth_context, json={"count": 2, "name_prefix": "Bane"}
+        )
+        [stage_with_items] = await get_full_tournament_details(tournament_id)
+        [group] = stage_with_items.stage_items
+        try:
+            await send_tournament_request(
+                HTTPMethod.PUT,
+                "time_windows",
+                auth_context,
+                json={
+                    "time_windows": [
+                        {"start_time": "2026-06-13T09:00:00Z", "end_time": "2026-06-13T12:00:00Z"}
+                    ]
+                },
+            )
+            await send_tournament_request(HTTPMethod.POST, "schedule/apply", auth_context)
+            issues = await send_tournament_request(HTTPMethod.GET, "schedule/issues", auth_context)
+            assert issues == {"data": []}
+
+            # The first match has been played: it stays where it is
+            [stage_with_items] = await get_full_tournament_details(tournament_id)
+            matches = sorted(
+                (m for r in stage_with_items.stage_items[0].rounds for m in r.matches),
+                key=lambda m: (assert_some(m.start_time), m.id),
+            )
+            first = matches[0]
+            await database.execute(
+                "UPDATE matches SET played = true WHERE id = :id", values={"id": first.id}
+            )
+
+            response = await send_tournament_request(
+                HTTPMethod.POST,
+                "schedule/delay",
+                auth_context,
+                json={"minutes": 180, "from_time": "2026-06-13T08:00:00Z"},
+            )
+            assert response == {"data": 5}
+
+            # Now everything except the played match is after the time window
+            issues = await send_tournament_request(HTTPMethod.GET, "schedule/issues", auth_context)
+            outside = {i["match_id"] for i in issues["data"] if i["kind"] == "OUTSIDE_TIME_WINDOWS"}
+            assert outside == {m.id for m in matches[1:]}
+        finally:
+            await sql_delete_stage_item_with_foreign_keys(group.id)
+            await database.execute(courts.delete())
+            await database.execute(time_windows.delete())

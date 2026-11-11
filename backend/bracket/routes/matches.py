@@ -10,7 +10,13 @@ from bracket.logic.planning.matches import (
     reorder_matches_for_court,
     schedule_all_unscheduled_matches,
 )
-from bracket.logic.planning.propose import apply_schedule, propose_schedule
+from bracket.logic.planning.propose import (
+    DelayBody,
+    apply_schedule,
+    delay_remaining_matches,
+    get_current_plan_issues,
+    propose_schedule,
+)
 from bracket.logic.ranking.calculation import (
     recalculate_ranking_for_stage_item,
 )
@@ -32,6 +38,8 @@ from bracket.models.db.tournament import Tournament
 from bracket.models.db.user import UserPublic
 from bracket.routes.auth import user_authenticated_for_tournament
 from bracket.routes.models import (
+    CountResponse,
+    PlanIssuesResponse,
     ScheduleProposalResponse,
     SingleMatchResponse,
     SuccessResponse,
@@ -163,6 +171,33 @@ async def apply_match_schedule(
     left without a court and time.
     """
     return ScheduleProposalResponse(data=await apply_schedule(tournament_id))
+
+
+@router.get("/tournaments/{tournament_id}/schedule/issues", response_model=PlanIssuesResponse)
+async def get_schedule_issues(
+    tournament_id: TournamentId,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+) -> PlanIssuesResponse:
+    """
+    Problems in the current plan: overlapping matches, too little rest, matches outside the
+    time windows or on a court of the wrong format, knockout matches before their feeders.
+    """
+    return PlanIssuesResponse(data=await get_current_plan_issues(tournament_id))
+
+
+@router.post("/tournaments/{tournament_id}/schedule/delay", response_model=CountResponse)
+async def delay_schedule(
+    tournament_id: TournamentId,
+    body: DelayBody,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+    __: Tournament = Depends(disallow_archived_tournament),
+) -> CountResponse:
+    """
+    When the cup runs late: moves the remaining matches (of one court or all) by some minutes.
+    Returns the number of matches that moved.
+    """
+    await check_foreign_keys_belong_to_tournament(body, tournament_id)
+    return CountResponse(data=await delay_remaining_matches(tournament_id, body))
 
 
 @router.post("/tournaments/{tournament_id}/schedule_matches", response_model=SuccessResponse)

@@ -20,6 +20,7 @@ import { SWRResponse } from 'swr';
 import CourtModal from '@components/modals/create_court_modal';
 import MatchModal from '@components/modals/match_modal';
 import MatchPlanPanel from '@components/scheduling/match_plan_panel';
+import { PlanIssues } from '@components/scheduling/plan_issues';
 import { NoContent } from '@components/no_content/empty_table_info';
 import { DayAndTime, Time, spansMultipleDays } from '@components/utils/datetime';
 import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
@@ -313,6 +314,12 @@ export default function SchedulePage() {
         onApplied={async () => {
           await swrStagesResponse.mutate();
         }}
+      />
+      <PlanIssues
+        tournamentId={tournamentData.id}
+        swrStagesResponse={swrStagesResponse}
+        matchesLookup={matchesLookup}
+        stageItemsLookup={stageItemsLookup}
       />
       <Group grow mt="1rem">
         <DragDropContext

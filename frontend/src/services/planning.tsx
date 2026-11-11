@@ -34,3 +34,14 @@ export async function applySchedule(tournament_id: number) {
     axios.post<ScheduleProposalResponse>(`tournaments/${tournament_id}/schedule/apply`),
   );
 }
+
+export async function delaySchedule(
+  tournament_id: number,
+  minutes: number,
+  from_time: string,
+  court_id: number | null,
+) {
+  return awaitRequestAndHandleError(async (axios) =>
+    axios.post(`tournaments/${tournament_id}/schedule/delay`, { minutes, from_time, court_id }),
+  );
+}

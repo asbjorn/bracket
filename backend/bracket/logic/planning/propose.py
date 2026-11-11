@@ -3,19 +3,23 @@ Proposing and applying a complete match plan for a tournament, see `scheduler.py
 """
 
 from collections import defaultdict
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from heliclockter import datetime_utc
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
+from bracket.database import database
 from bracket.logic.planning.conflicts import handle_conflicts
 from bracket.logic.planning.scheduler import (
+    Assignment,
     CourtToPlan,
     Dependency,
+    IssueKind,
     MatchToPlan,
     ScheduleResult,
     Window,
     determine_shortfall,
+    find_plan_issues,
     schedule_matches,
 )
 from bracket.logic.planning.timing import get_category_per_match, get_min_rest_minutes
@@ -245,3 +249,69 @@ async def apply_schedule(tournament_id: TournamentId) -> ScheduleProposal:
 
     await handle_conflicts(await get_full_tournament_details(tournament_id))
     return to_proposal(matches, courts, windows, result, uses_default_window=uses_default_window)
+
+
+class PlanIssueOut(BaseModel):
+    match_id: MatchId
+    kind: IssueKind
+    other_match_id: MatchId | None
+
+
+async def get_current_plan_issues(tournament_id: TournamentId) -> list[PlanIssueOut]:
+    """
+    Checks the current plan (also after manual changes): overlaps, rest, time windows,
+    game formats and the order of knockout rounds.
+    """
+    matches, courts, windows, _ = await get_planning_input(tournament_id)
+    stages = await get_full_tournament_details(tournament_id)
+    assignments = {
+        match.id: Assignment(match.id, match.court_id, match.start_time)
+        for stage in stages
+        for stage_item in stage.stage_items
+        for round_ in stage_item.rounds
+        for match in round_.matches
+        if match.court_id is not None and match.start_time is not None
+    }
+    return [
+        PlanIssueOut(match_id=i.match_id, kind=i.kind, other_match_id=i.other_match_id)
+        for i in find_plan_issues(matches, courts, windows, assignments)
+    ]
+
+
+class DelayBody(BaseModel):
+    """Moves all matches that haven't been played yet and start at or after `from_time`."""
+
+    minutes: int = Field(ge=-240, le=600)
+    from_time: datetime_utc
+    court_id: CourtId | None = None
+
+
+async def delay_remaining_matches(tournament_id: TournamentId, body: DelayBody) -> int:
+    """
+    Returns the number of moved matches. Matches with a result or live score stay in place.
+    """
+    query = f"""
+        UPDATE matches
+        SET start_time = start_time + make_interval(mins => :minutes)
+        FROM rounds r
+        JOIN stage_items si ON si.id = r.stage_item_id
+        JOIN stages st ON st.id = si.stage_id
+        WHERE r.id = matches.round_id
+        AND st.tournament_id = :tournament_id
+        AND matches.start_time >= :from_time
+        AND matches.played IS FALSE
+        AND matches.stage_item_input1_score = 0
+        AND matches.stage_item_input2_score = 0
+        {"AND matches.court_id = :court_id" if body.court_id is not None else ""}
+        RETURNING matches.id
+        """
+    values: dict[str, object] = {
+        "tournament_id": tournament_id,
+        "minutes": body.minutes,
+        "from_time": datetime.fromisoformat(body.from_time.isoformat()),
+    }
+    if body.court_id is not None:
+        values["court_id"] = body.court_id
+    moved = await database.fetch_all(query=query, values=values)
+    await handle_conflicts(await get_full_tournament_details(tournament_id))
+    return len(moved)

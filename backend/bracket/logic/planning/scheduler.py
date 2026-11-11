@@ -19,6 +19,7 @@ depend on the matches they get their teams from.
 from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 from datetime import timedelta
+from enum import StrEnum
 
 from heliclockter import datetime_utc
 
@@ -310,3 +311,91 @@ def window_start_for(
         if start + duration_minutes * MINUTE <= window.end:
             return start
     return earliest
+
+
+class IssueKind(StrEnum):
+    TEAM_OVERLAP = "TEAM_OVERLAP"
+    TOO_LITTLE_REST = "TOO_LITTLE_REST"
+    COURT_OVERLAP = "COURT_OVERLAP"
+    WRONG_GAME_FORMAT = "WRONG_GAME_FORMAT"
+    OUTSIDE_TIME_WINDOWS = "OUTSIDE_TIME_WINDOWS"
+    BEFORE_DEPENDENCY = "BEFORE_DEPENDENCY"
+
+
+@dataclass(frozen=True)
+class PlanIssue:
+    match_id: MatchId
+    kind: IssueKind
+    # The other match involved (overlaps, rest, dependencies)
+    other_match_id: MatchId | None = None
+
+
+def single_match_issues(
+    match: MatchToPlan,
+    assignments: dict[MatchId, Assignment],
+    court_by_id: dict[CourtId, CourtToPlan],
+    windows: list[Window],
+    match_by_id: dict[MatchId, MatchToPlan],
+) -> list[PlanIssue]:
+    """Game format, time windows and dependencies of one planned match."""
+    issues: list[PlanIssue] = []
+    assignment = assignments[match.id]
+    court = court_by_id.get(assignment.court_id)
+    if court is not None and not court_fits(court, match):
+        issues.append(PlanIssue(match.id, IssueKind.WRONG_GAME_FORMAT))
+    playing_end = assignment.start + match.duration_minutes * MINUTE
+    if windows and not any(w.start <= assignment.start and playing_end <= w.end for w in windows):
+        issues.append(PlanIssue(match.id, IssueKind.OUTSIDE_TIME_WINDOWS))
+    for dependency in match.dependencies:
+        dependency_match = match_by_id.get(dependency.match_id)
+        if dependency_match is not None and dependency.match_id in assignments:
+            dependency_end = assignments[dependency.match_id].end(dependency_match)
+            if assignment.start < dependency_end + dependency.delay_minutes * MINUTE:
+                issues.append(PlanIssue(match.id, IssueKind.BEFORE_DEPENDENCY, dependency.match_id))
+    return issues
+
+
+def pair_issues(
+    earlier: MatchToPlan, later: MatchToPlan, assignments: dict[MatchId, Assignment]
+) -> list[PlanIssue]:
+    """Overlaps on a court and of teams, and rest of teams, for two matches by start time."""
+    issues: list[PlanIssue] = []
+    earlier_end = assignments[earlier.id].end(earlier)
+    later_start = assignments[later.id].start
+    same_court = assignments[earlier.id].court_id == assignments[later.id].court_id
+    if same_court and later_start < earlier_end:
+        issues.append(PlanIssue(later.id, IssueKind.COURT_OVERLAP, earlier.id))
+    if earlier.teams & later.teams:
+        # Like the scheduler: a team rests after a match for the rest of that match
+        if later_start < earlier_end:
+            issues.append(PlanIssue(later.id, IssueKind.TEAM_OVERLAP, earlier.id))
+        elif later_start < earlier_end + earlier.rest_minutes * MINUTE:
+            issues.append(PlanIssue(later.id, IssueKind.TOO_LITTLE_REST, earlier.id))
+    return issues
+
+
+def find_plan_issues(
+    matches: list[MatchToPlan],
+    courts: list[CourtToPlan],
+    windows: list[Window],
+    assignments: dict[MatchId, Assignment],
+) -> list[PlanIssue]:
+    """
+    Checks a plan independently of how it was made (by the scheduler or by hand). Played matches
+    are checked as well, so issues stay visible until they are resolved.
+    """
+    match_by_id = {match.id: match for match in matches}
+    court_by_id = {court.id: court for court in courts}
+    planned = sorted(
+        (match for match in matches if match.id in assignments),
+        key=lambda m: assignments[m.id].start,
+    )
+    issues = [
+        issue
+        for match in planned
+        for issue in single_match_issues(match, assignments, court_by_id, windows, match_by_id)
+    ]
+    for index, earlier in enumerate(planned):
+        for later in planned[index + 1 :]:
+            issues += pair_issues(earlier, later, assignments)
+    return issues

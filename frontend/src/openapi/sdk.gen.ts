@@ -65,6 +65,9 @@ import type {
   CreateTournamentTournamentsPostData,
   CreateTournamentTournamentsPostErrors,
   CreateTournamentTournamentsPostResponses,
+  DelayScheduleTournamentsTournamentIdScheduleDelayPostData,
+  DelayScheduleTournamentsTournamentIdScheduleDelayPostErrors,
+  DelayScheduleTournamentsTournamentIdScheduleDelayPostResponses,
   DeleteCategoryTournamentsTournamentIdCategoriesCategoryIdDeleteData,
   DeleteCategoryTournamentsTournamentIdCategoriesCategoryIdDeleteErrors,
   DeleteCategoryTournamentsTournamentIdCategoriesCategoryIdDeleteResponses,
@@ -129,6 +132,9 @@ import type {
   GetRankingsTournamentsTournamentIdRankingsGetData,
   GetRankingsTournamentsTournamentIdRankingsGetErrors,
   GetRankingsTournamentsTournamentIdRankingsGetResponses,
+  GetScheduleIssuesTournamentsTournamentIdScheduleIssuesGetData,
+  GetScheduleIssuesTournamentsTournamentIdScheduleIssuesGetErrors,
+  GetScheduleIssuesTournamentsTournamentIdScheduleIssuesGetResponses,
   GetStagesTournamentsTournamentIdStagesGetData,
   GetStagesTournamentsTournamentIdStagesGetErrors,
   GetStagesTournamentsTournamentIdStagesGetResponses,
@@ -1295,6 +1301,62 @@ export const applyMatchScheduleTournamentsTournamentIdScheduleApplyPost = <
     responseType: 'json',
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/tournaments/{tournament_id}/schedule/apply',
+    ...options,
+  });
+
+/**
+ * Delay Schedule
+ *
+ * When the cup runs late: moves the remaining matches (of one court or all) by some minutes.
+ * Returns the number of matches that moved.
+ */
+export const delayScheduleTournamentsTournamentIdScheduleDelayPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<DelayScheduleTournamentsTournamentIdScheduleDelayPostData, ThrowOnError>,
+): RequestResult<
+  DelayScheduleTournamentsTournamentIdScheduleDelayPostResponses,
+  DelayScheduleTournamentsTournamentIdScheduleDelayPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    DelayScheduleTournamentsTournamentIdScheduleDelayPostResponses,
+    DelayScheduleTournamentsTournamentIdScheduleDelayPostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/schedule/delay',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get Schedule Issues
+ *
+ * Problems in the current plan: overlapping matches, too little rest, matches outside the
+ * time windows or on a court of the wrong format, knockout matches before their feeders.
+ */
+export const getScheduleIssuesTournamentsTournamentIdScheduleIssuesGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetScheduleIssuesTournamentsTournamentIdScheduleIssuesGetData, ThrowOnError>,
+): RequestResult<
+  GetScheduleIssuesTournamentsTournamentIdScheduleIssuesGetResponses,
+  GetScheduleIssuesTournamentsTournamentIdScheduleIssuesGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetScheduleIssuesTournamentsTournamentIdScheduleIssuesGetResponses,
+    GetScheduleIssuesTournamentsTournamentIdScheduleIssuesGetErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/schedule/issues',
     ...options,
   });
 

@@ -1,14 +1,20 @@
+import random
+from dataclasses import replace
 from datetime import timedelta
 from zoneinfo import ZoneInfo
 
 from heliclockter import datetime_utc
 
 from bracket.logic.planning.scheduler import (
+    Assignment,
     CourtToPlan,
     Dependency,
+    IssueKind,
     MatchToPlan,
+    PlanIssue,
     Window,
     determine_shortfall,
+    find_plan_issues,
     schedule_matches,
     window_start_for,
 )
@@ -181,3 +187,76 @@ def test_window_start_for_moves_matches_past_lunch() -> None:
     # After the last window, matches follow each other
     assert window_start_for(windows, at(15), 30) == at(15)
     assert window_start_for([], at(8), 30) == at(8)
+
+
+def test_plan_issues_of_a_hand_made_plan() -> None:
+    match1 = MatchToPlan(MatchId(1), 10, 2, frozenset({"A", "B"}), rest_minutes=10)
+    match2 = MatchToPlan(MatchId(2), 10, 2, frozenset({"A", "C"}), rest_minutes=10)
+    final = MatchToPlan(
+        MatchId(3),
+        10,
+        2,
+        frozenset({"W"}),
+        game_format=GameFormat("7v7"),
+        dependencies=(Dependency(MatchId(1), 0),),
+    )
+    courts = [CourtToPlan(CourtId(1)), CourtToPlan(CourtId(2), GameFormat("5v5"))]
+    assignments = {
+        MatchId(1): Assignment(MatchId(1), CourtId(1), at(9)),
+        # Team A ends at 9:12 and needs 10 minutes rest, so 9:15 is too early
+        MatchId(2): Assignment(MatchId(2), CourtId(1), at(9, 15)),
+        # Before match 1 has ended, on a 5v5 court, and after the time window
+        MatchId(3): Assignment(MatchId(3), CourtId(2), at(9, 55)),
+    }
+    issues = find_plan_issues([match1, match2, final], courts, [Window(at(9), at(10))], assignments)
+    assert set(issues) == {
+        PlanIssue(MatchId(2), IssueKind.TOO_LITTLE_REST, MatchId(1)),
+        PlanIssue(MatchId(3), IssueKind.WRONG_GAME_FORMAT),
+        PlanIssue(MatchId(3), IssueKind.OUTSIDE_TIME_WINDOWS),
+    }
+
+    # Overlaps on a court and for a team
+    assignments[MatchId(2)] = Assignment(MatchId(2), CourtId(1), at(9, 5))
+    assignments[MatchId(3)] = Assignment(MatchId(3), CourtId(1), at(9, 5))
+    issues = find_plan_issues(
+        [match1, match2, final], [CourtToPlan(CourtId(1))], [Window(at(9), at(10))], assignments
+    )
+    assert PlanIssue(MatchId(2), IssueKind.TEAM_OVERLAP, MatchId(1)) in issues
+    assert PlanIssue(MatchId(3), IssueKind.BEFORE_DEPENDENCY, MatchId(1)) in issues
+    assert PlanIssue(MatchId(3), IssueKind.COURT_OVERLAP, MatchId(1)) in issues
+
+
+def test_scheduler_output_has_no_issues() -> None:
+    """
+    Property test: whatever the scheduler plans passes the independent checker.
+    """
+    rng = random.Random(7)
+    for _ in range(40):
+        group_count = rng.randint(1, 4)
+        matches: list[MatchToPlan] = []
+        for group_index in range(group_count):
+            matches += [
+                replace(
+                    match,
+                    rest_minutes=rng.choice([0, 5, 15]),
+                    game_format=rng.choice([None, GameFormat("5v5"), GameFormat("7v7")]),
+                )
+                for match in group_matches(
+                    "ABCD"[group_index],
+                    rng.randint(3, 5),
+                    1000 * (group_index + 1),
+                    duration=rng.choice([8, 10, 15]),
+                    margin=rng.choice([0, 2, 3]),
+                )
+            ]
+        group_ids = [m.id for m in matches]
+        matches.append(knockout_match(9001, group_ids, 5, priority=(1, 0, 0)))
+        matches.append(knockout_match(9002, [MatchId(9001)], 10, priority=(1, 1, 0)))
+        courts = [
+            CourtToPlan(CourtId(i), rng.choice([None, GameFormat("5v5"), GameFormat("7v7")]))
+            for i in range(rng.randint(1, 3))
+        ] + [CourtToPlan(CourtId(99))]
+        windows = [Window(at(9), at(12)), Window(at(13), at(18))]
+
+        result = schedule_matches(matches, courts, windows)
+        assert not find_plan_issues(matches, courts, windows, result.assignments)

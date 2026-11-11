@@ -19,6 +19,7 @@ import {
   StagesWithStageItemsResponse,
   TeamsWithPlayersResponse,
   TimeWindowsResponse,
+  PlanIssuesResponse,
   TournamentResponse,
   TournamentsResponse,
   UpcomingMatchesResponse,
@@ -221,6 +222,10 @@ export function getRankingsPerStageItem(
 ): SWRResponse<StageRankingResponse> {
   const query = category_id == null ? '' : `?category_id=${category_id}`;
   return useSWR(`tournaments/${tournament_id}/next_stage_rankings${query}`, fetcher);
+}
+
+export function getPlanIssues(tournament_id: number): SWRResponse<PlanIssuesResponse> {
+  return useSWR(`tournaments/${tournament_id}/schedule/issues`, fetcher);
 }
 
 export function getTimeWindows(tournament_id: number): SWRResponse<TimeWindowsResponse> {
