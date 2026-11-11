@@ -12,10 +12,12 @@ from typing import NoReturn
 from fastapi import HTTPException
 from starlette import status
 
+from bracket.logic.ranking.statistics import START_ELO
 from bracket.models.db.category import Category
 from bracket.models.db.match import MatchWithDetails, MatchWithDetailsDefinitive
 from bracket.models.db.stage_item import StageType
 from bracket.models.db.stage_item_inputs import StageItemInput
+from bracket.models.db.team import FullTeamWithPlayers
 from bracket.models.db.util import RoundWithMatches, StageItemWithRounds, StageWithStageItems
 from bracket.utils.id_types import CategoryId
 
@@ -48,6 +50,28 @@ def without_results_stage_item(stage_item: StageItemWithRounds) -> StageItemWith
             "rounds": [without_results_round(round_) for round_ in stage_item.rounds],
         }
     )
+
+
+def hide_team_statistics_of_private_categories(
+    teams: list[FullTeamWithPlayers], categories: list[Category]
+) -> list[FullTeamWithPlayers]:
+    """
+    Resets the statistics stored on teams of classes where `results_public` is false. These
+    fields are not written by any code today (results live on stage item inputs), but resetting
+    them keeps the public API safe if that ever changes.
+    """
+    hidden_category_ids = {category.id for category in categories if not category.results_public}
+    reset = {
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "elo_score": START_ELO,
+        "swiss_score": Decimal("0.0"),
+    }
+    return [
+        team.model_copy(update=reset) if team.category_id in hidden_category_ids else team
+        for team in teams
+    ]
 
 
 def hide_results_of_private_categories(

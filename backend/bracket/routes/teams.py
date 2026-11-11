@@ -10,6 +10,7 @@ from starlette import status
 
 from bracket.config import config
 from bracket.database import database
+from bracket.logic.results_visibility import hide_team_statistics_of_private_categories
 from bracket.logic.subscriptions import check_requirement
 from bracket.logic.teams import get_team_logo_path
 from bracket.models.db.player import PlayerBody
@@ -38,6 +39,7 @@ from bracket.routes.util import (
     team_with_players_dependency,
 )
 from bracket.schema import players_x_teams, teams
+from bracket.sql.categories import get_all_categories_in_tournament
 from bracket.sql.players import get_all_players_in_tournament, insert_player
 from bracket.sql.stages import get_full_tournament_details
 from bracket.sql.teams import (
@@ -84,16 +86,22 @@ async def get_teams(
     tournament_id: TournamentId,
     pagination: PaginationTeams = Depends(),
     category_id: CategoryId | None = None,
-    _: UserPublic = Depends(user_authenticated_or_public_dashboard),
+    user: UserPublic | None = Depends(user_authenticated_or_public_dashboard),
 ) -> TeamsWithPlayersResponse:
     """
     Returns the teams of the tournament, optionally only those of one age class (`category_id`).
     """
+    teams_ = await get_teams_with_members(
+        tournament_id, pagination=pagination, category_id=category_id
+    )
+    if user is None:
+        # Public dashboard: don't reveal results of classes where that's not allowed
+        categories = await get_all_categories_in_tournament(tournament_id)
+        teams_ = hide_team_statistics_of_private_categories(teams_, categories)
+
     return TeamsWithPlayersResponse(
         data=PaginatedTeams(
-            teams=await get_teams_with_members(
-                tournament_id, pagination=pagination, category_id=category_id
-            ),
+            teams=teams_,
             count=await get_team_count(tournament_id, category_id=category_id),
         )
     )

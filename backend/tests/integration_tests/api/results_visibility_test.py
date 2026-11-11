@@ -378,3 +378,29 @@ async def test_cannot_hide_results_of_class_with_advancing_teams(
             json={"name": "J13 renamed", "results_public": True},
         )
         assert response["data"]["name"] == "J13 renamed"
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_public_teams_hide_statistics_of_private_classes(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    async with (
+        inserted_class_with_played_match(auth_context, "G10", results_public=False) as g10,
+        inserted_class_with_played_match(auth_context, "J14", results_public=True) as j14,
+    ):
+        # Not written by the app today, but must never become public for hidden classes
+        await database.execute("UPDATE teams SET wins = 5, elo_score = 1500, swiss_score = 2")
+        endpoint = f"tournaments/{auth_context.tournament.id}/teams"
+        public = await send_request(HTTPMethod.GET, endpoint)
+        organiser = await send_request(HTTPMethod.GET, endpoint, headers=auth_context.headers)
+
+    def stats(response: JsonDict, category_id: CategoryId) -> set[tuple[int, str, str]]:
+        return {
+            (team["wins"], team["elo_score"], team["swiss_score"])
+            for team in response["data"]["teams"]
+            if team["category_id"] == category_id
+        }
+
+    assert stats(public, g10.category_id) == {(0, "1200", "0.0")}
+    assert stats(public, j14.category_id) == {(5, "1500.0", "2.0")}
+    assert stats(organiser, g10.category_id) == {(5, "1500.0", "2.0")}
