@@ -120,6 +120,8 @@ async def register_team(
         category = Category.model_validate(dict(row._mapping))
         if not is_open(category, now):
             raise bad_request("Registration for this class is closed")
+        # The waitlist follows the order of the locks above, not of the requests
+        registered_at = datetime_utc.now()
 
         team_count = int(
             await database.fetch_val(
@@ -165,7 +167,7 @@ async def register_team(
             """,
             values={
                 "name": body.team_name,
-                "now": now,
+                "now": registered_at,
                 "tournament_id": tournament_id,
                 "category_id": category.id,
                 "club_name": body.club_name,
@@ -190,7 +192,7 @@ async def register_team(
                 "contact_email": str(body.contact_email),
                 "contact_phone": body.contact_phone,
                 "comment": body.comment or None,
-                "now": now,
+                "now": registered_at,
             },
         )
         place = await waitlist_place(category.id, team_id) if full else None
