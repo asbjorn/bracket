@@ -178,6 +178,14 @@ The target workflow:
 
 ### Phase 4 — Cup setup wizard and planning
 
+**Status (2026-11-11): items 24–26 done** (commits 4a–4c on branch `phase-0-norwegian`).
+
+- **Capacity calculator** (`/capacity`): classes described by numbers are planned with the real scheduler, so the answer includes rest, formats and stage order. Reports fit, extra courts or time, matches per team and NFF warnings. Input limits: 600 teams, 100 courts, playoffs of at most 64 teams.
+- **Scheduler speed-up:** court bookings as merged intervals searched with bisect; the worst case (3300 matches, 100 courts) went from 34 s to 5 s with identical plans.
+- **Setup wizard** (`/tournaments/{id}/setup`): classes → courts → playing days → overview with the calculated plan → creates classes, group stages, A/B/C playoffs, courts and time windows in one transaction, and can plan all matches at once. Only for an empty tournament.
+- **Group draw** (`/tournaments/{id}/draw`): pots (one team per pot per group), clubs apart where possible (Hungarian per round), random otherwise; revealed team by team with a full-screen view. Teams have an optional club; empty means the name without a trailing number.
+- **Not done yet:** manual adjustment happens on the stages page (no drag and drop on the draw view); pots are not stored.
+
 24. **[Feature] Capacity calculator** (Cup Manager formulas)
     - Inputs: teams per class, group size, playoff type (A / A+B / …), match length + changeover, pitches per format, time windows.
     - Outputs: number of matches, hours, minimum pitches, utilisation, and warnings (e.g. ≥5 matches/day for 10–13-year-olds, fewer than 3 matches per team).
