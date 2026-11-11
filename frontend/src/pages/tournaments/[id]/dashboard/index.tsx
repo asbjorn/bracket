@@ -22,8 +22,11 @@ import { NoContent } from '@components/no_content/empty_table_info';
 import { PrintButton } from '@components/print/print_button';
 import {
   CategoryFilterSelect,
+  StageItemClassContext,
+  StageItemTitle,
   getStageItemCategoryLookup,
   getStageItemIdsWithHiddenResults,
+  stageItemClassNames,
   useCategoryFilter,
 } from '@components/utils/category';
 import { Time, compareDateTime, spansMultipleDays } from '@components/utils/datetime';
@@ -78,6 +81,8 @@ function ScheduleRow({
   referee?: string | null;
 }) {
   const { t } = useTranslation();
+  // A score only once the match has started: an upcoming match shows no "0 0"
+  const hasScore = data.match.played || data.match.started_at != null;
   const winColor = '#2a8f37';
   const drawColor = '#656565';
   const loseColor = '#af4034';
@@ -136,7 +141,7 @@ function ScheduleRow({
                 mt="0.8rem"
                 size="md"
               >
-                {data.stageItem.name}
+                <StageItemTitle id={data.stageItem.id} name={data.stageItem.name} />
               </Badge>
             </Flex>
           </Grid.Col>
@@ -156,9 +161,9 @@ function ScheduleRow({
                   {t('played_badge')}
                 </Badge>
               ) : null
-            ) : (
+            ) : hasScore ? (
               <ScoreBox score={data.match.stage_item_input1_score} color={team1_color} />
-            )}
+            ) : null}
           </Grid.Col>
         </Grid>
         <Grid mb="0rem">
@@ -168,7 +173,7 @@ function ScheduleRow({
             </Text>
           </Grid.Col>
           <Grid.Col span="content" pb="0rem">
-            {resultsHidden ? null : (
+            {resultsHidden || !hasScore ? null : (
               <ScoreBox score={data.match.stage_item_input2_score} color={team2_color} />
             )}
           </Grid.Col>
@@ -299,51 +304,53 @@ export default function DashboardSchedulePage() {
   const stageItemCategories = getStageItemCategoryLookup(stages);
 
   return (
-    <>
-      <DoubleHeader tournamentData={tournamentDataFull} />
-      <Center>
-        <Group style={{ maxWidth: '48rem', width: '100%' }} px="1rem">
-          <Stack style={{ width: '100%' }}>
-            <Group align="end" className="no-print">
-              <div style={{ flex: 1 }}>
-                <CategoryFilterSelect
-                  categories={categories}
-                  value={filterValue}
-                  setValue={setFilterValue}
-                />
-              </div>
+    <StageItemClassContext.Provider value={stageItemClassNames(stages, categories)}>
+      <>
+        <DoubleHeader tournamentData={tournamentDataFull} />
+        <Center>
+          <Group style={{ maxWidth: '48rem', width: '100%' }} px="1rem">
+            <Stack style={{ width: '100%' }}>
+              <Group align="end" className="no-print">
+                <div style={{ flex: 1 }}>
+                  <CategoryFilterSelect
+                    categories={categories}
+                    value={filterValue}
+                    setValue={setFilterValue}
+                  />
+                </div>
+                {filterCategoryId != null ? (
+                  <Button
+                    component={PreloadLink}
+                    href={`/tournaments/${tournamentDataFull.dashboard_endpoint}/dashboard/poster?category=${filterValue}`}
+                    variant="default"
+                    leftSection={<IconQrcode size={18} />}
+                  >
+                    {t('poster_button')}
+                  </Button>
+                ) : null}
+                <PrintButton />
+              </Group>
               {filterCategoryId != null ? (
-                <Button
-                  component={PreloadLink}
-                  href={`/tournaments/${tournamentDataFull.dashboard_endpoint}/dashboard/poster?category=${filterValue}`}
-                  variant="default"
-                  leftSection={<IconQrcode size={18} />}
-                >
-                  {t('poster_button')}
-                </Button>
+                <Title order={3} className="print-only">
+                  {categories.find((c) => c.id === filterCategoryId)?.name}
+                </Title>
               ) : null}
-              <PrintButton />
-            </Group>
-            {filterCategoryId != null ? (
-              <Title order={3} className="print-only">
-                {categories.find((c) => c.id === filterCategoryId)?.name}
-              </Title>
-            ) : null}
-            <Schedule
-              t={t}
-              referees={referees}
-              matchesLookup={matchesLookup}
-              stageItemsLookup={stageItemsLookup}
-              stageItemIdsWithHiddenResults={getStageItemIdsWithHiddenResults(stages, categories)}
-              includeStageItem={(stageItemId) =>
-                filterCategoryId === undefined ||
-                stageItemCategories[stageItemId] === filterCategoryId
-              }
-            />
-          </Stack>
-        </Group>
-      </Center>
-      <DashboardFooter />
-    </>
+              <Schedule
+                t={t}
+                referees={referees}
+                matchesLookup={matchesLookup}
+                stageItemsLookup={stageItemsLookup}
+                stageItemIdsWithHiddenResults={getStageItemIdsWithHiddenResults(stages, categories)}
+                includeStageItem={(stageItemId) =>
+                  filterCategoryId === undefined ||
+                  stageItemCategories[stageItemId] === filterCategoryId
+                }
+              />
+            </Stack>
+          </Group>
+        </Center>
+        <DashboardFooter />
+      </>
+    </StageItemClassContext.Provider>
   );
 }

@@ -37,6 +37,7 @@ import { useParams } from 'react-router';
 
 import { CardsEditor, SuspendedAlert } from '@components/discipline/cards_editor';
 import { Time } from '@components/utils/datetime';
+import { capitalize } from '@components/utils/util';
 import { MatchResultType, ScoreEntryMatch } from '@openapi';
 import { requestSucceeded } from '@services/adapter';
 import { createCardAtPitch, deleteCardAtPitch } from '@services/discipline';
@@ -422,8 +423,9 @@ function MatchRow({
               {match.category_name != null ? ` · ${match.category_name}` : ''}
             </Text>
             <Text fw={500} truncate c={canBeEntered(match) ? undefined : 'dimmed'}>
-              {match.team1_name ?? t('score_no_team_yet')} –{' '}
-              {match.team2_name ?? t('score_no_team_yet')}
+              {match.team1_name == null && match.team2_name == null
+                ? capitalize(t('score_no_team_yet'))
+                : `${match.team1_name ?? '?'} – ${match.team2_name ?? '?'}`}
             </Text>
           </Stack>
           {match.played ? (

@@ -2,8 +2,10 @@ import {
   ActionIcon,
   Alert,
   Anchor,
+  Autocomplete,
   Badge,
   Button,
+  Fieldset,
   Group,
   List,
   Modal,
@@ -38,6 +40,11 @@ import { getTournamentIdFromRouter } from '@components/utils/util';
 import { contentLanguage } from '@components/utils/language';
 import { DateTimeField } from '@components/utils/time_fields';
 import {
+  StageItemClassContext,
+  StageItemTitle,
+  stageItemClassNames,
+} from '@components/utils/category';
+import {
   Court,
   MatchWithDetails,
   Official,
@@ -46,7 +53,13 @@ import {
   OfficialsOverview,
 } from '@openapi';
 import TournamentLayout from '@pages/tournaments/_tournament_layout';
-import { getCourts, getStages, requestSucceeded } from '@services/adapter';
+import {
+  getCategories,
+  getCourts,
+  getParticipatingClubs,
+  getStages,
+  requestSucceeded,
+} from '@services/adapter';
 import { getMatchLookup, getStageItemLookup } from '@services/lookups';
 import {
   assignBlock,
@@ -98,6 +111,7 @@ function OfficialModal({
   );
   const [saving, setSaving] = useState(false);
   const update = (changes: Partial<OfficialBody>) => setValue({ ...value, ...changes });
+  const clubNames = (getParticipatingClubs(tournamentId).data?.data ?? []).map((c) => c.name);
 
   return (
     <Modal
@@ -152,11 +166,12 @@ function OfficialModal({
               onChange={(age) => update({ age: age === '' ? null : Number(age) })}
             />
           </Group>
-          <TextInput
+          <Autocomplete
             label={t('club_name_input_label')}
             description={t('official_club_description')}
+            data={clubNames}
             value={value.club_name ?? ''}
-            onChange={(e) => update({ club_name: emptyToNull(e.currentTarget.value) })}
+            onChange={(club) => update({ club_name: emptyToNull(club) })}
           />
           <Group grow>
             <TextInput
@@ -355,6 +370,7 @@ interface MatchRow {
   team1: string;
   team2: string;
   stageItemName: string;
+  stageItemId: number;
 }
 
 function BlockForm({
@@ -380,50 +396,57 @@ function BlockForm({
   const candidates = officials.filter((o) => o.active && (host ? true : o.role === role));
 
   return (
-    <Group align="end">
-      <Select
-        label={host ? t('official_role_host') : t('official_role_referee')}
-        data={candidates.map((o) => ({ value: `${o.id}`, label: o.name }))}
-        value={officialId}
-        onChange={setOfficialId}
-        searchable
-        w="14rem"
-      />
-      <Select
-        label={t('court_label')}
-        data={courts.map((c) => ({ value: `${c.id}`, label: c.name }))}
-        value={courtId}
-        onChange={setCourtId}
-        w="10rem"
-      />
-      <DateTimeField
-        label={t('official_block_from_label')}
-        value={start}
-        onChange={setStart}
-        w="13rem"
-      />
-      <DateTimeField label={t('official_block_to_label')} value={end} onChange={setEnd} w="13rem" />
-      <Button
-        loading={saving}
-        disabled={officialId == null || courtId == null || start == null || end == null}
-        onClick={async () => {
-          setSaving(true);
-          const body = {
-            official_id: Number(officialId),
-            court_id: Number(courtId),
-            start_time: dayjs(start).toISOString(),
-            end_time: dayjs(end).toISOString(),
-          };
-          const response = host
-            ? await createCourtHost(tournamentId, body)
-            : await assignBlock(tournamentId, body);
-          setSaving(false);
-          if (requestSucceeded(response)) await refresh();
-        }}
-      >
-        {host ? t('add_host_block_button') : t('assign_block_button')}
-      </Button>
-    </Group>
+    <Fieldset legend={host ? t('court_host_block_title') : t('official_block_title')} radius="md">
+      <Group align="end">
+        <Select
+          label={host ? t('official_role_host') : t('official_role_referee')}
+          data={candidates.map((o) => ({ value: `${o.id}`, label: o.name }))}
+          value={officialId}
+          onChange={setOfficialId}
+          searchable
+          w="14rem"
+        />
+        <Select
+          label={t('court_label')}
+          data={courts.map((c) => ({ value: `${c.id}`, label: c.name }))}
+          value={courtId}
+          onChange={setCourtId}
+          w="10rem"
+        />
+        <DateTimeField
+          label={t('official_block_from_label')}
+          value={start}
+          onChange={setStart}
+          w="13rem"
+        />
+        <DateTimeField
+          label={t('official_block_to_label')}
+          value={end}
+          onChange={setEnd}
+          w="13rem"
+        />
+        <Button
+          loading={saving}
+          disabled={officialId == null || courtId == null || start == null || end == null}
+          onClick={async () => {
+            setSaving(true);
+            const body = {
+              official_id: Number(officialId),
+              court_id: Number(courtId),
+              start_time: dayjs(start).toISOString(),
+              end_time: dayjs(end).toISOString(),
+            };
+            const response = host
+              ? await createCourtHost(tournamentId, body)
+              : await assignBlock(tournamentId, body);
+            setSaving(false);
+            if (requestSucceeded(response)) await refresh();
+          }}
+        >
+          {host ? t('add_host_block_button') : t('assign_block_button')}
+        </Button>
+      </Group>
+    </Fieldset>
   );
 }
 
@@ -485,7 +508,7 @@ function AssignmentTab({
       />
       <Group align="end">
         <Select
-          label={t('court_label')}
+          label={t('officials_show_court_label')}
           placeholder={t('all_courts_button')}
           data={courts.map((c) => ({ value: `${c.id}`, label: c.name }))}
           value={courtFilter}
@@ -542,7 +565,7 @@ function AssignmentTab({
                         {row.team1} – {row.team2}
                       </Text>
                       <Text size="xs" c="dimmed">
-                        {row.stageItemName}
+                        <StageItemTitle id={row.stageItemId} name={row.stageItemName} />
                       </Text>
                     </Table.Td>
                     <Table.Td>
@@ -708,6 +731,7 @@ export default function OfficialsPage() {
   const tournamentId = tournamentData.id;
   const swrOverview = getOfficialsOverview(tournamentId);
   const swrStagesResponse = getStages(tournamentId);
+  const categoriesForTitles = getCategories(tournamentId).data?.data ?? [];
   const courts = getCourts(tournamentId).data?.data ?? [];
   const overview = swrOverview.data?.data;
 
@@ -728,6 +752,7 @@ export default function OfficialsPage() {
           team1: formatMatchInput1(t, stageItemsLookup, matchesLookup, data.match),
           team2: formatMatchInput2(t, stageItemsLookup, matchesLookup, data.match),
           stageItemName: data.stageItem.name,
+          stageItemId: data.stageItem.id,
         }),
       );
   }
@@ -743,62 +768,66 @@ export default function OfficialsPage() {
   const refresh = () => swrOverview.mutate();
 
   return (
-    <TournamentLayout tournament_id={tournamentId}>
-      <Stack>
-        <Group justify="space-between">
-          <Title>{t('officials_title')}</Title>
+    <StageItemClassContext.Provider
+      value={stageItemClassNames(swrStagesResponse.data?.data ?? [], categoriesForTitles)}
+    >
+      <TournamentLayout tournament_id={tournamentId}>
+        <Stack>
+          <Group justify="space-between">
+            <Title>{t('officials_title')}</Title>
+            {overview != null ? (
+              <Badge size="lg" variant="light" leftSection={<IconUserCheck size={14} />}>
+                {t('official_coverage_badge', {
+                  assigned: rows.filter((row) =>
+                    overview.assignments.some(
+                      (a) => a.match_id === row.match.id && a.role === 'REFEREE',
+                    ),
+                  ).length,
+                  total: rows.length,
+                })}
+              </Badge>
+            ) : null}
+          </Group>
           {overview != null ? (
-            <Badge size="lg" variant="light" leftSection={<IconUserCheck size={14} />}>
-              {t('official_coverage_badge', {
-                assigned: rows.filter((row) =>
-                  overview.assignments.some(
-                    (a) => a.match_id === row.match.id && a.role === 'REFEREE',
-                  ),
-                ).length,
-                total: rows.length,
-              })}
-            </Badge>
+            <>
+              <ConflictsAlert overview={overview} matchLabel={matchLabel} />
+              <Tabs defaultValue="officials" keepMounted={false}>
+                <Tabs.List>
+                  <Tabs.Tab value="officials">
+                    {t('officials_tab', { count: overview.officials.length })}
+                  </Tabs.Tab>
+                  <Tabs.Tab value="assignment">{t('official_assignment_tab')}</Tabs.Tab>
+                  <Tabs.Tab value="hosts">{t('court_hosts_tab')}</Tabs.Tab>
+                  <Tabs.Tab value="fees">{t('official_fees_tab')}</Tabs.Tab>
+                </Tabs.List>
+                <Tabs.Panel value="officials" pt="md">
+                  <OfficialsTab tournamentId={tournamentId} overview={overview} refresh={refresh} />
+                </Tabs.Panel>
+                <Tabs.Panel value="assignment" pt="md">
+                  <AssignmentTab
+                    tournamentId={tournamentId}
+                    overview={overview}
+                    rows={rows}
+                    courts={courts}
+                    refresh={refresh}
+                  />
+                </Tabs.Panel>
+                <Tabs.Panel value="hosts" pt="md">
+                  <HostsTab
+                    tournamentId={tournamentId}
+                    overview={overview}
+                    courts={courts}
+                    refresh={refresh}
+                  />
+                </Tabs.Panel>
+                <Tabs.Panel value="fees" pt="md">
+                  <FeesTab tournamentId={tournamentId} overview={overview} />
+                </Tabs.Panel>
+              </Tabs>
+            </>
           ) : null}
-        </Group>
-        {overview != null ? (
-          <>
-            <ConflictsAlert overview={overview} matchLabel={matchLabel} />
-            <Tabs defaultValue="officials" keepMounted={false}>
-              <Tabs.List>
-                <Tabs.Tab value="officials">
-                  {t('officials_tab', { count: overview.officials.length })}
-                </Tabs.Tab>
-                <Tabs.Tab value="assignment">{t('official_assignment_tab')}</Tabs.Tab>
-                <Tabs.Tab value="hosts">{t('court_hosts_tab')}</Tabs.Tab>
-                <Tabs.Tab value="fees">{t('official_fees_tab')}</Tabs.Tab>
-              </Tabs.List>
-              <Tabs.Panel value="officials" pt="md">
-                <OfficialsTab tournamentId={tournamentId} overview={overview} refresh={refresh} />
-              </Tabs.Panel>
-              <Tabs.Panel value="assignment" pt="md">
-                <AssignmentTab
-                  tournamentId={tournamentId}
-                  overview={overview}
-                  rows={rows}
-                  courts={courts}
-                  refresh={refresh}
-                />
-              </Tabs.Panel>
-              <Tabs.Panel value="hosts" pt="md">
-                <HostsTab
-                  tournamentId={tournamentId}
-                  overview={overview}
-                  courts={courts}
-                  refresh={refresh}
-                />
-              </Tabs.Panel>
-              <Tabs.Panel value="fees" pt="md">
-                <FeesTab tournamentId={tournamentId} overview={overview} />
-              </Tabs.Panel>
-            </Tabs>
-          </>
-        ) : null}
-      </Stack>
-    </TournamentLayout>
+        </Stack>
+      </TournamentLayout>
+    </StageItemClassContext.Provider>
   );
 }

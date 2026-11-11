@@ -59,7 +59,7 @@ export function StandingsTableForStageItem({
             </Table.Td>
           </>
         )}
-        <Table.Td style={{ minWidth: '6rem' }}>
+        <Table.Td style={{ minWidth: '3rem' }}>
           <Text truncate="end" lineClamp={1} inherit fw={700}>
             {parseFloat(team_with_input.points)}
           </Text>
@@ -75,7 +75,8 @@ export function StandingsTableForStageItem({
             />
           </Table.Td>
         ) : (
-          <Table.Td style={{ minWidth: '10rem' }}>
+          // Won/drawn/lost doesn't fit on a phone: points and goals tell enough there
+          <Table.Td visibleFrom="sm" style={{ minWidth: '10rem' }}>
             <WinDistribution
               wins={team_with_input.wins}
               draws={team_with_input.draws}
@@ -105,7 +106,7 @@ export function StandingsTableForStageItem({
               <ThNotSortable visibleFrom="sm">{t('goals_table_header')}</ThNotSortable>
               <ThNotSortable visibleFrom="sm">{t('goal_difference_table_header')}</ThNotSortable>
               <ThNotSortable>{t('points_table_header')}</ThNotSortable>
-              <ThNotSortable>
+              <ThNotSortable visibleFrom="sm">
                 <WinDistributionTitle />
               </ThNotSortable>
             </>

@@ -36,9 +36,14 @@ import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
 import { TournamentMinimal } from '@components/utils/tournament';
 import { Translator } from '@components/utils/types';
 import { getTournamentIdFromRouter, responseIsValid } from '@components/utils/util';
+import {
+  StageItemClassContext,
+  StageItemTitle,
+  stageItemClassNames,
+} from '@components/utils/category';
 import { Court, CourtsResponse, MatchWithDetails } from '@openapi';
 import TournamentLayout from '@pages/tournaments/_tournament_layout';
-import { getCourts, getStages } from '@services/adapter';
+import { getCourts, getStages, getCategories } from '@services/adapter';
 import { deleteCourt } from '@services/court';
 import { getMatchOfficials, refereeNamesByMatch } from '@services/officials';
 import {
@@ -119,7 +124,10 @@ function ScheduleRow({
                     color={stringToColour(`${matchesLookup[match.id].stageItem.id}`)}
                     variant="outline"
                   >
-                    {matchesLookup[match.id].stageItem.name}
+                    <StageItemTitle
+                      id={matchesLookup[match.id].stageItem.id}
+                      name={matchesLookup[match.id].stageItem.name}
+                    />
                   </Badge>
                 </Stack>
               </Grid.Col>
@@ -384,6 +392,7 @@ export default function SchedulePage() {
   const { t } = useTranslation();
   const { tournamentData } = getTournamentIdFromRouter();
   const swrStagesResponse = getStages(tournamentData.id);
+  const categoriesForTitles = getCategories(tournamentData.id).data?.data ?? [];
   const swrCourtsResponse = getCourts(tournamentData.id);
 
   const stageItemsLookup = responseIsValid(swrStagesResponse)
@@ -408,97 +417,104 @@ export default function SchedulePage() {
   }
 
   return (
-    <TournamentLayout tournament_id={tournamentData.id}>
-      {match != null ? (
-        <MatchModal
-          swrStagesResponse={swrStagesResponse}
-          swrUpcomingMatchesResponse={null}
-          tournamentData={tournamentData}
-          match={match}
-          opened={modalOpened}
-          setOpened={modalSetOpened}
-          round={null}
-        />
-      ) : null}
-      <Title mb="md">{t('planning_title')}</Title>
-      <NoticesAlert tournamentId={tournamentData.id} courts={swrCourtsResponse.data?.data ?? []} />
-      <MatchPlanPanel
-        tournamentId={tournamentData.id}
-        swrCourtsResponse={swrCourtsResponse}
-        onApplied={async () => {
-          await swrStagesResponse.mutate();
-        }}
-        matchLabel={(matchId) => {
-          const found = (matchesLookup as Record<number, any>)[matchId];
-          if (found == null) return `#${matchId}`;
-          return `${formatMatchInput1(t, stageItemsLookup, matchesLookup, found.match)} – ${formatMatchInput2(t, stageItemsLookup, matchesLookup, found.match)}`;
-        }}
-      />
-      <PlanIssues
-        tournamentId={tournamentData.id}
-        swrStagesResponse={swrStagesResponse}
-        matchesLookup={matchesLookup}
-        stageItemsLookup={stageItemsLookup}
-      />
-      {(swrStagesResponse.data?.data ?? []).length < 1 ? (
-        <Alert color="indigo" icon={<IconWand />} title={t('no_matches_title')} mt="md">
-          <Stack gap="xs" align="flex-start">
-            <Text size="sm">{t('schedule_empty_wizard_hint')}</Text>
-            <Button
-              component={PreloadLink}
-              href={`/tournaments/${tournamentData.id}/setup`}
-              leftSection={<IconWand size={18} />}
-            >
-              {t('setup_start_button')}
-            </Button>
-          </Stack>
-        </Alert>
-      ) : null}
-      <Group mt="lg" justify="flex-end">
-        <SegmentedControl
-          value={view}
-          onChange={(value) => setView(value as 'board' | 'list')}
-          data={[
-            { value: 'board', label: t('schedule_view_board') },
-            { value: 'list', label: t('schedule_view_list') },
-          ]}
-        />
-      </Group>
-      {view === 'list' ? (
-        <Box mt="md">
-          <ScheduleList
-            schedule={data}
-            courts={swrCourtsResponse.data?.data ?? []}
-            stageItemsLookup={stageItemsLookup}
-            matchesLookup={matchesLookup}
-            openMatchModal={openMatchModal}
+    <StageItemClassContext.Provider
+      value={stageItemClassNames(swrStagesResponse.data?.data ?? [], categoriesForTitles)}
+    >
+      <TournamentLayout tournament_id={tournamentData.id}>
+        {match != null ? (
+          <MatchModal
+            swrStagesResponse={swrStagesResponse}
+            swrUpcomingMatchesResponse={null}
+            tournamentData={tournamentData}
+            match={match}
+            opened={modalOpened}
+            setOpened={modalSetOpened}
+            round={null}
           />
-        </Box>
-      ) : null}
-      <Box mt="1rem" display={view === 'board' ? undefined : 'none'}>
-        <DragDropContext
-          onDragEnd={async ({ destination, source, draggableId: matchId }) => {
-            if (destination == null || source == null) return;
-            await rescheduleMatch(tournamentData.id, +matchId, {
-              old_court_id: +source.droppableId,
-              old_position: source.index,
-              new_court_id: +destination.droppableId,
-              new_position: destination.index,
-            });
+        ) : null}
+        <Title mb="md">{t('planning_title')}</Title>
+        <NoticesAlert
+          tournamentId={tournamentData.id}
+          courts={swrCourtsResponse.data?.data ?? []}
+        />
+        <MatchPlanPanel
+          tournamentId={tournamentData.id}
+          swrCourtsResponse={swrCourtsResponse}
+          onApplied={async () => {
             await swrStagesResponse.mutate();
           }}
-        >
-          <Schedule
-            t={t}
-            tournament={tournamentData}
-            swrCourtsResponse={swrCourtsResponse}
-            schedule={data}
-            stageItemsLookup={stageItemsLookup}
-            matchesLookup={matchesLookup}
-            openMatchModal={openMatchModal}
+          matchLabel={(matchId) => {
+            const found = (matchesLookup as Record<number, any>)[matchId];
+            if (found == null) return `#${matchId}`;
+            return `${formatMatchInput1(t, stageItemsLookup, matchesLookup, found.match)} – ${formatMatchInput2(t, stageItemsLookup, matchesLookup, found.match)}`;
+          }}
+        />
+        <PlanIssues
+          tournamentId={tournamentData.id}
+          swrStagesResponse={swrStagesResponse}
+          matchesLookup={matchesLookup}
+          stageItemsLookup={stageItemsLookup}
+        />
+        {(swrStagesResponse.data?.data ?? []).length < 1 ? (
+          <Alert color="indigo" icon={<IconWand />} title={t('no_matches_title')} mt="md">
+            <Stack gap="xs" align="flex-start">
+              <Text size="sm">{t('schedule_empty_wizard_hint')}</Text>
+              <Button
+                component={PreloadLink}
+                href={`/tournaments/${tournamentData.id}/setup`}
+                leftSection={<IconWand size={18} />}
+              >
+                {t('setup_start_button')}
+              </Button>
+            </Stack>
+          </Alert>
+        ) : null}
+        <Group mt="lg" justify="flex-end">
+          <SegmentedControl
+            value={view}
+            onChange={(value) => setView(value as 'board' | 'list')}
+            data={[
+              { value: 'board', label: t('schedule_view_board') },
+              { value: 'list', label: t('schedule_view_list') },
+            ]}
           />
-        </DragDropContext>
-      </Box>
-    </TournamentLayout>
+        </Group>
+        {view === 'list' ? (
+          <Box mt="md">
+            <ScheduleList
+              schedule={data}
+              courts={swrCourtsResponse.data?.data ?? []}
+              stageItemsLookup={stageItemsLookup}
+              matchesLookup={matchesLookup}
+              openMatchModal={openMatchModal}
+            />
+          </Box>
+        ) : null}
+        <Box mt="1rem" display={view === 'board' ? undefined : 'none'}>
+          <DragDropContext
+            onDragEnd={async ({ destination, source, draggableId: matchId }) => {
+              if (destination == null || source == null) return;
+              await rescheduleMatch(tournamentData.id, +matchId, {
+                old_court_id: +source.droppableId,
+                old_position: source.index,
+                new_court_id: +destination.droppableId,
+                new_position: destination.index,
+              });
+              await swrStagesResponse.mutate();
+            }}
+          >
+            <Schedule
+              t={t}
+              tournament={tournamentData}
+              swrCourtsResponse={swrCourtsResponse}
+              schedule={data}
+              stageItemsLookup={stageItemsLookup}
+              matchesLookup={matchesLookup}
+              openMatchModal={openMatchModal}
+            />
+          </DragDropContext>
+        </Box>
+      </TournamentLayout>
+    </StageItemClassContext.Provider>
   );
 }

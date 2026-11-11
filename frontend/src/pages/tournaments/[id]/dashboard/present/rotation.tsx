@@ -5,7 +5,12 @@ import { useTranslation } from 'react-i18next';
 
 import { getTournamentHeadTitle } from '@components/dashboard/layout';
 import { PublicNoticesBanner } from '@components/dashboard/public_notices';
-import { getStageItemIdsWithHiddenResults } from '@components/utils/category';
+import {
+  StageItemClassContext,
+  StageItemTitle,
+  getStageItemIdsWithHiddenResults,
+  stageItemClassNames,
+} from '@components/utils/category';
 import { Time } from '@components/utils/datetime';
 import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
 import { TableSkeletonTwoColumns } from '@components/utils/skeletons';
@@ -48,7 +53,7 @@ function UpcomingMatches({ swrStagesResponse }: { swrStagesResponse: any }) {
                 </Table.Td>
                 <Table.Td>
                   <Badge size="xl" variant="light">
-                    {data.stageItem.name}
+                    <StageItemTitle id={data.stageItem.id} name={data.stageItem.name} />
                   </Badge>
                 </Table.Td>
               </Table.Tr>
@@ -104,14 +109,21 @@ export default function RotationPresentPage() {
   ];
 
   return (
-    <Box>
-      <Progress value={(100 * elapsed) / seconds} size="xs" radius={0} transitionDuration={1000} />
-      <Group px="xl">
-        <Box style={{ flex: 1 }}>
-          <PublicNoticesBanner tournamentId={tournamentDataFull.id} size="xl" />
-        </Box>
-      </Group>
-      {views[index % views.length]}
-    </Box>
+    <StageItemClassContext.Provider value={stageItemClassNames(stages, categories)}>
+      <Box>
+        <Progress
+          value={(100 * elapsed) / seconds}
+          size="xs"
+          radius={0}
+          transitionDuration={1000}
+        />
+        <Group px="xl">
+          <Box style={{ flex: 1 }}>
+            <PublicNoticesBanner tournamentId={tournamentDataFull.id} size="xl" />
+          </Box>
+        </Group>
+        {views[index % views.length]}
+      </Box>
+    </StageItemClassContext.Provider>
   );
 }

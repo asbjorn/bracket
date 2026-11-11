@@ -34,6 +34,31 @@ export function isMatchInTheFuture(match: MatchWithDetails) {
   return getMatchStartTime(match) > dayjs();
 }
 
+/**
+ * A short name for a knockout match, e.g. "semifinale 1" or "kvartfinale 3": readable on
+ * schedules instead of "Vinner av kamp Nr. 1 i Pulje A - Nr. 2 i Pulje B".
+ */
+export function knockoutMatchName(t: Translator, matchesLookup: any, matchId: number): string {
+  const entry = matchesLookup[matchId];
+  if (entry == null) return `#${matchId}`;
+  const rounds = [...entry.stageItem.rounds].sort((a: any, b: any) => a.id - b.id);
+  const roundIndex = rounds.findIndex((round: any) =>
+    round.matches.some((m: MatchWithDetails) => m.id === matchId),
+  );
+  if (roundIndex < 0) return `#${matchId}`;
+  const matches = [...rounds[roundIndex].matches].sort((a: any, b: any) => a.id - b.id);
+  const number = matches.findIndex((m: MatchWithDetails) => m.id === matchId) + 1;
+  const fromEnd = rounds.length - 1 - roundIndex;
+  if (fromEnd === 0) return t('round_name_final');
+  const name =
+    fromEnd === 1
+      ? t('round_name_semifinal')
+      : fromEnd === 2
+        ? t('round_name_quarterfinal')
+        : t('round_name_round', { number: roundIndex + 1 });
+  return matches.length > 1 ? `${name} ${number}` : name;
+}
+
 export function formatMatchInput1(
   t: Translator,
   stageItemsLookup: any,
@@ -44,18 +69,16 @@ export function formatMatchInput1(
   if (formatted != null) return formatted;
 
   if (match.stage_item_input1_loser_from_match_id != null) {
-    const loser = matchesLookup[match.stage_item_input1_loser_from_match_id].match;
-    const loser_1 = formatMatchInput1(t, stageItemsLookup, matchesLookup, loser);
-    const loser_2 = formatMatchInput2(t, stageItemsLookup, matchesLookup, loser);
-    return t('loser_of_match', { match: `${loser_1} - ${loser_2}` });
+    return t('loser_of_match', {
+      match: knockoutMatchName(t, matchesLookup, match.stage_item_input1_loser_from_match_id),
+    });
   }
   if (match.stage_item_input1_winner_from_match_id == null) {
     return t('empty_slot');
   }
-  const winner = matchesLookup[match.stage_item_input1_winner_from_match_id].match;
-  const match_1 = formatMatchInput1(t, stageItemsLookup, matchesLookup, winner);
-  const match_2 = formatMatchInput2(t, stageItemsLookup, matchesLookup, winner);
-  return t('winner_of_match', { match: `${match_1} - ${match_2}` });
+  return t('winner_of_match', {
+    match: knockoutMatchName(t, matchesLookup, match.stage_item_input1_winner_from_match_id),
+  });
 }
 
 export function formatMatchInput2(
@@ -68,18 +91,16 @@ export function formatMatchInput2(
   if (formatted != null) return formatted;
 
   if (match.stage_item_input2_loser_from_match_id != null) {
-    const loser = matchesLookup[match.stage_item_input2_loser_from_match_id].match;
-    const loser_1 = formatMatchInput1(t, stageItemsLookup, matchesLookup, loser);
-    const loser_2 = formatMatchInput2(t, stageItemsLookup, matchesLookup, loser);
-    return t('loser_of_match', { match: `${loser_1} - ${loser_2}` });
+    return t('loser_of_match', {
+      match: knockoutMatchName(t, matchesLookup, match.stage_item_input2_loser_from_match_id),
+    });
   }
   if (match.stage_item_input2_winner_from_match_id == null) {
     return t('empty_slot');
   }
-  const winner = matchesLookup[match.stage_item_input2_winner_from_match_id].match;
-  const match_1 = formatMatchInput1(t, stageItemsLookup, matchesLookup, winner);
-  const match_2 = formatMatchInput2(t, stageItemsLookup, matchesLookup, winner);
-  return t('winner_of_match', { match: `${match_1} - ${match_2}` });
+  return t('winner_of_match', {
+    match: knockoutMatchName(t, matchesLookup, match.stage_item_input2_winner_from_match_id),
+  });
 }
 
 /**

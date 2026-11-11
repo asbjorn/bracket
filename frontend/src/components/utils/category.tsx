@@ -1,5 +1,6 @@
 import { Select } from '@mantine/core';
 import { parseAsString, useQueryState } from 'nuqs';
+import { createContext, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Category, StageWithStageItems } from '@openapi';
@@ -178,4 +179,35 @@ export function getStageItemIdsWithHiddenResults(
       .filter((stage) => stage.category_id != null && hiddenCategoryIds.has(stage.category_id))
       .flatMap((stage) => stage.stage_items.map((stageItem) => stageItem.id)),
   );
+}
+
+/**
+ * The class of every stage item, so a match can show "G9 · Pulje A" next to its teams (team
+ * names like "Gneist 1" can exist in several classes). Pages provide it, rows read it.
+ */
+export const StageItemClassContext = createContext<Record<number, string>>({});
+
+export function stageItemClassNames(
+  stages: StageWithStageItems[],
+  categories: Category[],
+): Record<number, string> {
+  if (categories.length < 2) return {}; // One class: nothing to tell apart
+  const names = Object.fromEntries(categories.map((c) => [c.id, c.name]));
+  return Object.fromEntries(
+    stages.flatMap((stage) =>
+      stage.category_id != null && names[stage.category_id] != null
+        ? stage.stage_items.map((item) => [item.id, names[stage.category_id as number]])
+        : [],
+    ),
+  );
+}
+
+/** E.g. "G9 · Pulje A", or just "Pulje A" when the cup has one class. */
+export function useStageItemTitle(stageItemId: number, stageItemName: string): string {
+  const className = useContext(StageItemClassContext)[stageItemId];
+  return className != null ? `${className} · ${stageItemName}` : stageItemName;
+}
+
+export function StageItemTitle({ id, name }: { id: number; name: string }) {
+  return <>{useStageItemTitle(id, name)}</>;
 }
