@@ -405,13 +405,13 @@ async def test_address_gets_limited_emails_per_day(
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_address_global_limit(
+async def test_address_club_limit(
     startup_and_shutdown_uvicorn_server: None,
     auth_context: AuthContext,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """The global limit over all cups also holds (lowered here to test it with one cup)."""
-    monkeypatch.setattr(notifications, "MAX_EMAILS_PER_ADDRESS_DAY_GLOBAL", 3)
+    """The limit over all cups of a club also holds (lowered here to test it with one cup)."""
+    monkeypatch.setattr(notifications, "MAX_EMAILS_PER_ADDRESS_DAY_CLUB", 3)
     tournament_id = auth_context.tournament.id
     try:
         team_ids = await set_up_playable_cup(auth_context)

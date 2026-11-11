@@ -38,11 +38,12 @@ MAX_ATTEMPTS = 3
 # Sign-up confirmations (the public form can trigger them): per address a day, per cup an hour
 MAX_REGISTRATION_EMAILS_PER_ADDRESS = 3
 MAX_REGISTRATION_EMAILS_HOUR = 60
-# Any kind of email to one address a day: per tournament, and (higher) over all tournaments.
-# The per-tournament limit keeps one organiser from using up another cup's emails; the
-# global one keeps an address from being flooded through many tournaments.
+# Any kind of email to one address a day: per tournament, and (higher) over all tournaments of
+# the same club (organiser). Counted only within the organiser's own tournaments, so another
+# organiser can neither use up these limits nor learn anything from them; an address can't be
+# flooded by creating many tournaments.
 MAX_EMAILS_PER_ADDRESS_DAY = 20
-MAX_EMAILS_PER_ADDRESS_DAY_GLOBAL = 100
+MAX_EMAILS_PER_ADDRESS_DAY_CLUB = 100
 # A plain address, nothing that could add headers or recipients
 PLAIN_ADDRESS = re.compile(r"^[^\s@<>,;:\"()\[\]\\]+@[^\s@<>,;:\"()\[\]\\]+$")
 STALE_SENDING = timedelta(minutes=10)
@@ -259,7 +260,7 @@ async def queue(  # pylint: disable=too-many-arguments
     """
     Queues an email; `False` if this message (`dedupe_key`) was queued before, or the address
     already got `MAX_EMAILS_PER_ADDRESS_DAY` emails from this tournament, or
-    `MAX_EMAILS_PER_ADDRESS_DAY_GLOBAL` from all tournaments, in the last day (checked under a
+    `MAX_EMAILS_PER_ADDRESS_DAY_CLUB` from all tournaments of its club, in the last day (under a
     lock). An email over a limit is logged as failed for the organiser to see.
     """
     async with database.transaction():
@@ -271,19 +272,21 @@ async def queue(  # pylint: disable=too-many-arguments
         counts = await database.fetch_one(
             """
             SELECT
-                count(*) FILTER (WHERE tournament_id = :tournament_id) AS this_tournament,
-                count(*) AS all_tournaments
-            FROM notifications_sent
-            WHERE lower(recipient) = lower(:email)
-            AND status <> 'FAILED'
-            AND created > now() - interval '1 day'
+                count(*) FILTER (WHERE n.tournament_id = :tournament_id) AS this_tournament,
+                count(*) AS club_tournaments
+            FROM notifications_sent n
+            JOIN tournaments t ON t.id = n.tournament_id
+            WHERE t.club_id = (SELECT club_id FROM tournaments WHERE id = :tournament_id)
+            AND lower(n.recipient) = lower(:email)
+            AND n.status <> 'FAILED'
+            AND n.created > now() - interval '1 day'
             """,
             values={"tournament_id": tournament_id, "email": recipient.email},
         )
         assert counts is not None
         over_limit = (
             int(counts["this_tournament"]) >= MAX_EMAILS_PER_ADDRESS_DAY
-            or int(counts["all_tournaments"]) >= MAX_EMAILS_PER_ADDRESS_DAY_GLOBAL
+            or int(counts["club_tournaments"]) >= MAX_EMAILS_PER_ADDRESS_DAY_CLUB
         )
         inserted = await insert_notification(
             tournament_id, recipient, kind, dedupe_key, subject, body, reply_to
