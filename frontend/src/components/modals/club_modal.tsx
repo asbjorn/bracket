@@ -26,7 +26,7 @@ export default function ClubModal({
     <SaveButton
       mx="0px"
       fullWidth
-      onClick={() => setOpened(true)}
+      onClick={openModal}
       leftSection={<GoPlus size={24} />}
       title={operation_text}
     />
@@ -35,7 +35,7 @@ export default function ClubModal({
       color="green"
       size="xs"
       style={{ marginRight: 10 }}
-      onClick={() => setOpened(true)}
+      onClick={openModal}
       leftSection={icon}
     >
       {operation_text}
@@ -51,6 +51,13 @@ export default function ClubModal({
       name: (value) => (value.length > 0 ? null : t('too_short_name_validation')),
     },
   });
+
+  // The modal stays mounted: start every time from fresh values, not from what was typed last
+  function openModal() {
+    form.setInitialValues({ name: club == null ? '' : club.name });
+    form.reset();
+    setOpened(true);
+  }
 
   return (
     <>

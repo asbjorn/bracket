@@ -29,6 +29,13 @@ export default function CourtModal({
     },
   });
 
+  // The modal stays mounted: start every time from fresh values, not from what was typed last
+  function openModal() {
+    form.setInitialValues({ name: '' });
+    form.reset();
+    setOpened(true);
+  }
+
   return (
     <>
       <Modal opened={opened} onClose={() => setOpened(false)} title={t('add_court_title')}>
@@ -56,7 +63,7 @@ export default function CourtModal({
         color="green"
         size={buttonSize}
         style={{ marginRight: 10 }}
-        onClick={() => setOpened(true)}
+        onClick={openModal}
         leftSection={<GoPlus size={24} />}
       >
         {t('add_court_title')}

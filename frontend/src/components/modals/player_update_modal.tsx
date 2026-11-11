@@ -24,7 +24,7 @@ export default function PlayerUpdateModal({
       color="green"
       size="xs"
       style={{ marginRight: 10 }}
-      onClick={() => setOpened(true)}
+      onClick={openModal}
       leftSection={<BiEditAlt size={20} />}
     >
       {t('edit_player')}
@@ -40,6 +40,16 @@ export default function PlayerUpdateModal({
       name: (value) => (value.length > 0 ? null : t('too_short_name_validation')),
     },
   });
+
+  // The modal stays mounted: start every time from fresh values, not from what was typed last
+  function openModal() {
+    form.setInitialValues({
+      name: player == null ? '' : player.name,
+      active: player == null ? true : player.active,
+    });
+    form.reset();
+    setOpened(true);
+  }
 
   return (
     <>
