@@ -13,6 +13,7 @@ class UniqueIndex(EnumAutoStr):
     categories_tournament_id_name_key = auto()
     ix_tournaments_dashboard_endpoint = auto()
     ix_users_email = auto()
+    score_links_token_hash_key = auto()
     stage_item_inputs_stage_item_id_team_id_key = auto()
     stage_item_inputs_stage_item_id_winner_from_stage_item_id_w_key = auto()
 
@@ -35,6 +36,8 @@ unique_index_violation_error_lookup = {
     UniqueIndex.categories_tournament_id_name_key: "A class with this name already exists",
     UniqueIndex.ix_tournaments_dashboard_endpoint: "This dashboard link is already taken",
     UniqueIndex.ix_users_email: "This email is already taken",
+    # A random 256-bit token: practically never happens
+    UniqueIndex.score_links_token_hash_key: "Could not create a unique link, try again",
     UniqueIndex.stage_item_inputs_stage_item_id_team_id_key: (
         "This team is already assigned to another stage item"
     ),

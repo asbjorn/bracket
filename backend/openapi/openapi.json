@@ -1802,6 +1802,133 @@
         "title": "MatchCreateBodyFrontend",
         "type": "object"
       },
+      "MatchDayNotice": {
+        "properties": {
+          "court_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Court Id"
+          },
+          "created": {
+            "format": "date-time",
+            "title": "Created",
+            "type": "string"
+          },
+          "delay_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delay Minutes"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "resolved": {
+            "title": "Resolved",
+            "type": "boolean"
+          },
+          "score_link_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score Link Id"
+          },
+          "tournament_id": {
+            "title": "Tournament Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "tournament_id",
+          "court_id",
+          "score_link_id",
+          "delay_minutes",
+          "message",
+          "created",
+          "resolved"
+        ],
+        "title": "MatchDayNotice",
+        "type": "object"
+      },
+      "MatchDayNoticeBody": {
+        "properties": {
+          "delay_minutes": {
+            "anyOf": [
+              {
+                "maximum": 240.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delay Minutes"
+          },
+          "message": {
+            "default": "",
+            "maxLength": 300,
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "delay_minutes",
+          "message"
+        ],
+        "title": "MatchDayNoticeBody",
+        "type": "object"
+      },
+      "MatchDayNoticeResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/MatchDayNotice"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "MatchDayNoticeResponse",
+        "type": "object"
+      },
+      "MatchDayNoticesResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MatchDayNotice"
+            },
+            "title": "Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "MatchDayNoticesResponse",
+        "type": "object"
+      },
       "MatchRescheduleBody": {
         "properties": {
           "new_court_id": {
@@ -3124,6 +3251,444 @@
           "data"
         ],
         "title": "ScheduleProposalResponse",
+        "type": "object"
+      },
+      "ScoreEntryBody": {
+        "properties": {
+          "penalties1": {
+            "anyOf": [
+              {
+                "maximum": 99.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Penalties1"
+          },
+          "penalties2": {
+            "anyOf": [
+              {
+                "maximum": 99.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Penalties2"
+          },
+          "played": {
+            "default": true,
+            "title": "Played",
+            "type": "boolean"
+          },
+          "result_type": {
+            "$ref": "#/components/schemas/MatchResultType",
+            "default": "NORMAL"
+          },
+          "score1": {
+            "maximum": 99.0,
+            "minimum": 0.0,
+            "title": "Score1",
+            "type": "integer"
+          },
+          "score2": {
+            "maximum": 99.0,
+            "minimum": 0.0,
+            "title": "Score2",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "score1",
+          "score2",
+          "result_type",
+          "penalties1",
+          "penalties2",
+          "played"
+        ],
+        "title": "ScoreEntryBody",
+        "type": "object"
+      },
+      "ScoreEntryMatch": {
+        "description": "A match as the score keeper sees it.",
+        "properties": {
+          "category_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Name"
+          },
+          "court_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Court Id"
+          },
+          "court_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Court Name"
+          },
+          "duration_minutes": {
+            "title": "Duration Minutes",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "penalties1": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Penalties1"
+          },
+          "penalties2": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Penalties2"
+          },
+          "played": {
+            "title": "Played",
+            "type": "boolean"
+          },
+          "result_type": {
+            "$ref": "#/components/schemas/MatchResultType"
+          },
+          "round_id": {
+            "title": "Round Id",
+            "type": "integer"
+          },
+          "score1": {
+            "title": "Score1",
+            "type": "integer"
+          },
+          "score2": {
+            "title": "Score2",
+            "type": "integer"
+          },
+          "stage_item_name": {
+            "title": "Stage Item Name",
+            "type": "string"
+          },
+          "start_time": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Time"
+          },
+          "team1_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team1 Id"
+          },
+          "team1_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team1 Name"
+          },
+          "team2_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team2 Id"
+          },
+          "team2_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team2 Name"
+          }
+        },
+        "required": [
+          "id",
+          "round_id",
+          "court_id",
+          "court_name",
+          "start_time",
+          "duration_minutes",
+          "category_name",
+          "stage_item_name",
+          "team1_id",
+          "team1_name",
+          "team2_id",
+          "team2_name",
+          "score1",
+          "score2",
+          "penalties1",
+          "penalties2",
+          "played",
+          "result_type"
+        ],
+        "title": "ScoreEntryMatch",
+        "type": "object"
+      },
+      "ScoreEntryView": {
+        "properties": {
+          "court_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Court Id"
+          },
+          "court_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Court Name"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "link_name": {
+            "title": "Link Name",
+            "type": "string"
+          },
+          "matches": {
+            "items": {
+              "$ref": "#/components/schemas/ScoreEntryMatch"
+            },
+            "title": "Matches",
+            "type": "array"
+          },
+          "tournament_name": {
+            "title": "Tournament Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tournament_name",
+          "link_name",
+          "court_id",
+          "court_name",
+          "expires_at",
+          "matches"
+        ],
+        "title": "ScoreEntryView",
+        "type": "object"
+      },
+      "ScoreEntryViewResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ScoreEntryView"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ScoreEntryViewResponse",
+        "type": "object"
+      },
+      "ScoreLink": {
+        "properties": {
+          "court_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Court Id"
+          },
+          "created": {
+            "format": "date-time",
+            "title": "Created",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          },
+          "tournament_id": {
+            "title": "Tournament Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "tournament_id",
+          "court_id",
+          "name",
+          "created",
+          "expires_at",
+          "revoked_at"
+        ],
+        "title": "ScoreLink",
+        "type": "object"
+      },
+      "ScoreLinkBody": {
+        "properties": {
+          "court_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Court Id"
+          },
+          "name": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "valid_hours": {
+            "default": 48,
+            "maximum": 336.0,
+            "minimum": 1.0,
+            "title": "Valid Hours",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "court_id",
+          "valid_hours"
+        ],
+        "title": "ScoreLinkBody",
+        "type": "object"
+      },
+      "ScoreLinkCreated": {
+        "properties": {
+          "link": {
+            "$ref": "#/components/schemas/ScoreLink"
+          },
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "link",
+          "token"
+        ],
+        "title": "ScoreLinkCreated",
+        "type": "object"
+      },
+      "ScoreLinkCreatedResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ScoreLinkCreated"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ScoreLinkCreatedResponse",
+        "type": "object"
+      },
+      "ScoreLinksResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ScoreLink"
+            },
+            "title": "Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ScoreLinksResponse",
         "type": "object"
       },
       "SingleCategoryResponse": {
@@ -5044,7 +5609,7 @@
     }
   },
   "info": {
-    "description": "\n### Description\nThis API allows you to do everything the frontend of [Bracket](https://github.com/evroon/bracket)\nallows you to do (the frontend uses this API as well).\n\nFore more information, see the [documentation](https://docs.bracketapp.nl).\n\n### Table of Contents\n*(links only work for [ReDoc](https://api.bracketapp.nl/redoc), not for Swagger UI)*\n\n- [Auth](#tag/Auth)\n\n- [Capacity](#tag/Capacity)\n\n- [Cup setup](#tag/Cup-setup)\n\n- [Draw](#tag/Draw)\n\n- [Categories](#tag/Categories)\n\n- [Clubs](#tag/Clubs)\n\n- [Courts](#tag/Courts)\n\n- [Internals](#tag/Internals)\n\n- [Matches](#tag/Matches)\n\n- [Players](#tag/Players)\n\n- [Rankings](#tag/Rankings)\n\n- [Rounds](#tag/Rounds)\n\n- [Stage Items](#tag/Stage-Items)\n\n- [Stage Item Inputs](#tag/Stage-Item-Inputs)\n\n- [Stages](#tag/Stages)\n\n- [Teams](#tag/Teams)\n\n- [Tournaments](#tag/Tournaments)\n\n- [Users](#tag/Users)\n\n### Links\nGitHub: <https://github.com/evroon/bracket>\n\nDocs: <https://docs.bracketapp.nl>\n\nDemo: <https://www.bracketapp.nl/demo>\n\nAPI docs (Redoc): <https://api.bracketapp.nl/redoc>\n\nAPI docs (Swagger UI): <https://api.bracketapp.nl/docs>\n",
+    "description": "\n### Description\nThis API allows you to do everything the frontend of [Bracket](https://github.com/evroon/bracket)\nallows you to do (the frontend uses this API as well).\n\nFore more information, see the [documentation](https://docs.bracketapp.nl).\n\n### Table of Contents\n*(links only work for [ReDoc](https://api.bracketapp.nl/redoc), not for Swagger UI)*\n\n- [Auth](#tag/Auth)\n\n- [Capacity](#tag/Capacity)\n\n- [Cup setup](#tag/Cup-setup)\n\n- [Draw](#tag/Draw)\n\n- [Score links](#tag/Score-links)\n\n- [Categories](#tag/Categories)\n\n- [Clubs](#tag/Clubs)\n\n- [Courts](#tag/Courts)\n\n- [Internals](#tag/Internals)\n\n- [Matches](#tag/Matches)\n\n- [Players](#tag/Players)\n\n- [Rankings](#tag/Rankings)\n\n- [Rounds](#tag/Rounds)\n\n- [Stage Items](#tag/Stage-Items)\n\n- [Stage Item Inputs](#tag/Stage-Item-Inputs)\n\n- [Stages](#tag/Stages)\n\n- [Teams](#tag/Teams)\n\n- [Tournaments](#tag/Tournaments)\n\n- [Users](#tag/Users)\n\n### Links\nGitHub: <https://github.com/evroon/bracket>\n\nDocs: <https://docs.bracketapp.nl>\n\nDemo: <https://www.bracketapp.nl/demo>\n\nAPI docs (Redoc): <https://api.bracketapp.nl/redoc>\n\nAPI docs (Swagger UI): <https://api.bracketapp.nl/docs>\n",
     "license": {
       "name": "AGPL-3.0",
       "url": "https://www.gnu.org/licenses/agpl-3.0.en.html"
@@ -5314,6 +5879,163 @@
         "summary": "Healthcheck ping",
         "tags": [
           "Internals"
+        ]
+      }
+    },
+    "/score/{token}": {
+      "get": {
+        "description": "The matches of a score link (no account needed, the token is the key).",
+        "operationId": "get_score_entry_score__token__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoreEntryViewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Score Entry",
+        "tags": [
+          "Score links"
+        ]
+      }
+    },
+    "/score/{token}/matches/{match_id}": {
+      "put": {
+        "operationId": "enter_match_result_score__token__matches__match_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "match_id",
+            "required": true,
+            "schema": {
+              "title": "Match Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScoreEntryBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Enter Match Result",
+        "tags": [
+          "Score links"
+        ]
+      }
+    },
+    "/score/{token}/notices": {
+      "post": {
+        "description": "E.g. \"we're running 10 minutes late\": shown to the organiser on the schedule page.",
+        "operationId": "report_from_pitch_score__token__notices_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MatchDayNoticeBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchDayNoticeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Report From Pitch",
+        "tags": [
+          "Score links"
         ]
       }
     },
@@ -6679,6 +7401,109 @@
         ]
       }
     },
+    "/tournaments/{tournament_id}/notices": {
+      "get": {
+        "operationId": "get_match_day_notices_tournaments__tournament_id__notices_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchDayNoticesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Match Day Notices",
+        "tags": [
+          "Score links"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/notices/{notice_id}/resolve": {
+      "post": {
+        "operationId": "resolve_match_day_notice_tournaments__tournament_id__notices__notice_id__resolve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "notice_id",
+            "required": true,
+            "schema": {
+              "title": "Notice Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Resolve Match Day Notice",
+        "tags": [
+          "Score links"
+        ]
+      }
+    },
     "/tournaments/{tournament_id}/players": {
       "get": {
         "operationId": "get_players_tournaments__tournament_id__players_get",
@@ -7727,6 +8552,165 @@
         "summary": "Schedule Matches",
         "tags": [
           "Matches"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/score_links": {
+      "get": {
+        "operationId": "get_tournament_score_links_tournaments__tournament_id__score_links_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoreLinksResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Tournament Score Links",
+        "tags": [
+          "Score links"
+        ]
+      },
+      "post": {
+        "description": "A link for entering results without an account, for one court or the whole tournament.\nOwners and collaborators can create links: they run the match day. The token is in the\nresponse only this once; the frontend link is `/score/<token>`.",
+        "operationId": "create_score_link_tournaments__tournament_id__score_links_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScoreLinkBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoreLinkCreatedResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Score Link",
+        "tags": [
+          "Score links"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/score_links/{score_link_id}/revoke": {
+      "post": {
+        "operationId": "revoke_score_link_tournaments__tournament_id__score_links__score_link_id__revoke_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "score_link_id",
+            "required": true,
+            "schema": {
+              "title": "Score Link Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Revoke Score Link",
+        "tags": [
+          "Score links"
         ]
       }
     },

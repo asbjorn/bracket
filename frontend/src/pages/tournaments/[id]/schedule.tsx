@@ -20,6 +20,7 @@ import { SWRResponse } from 'swr';
 import CourtModal from '@components/modals/create_court_modal';
 import MatchModal from '@components/modals/match_modal';
 import MatchPlanPanel from '@components/scheduling/match_plan_panel';
+import NoticesAlert from '@components/scheduling/notices_alert';
 import { PlanIssues } from '@components/scheduling/plan_issues';
 import { NoContent } from '@components/no_content/empty_table_info';
 import { DayAndTime, Time, spansMultipleDays } from '@components/utils/datetime';
@@ -308,6 +309,7 @@ export default function SchedulePage() {
         />
       ) : null}
       <Title mb="md">{t('planning_title')}</Title>
+      <NoticesAlert tournamentId={tournamentData.id} courts={swrCourtsResponse.data?.data ?? []} />
       <MatchPlanPanel
         tournamentId={tournamentData.id}
         swrCourtsResponse={swrCourtsResponse}

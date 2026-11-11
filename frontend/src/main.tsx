@@ -17,6 +17,7 @@ import { LocalizedDatesProvider } from './components/utils/dates_provider';
 import HomePage from './pages';
 import NotFoundPage from './pages/404';
 import CapacityPage from './pages/capacity';
+import ScoreEntryPage from './pages/score';
 import ClubsPage from './pages/clubs';
 import CreateAccountPage from './pages/create_account';
 import CreateDemoAccountPage from './pages/demo';
@@ -84,6 +85,7 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/clubs" element={<ClubsPage />} />
                 <Route path="/capacity" element={<CapacityPage />} />
+                <Route path="/score/:token" element={<ScoreEntryPage />} />
                 <Route path="/demo" element={<CreateDemoAccountPage />} />
                 <Route path="/user" element={<UserPage />} />
                 <Route path="/password-reset" element={<PasswordResetPage />} />

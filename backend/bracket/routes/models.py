@@ -11,6 +11,12 @@ from bracket.models.db.court import Court
 from bracket.models.db.match import Match, SuggestedMatch
 from bracket.models.db.player import Player
 from bracket.models.db.ranking import Ranking
+from bracket.models.db.score_link import (
+    MatchDayNotice,
+    ScoreEntryView,
+    ScoreLink,
+    ScoreLinkCreated,
+)
 from bracket.models.db.stage_item_inputs import (
     StageItemInputOptionFinal,
     StageItemInputOptionTentative,
@@ -115,6 +121,26 @@ class PlanIssuesResponse(DataResponse[list[PlanIssueOut]]):
 
 
 class DrawResponse(DataResponse[list[DrawPlacement]]):
+    pass
+
+
+class ScoreLinksResponse(DataResponse[list[ScoreLink]]):
+    pass
+
+
+class ScoreLinkCreatedResponse(DataResponse[ScoreLinkCreated]):
+    pass
+
+
+class ScoreEntryViewResponse(DataResponse[ScoreEntryView]):
+    pass
+
+
+class MatchDayNoticeResponse(DataResponse[MatchDayNotice]):
+    pass
+
+
+class MatchDayNoticesResponse(DataResponse[list[MatchDayNotice]]):
     pass
 
 

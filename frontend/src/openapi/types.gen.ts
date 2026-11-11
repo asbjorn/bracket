@@ -903,6 +903,75 @@ export type MatchCreateBodyFrontend = {
 };
 
 /**
+ * MatchDayNotice
+ */
+export type MatchDayNotice = {
+  /**
+   * Court Id
+   */
+  court_id: number | null;
+  /**
+   * Created
+   */
+  created: string;
+  /**
+   * Delay Minutes
+   */
+  delay_minutes: number | null;
+  /**
+   * Id
+   */
+  id: number;
+  /**
+   * Message
+   */
+  message: string;
+  /**
+   * Resolved
+   */
+  resolved: boolean;
+  /**
+   * Score Link Id
+   */
+  score_link_id: number | null;
+  /**
+   * Tournament Id
+   */
+  tournament_id: number;
+};
+
+/**
+ * MatchDayNoticeBody
+ */
+export type MatchDayNoticeBody = {
+  /**
+   * Delay Minutes
+   */
+  delay_minutes: number | null;
+  /**
+   * Message
+   */
+  message: string;
+};
+
+/**
+ * MatchDayNoticeResponse
+ */
+export type MatchDayNoticeResponse = {
+  data: MatchDayNotice;
+};
+
+/**
+ * MatchDayNoticesResponse
+ */
+export type MatchDayNoticesResponse = {
+  /**
+   * Data
+   */
+  data: Array<MatchDayNotice>;
+};
+
+/**
  * MatchRescheduleBody
  */
 export type MatchRescheduleBody = {
@@ -1591,6 +1660,227 @@ export type ScheduleProposal = {
  */
 export type ScheduleProposalResponse = {
   data: ScheduleProposal;
+};
+
+/**
+ * ScoreEntryBody
+ */
+export type ScoreEntryBody = {
+  /**
+   * Penalties1
+   */
+  penalties1: number | null;
+  /**
+   * Penalties2
+   */
+  penalties2: number | null;
+  /**
+   * Played
+   */
+  played: boolean;
+  result_type: MatchResultType;
+  /**
+   * Score1
+   */
+  score1: number;
+  /**
+   * Score2
+   */
+  score2: number;
+};
+
+/**
+ * ScoreEntryMatch
+ *
+ * A match as the score keeper sees it.
+ */
+export type ScoreEntryMatch = {
+  /**
+   * Category Name
+   */
+  category_name: string | null;
+  /**
+   * Court Id
+   */
+  court_id: number | null;
+  /**
+   * Court Name
+   */
+  court_name: string | null;
+  /**
+   * Duration Minutes
+   */
+  duration_minutes: number;
+  /**
+   * Id
+   */
+  id: number;
+  /**
+   * Penalties1
+   */
+  penalties1: number | null;
+  /**
+   * Penalties2
+   */
+  penalties2: number | null;
+  /**
+   * Played
+   */
+  played: boolean;
+  result_type: MatchResultType;
+  /**
+   * Round Id
+   */
+  round_id: number;
+  /**
+   * Score1
+   */
+  score1: number;
+  /**
+   * Score2
+   */
+  score2: number;
+  /**
+   * Stage Item Name
+   */
+  stage_item_name: string;
+  /**
+   * Start Time
+   */
+  start_time: string | null;
+  /**
+   * Team1 Id
+   */
+  team1_id: number | null;
+  /**
+   * Team1 Name
+   */
+  team1_name: string | null;
+  /**
+   * Team2 Id
+   */
+  team2_id: number | null;
+  /**
+   * Team2 Name
+   */
+  team2_name: string | null;
+};
+
+/**
+ * ScoreEntryView
+ */
+export type ScoreEntryView = {
+  /**
+   * Court Id
+   */
+  court_id: number | null;
+  /**
+   * Court Name
+   */
+  court_name: string | null;
+  /**
+   * Expires At
+   */
+  expires_at: string;
+  /**
+   * Link Name
+   */
+  link_name: string;
+  /**
+   * Matches
+   */
+  matches: Array<ScoreEntryMatch>;
+  /**
+   * Tournament Name
+   */
+  tournament_name: string;
+};
+
+/**
+ * ScoreEntryViewResponse
+ */
+export type ScoreEntryViewResponse = {
+  data: ScoreEntryView;
+};
+
+/**
+ * ScoreLink
+ */
+export type ScoreLink = {
+  /**
+   * Court Id
+   */
+  court_id: number | null;
+  /**
+   * Created
+   */
+  created: string;
+  /**
+   * Expires At
+   */
+  expires_at: string;
+  /**
+   * Id
+   */
+  id: number;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Revoked At
+   */
+  revoked_at: string | null;
+  /**
+   * Tournament Id
+   */
+  tournament_id: number;
+};
+
+/**
+ * ScoreLinkBody
+ */
+export type ScoreLinkBody = {
+  /**
+   * Court Id
+   */
+  court_id: number | null;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Valid Hours
+   */
+  valid_hours: number;
+};
+
+/**
+ * ScoreLinkCreated
+ */
+export type ScoreLinkCreated = {
+  link: ScoreLink;
+  /**
+   * Token
+   */
+  token: string;
+};
+
+/**
+ * ScoreLinkCreatedResponse
+ */
+export type ScoreLinkCreatedResponse = {
+  data: ScoreLinkCreated;
+};
+
+/**
+ * ScoreLinksResponse
+ */
+export type ScoreLinksResponse = {
+  /**
+   * Data
+   */
+  data: Array<ScoreLink>;
 };
 
 /**
@@ -2928,6 +3218,106 @@ export type PingPingGetResponses = {
 
 export type PingPingGetResponse = PingPingGetResponses[keyof PingPingGetResponses];
 
+export type GetScoreEntryScoreTokenGetData = {
+  body?: never;
+  path: {
+    /**
+     * Token
+     */
+    token: string;
+  };
+  query?: never;
+  url: '/score/{token}';
+};
+
+export type GetScoreEntryScoreTokenGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetScoreEntryScoreTokenGetError =
+  GetScoreEntryScoreTokenGetErrors[keyof GetScoreEntryScoreTokenGetErrors];
+
+export type GetScoreEntryScoreTokenGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: ScoreEntryViewResponse;
+};
+
+export type GetScoreEntryScoreTokenGetResponse =
+  GetScoreEntryScoreTokenGetResponses[keyof GetScoreEntryScoreTokenGetResponses];
+
+export type EnterMatchResultScoreTokenMatchesMatchIdPutData = {
+  body: ScoreEntryBody;
+  path: {
+    /**
+     * Match Id
+     */
+    match_id: number;
+    /**
+     * Token
+     */
+    token: string;
+  };
+  query?: never;
+  url: '/score/{token}/matches/{match_id}';
+};
+
+export type EnterMatchResultScoreTokenMatchesMatchIdPutErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type EnterMatchResultScoreTokenMatchesMatchIdPutError =
+  EnterMatchResultScoreTokenMatchesMatchIdPutErrors[keyof EnterMatchResultScoreTokenMatchesMatchIdPutErrors];
+
+export type EnterMatchResultScoreTokenMatchesMatchIdPutResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type EnterMatchResultScoreTokenMatchesMatchIdPutResponse =
+  EnterMatchResultScoreTokenMatchesMatchIdPutResponses[keyof EnterMatchResultScoreTokenMatchesMatchIdPutResponses];
+
+export type ReportFromPitchScoreTokenNoticesPostData = {
+  body: MatchDayNoticeBody;
+  path: {
+    /**
+     * Token
+     */
+    token: string;
+  };
+  query?: never;
+  url: '/score/{token}/notices';
+};
+
+export type ReportFromPitchScoreTokenNoticesPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ReportFromPitchScoreTokenNoticesPostError =
+  ReportFromPitchScoreTokenNoticesPostErrors[keyof ReportFromPitchScoreTokenNoticesPostErrors];
+
+export type ReportFromPitchScoreTokenNoticesPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: MatchDayNoticeResponse;
+};
+
+export type ReportFromPitchScoreTokenNoticesPostResponse =
+  ReportFromPitchScoreTokenNoticesPostResponses[keyof ReportFromPitchScoreTokenNoticesPostResponses];
+
 export type LoginForAccessTokenTokenPostData = {
   body: BodyLoginForAccessTokenTokenPost;
   path?: never;
@@ -3755,6 +4145,74 @@ export type GetNextStageRankingsTournamentsTournamentIdNextStageRankingsGetRespo
 export type GetNextStageRankingsTournamentsTournamentIdNextStageRankingsGetResponse =
   GetNextStageRankingsTournamentsTournamentIdNextStageRankingsGetResponses[keyof GetNextStageRankingsTournamentsTournamentIdNextStageRankingsGetResponses];
 
+export type GetMatchDayNoticesTournamentsTournamentIdNoticesGetData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/notices';
+};
+
+export type GetMatchDayNoticesTournamentsTournamentIdNoticesGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetMatchDayNoticesTournamentsTournamentIdNoticesGetError =
+  GetMatchDayNoticesTournamentsTournamentIdNoticesGetErrors[keyof GetMatchDayNoticesTournamentsTournamentIdNoticesGetErrors];
+
+export type GetMatchDayNoticesTournamentsTournamentIdNoticesGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: MatchDayNoticesResponse;
+};
+
+export type GetMatchDayNoticesTournamentsTournamentIdNoticesGetResponse =
+  GetMatchDayNoticesTournamentsTournamentIdNoticesGetResponses[keyof GetMatchDayNoticesTournamentsTournamentIdNoticesGetResponses];
+
+export type ResolveMatchDayNoticeTournamentsTournamentIdNoticesNoticeIdResolvePostData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+    /**
+     * Notice Id
+     */
+    notice_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/notices/{notice_id}/resolve';
+};
+
+export type ResolveMatchDayNoticeTournamentsTournamentIdNoticesNoticeIdResolvePostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ResolveMatchDayNoticeTournamentsTournamentIdNoticesNoticeIdResolvePostError =
+  ResolveMatchDayNoticeTournamentsTournamentIdNoticesNoticeIdResolvePostErrors[keyof ResolveMatchDayNoticeTournamentsTournamentIdNoticesNoticeIdResolvePostErrors];
+
+export type ResolveMatchDayNoticeTournamentsTournamentIdNoticesNoticeIdResolvePostResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type ResolveMatchDayNoticeTournamentsTournamentIdNoticesNoticeIdResolvePostResponse =
+  ResolveMatchDayNoticeTournamentsTournamentIdNoticesNoticeIdResolvePostResponses[keyof ResolveMatchDayNoticeTournamentsTournamentIdNoticesNoticeIdResolvePostResponses];
+
 export type GetPlayersTournamentsTournamentIdPlayersGetData = {
   body?: never;
   path: {
@@ -4387,6 +4845,106 @@ export type ScheduleMatchesTournamentsTournamentIdScheduleMatchesPostResponses =
 
 export type ScheduleMatchesTournamentsTournamentIdScheduleMatchesPostResponse =
   ScheduleMatchesTournamentsTournamentIdScheduleMatchesPostResponses[keyof ScheduleMatchesTournamentsTournamentIdScheduleMatchesPostResponses];
+
+export type GetTournamentScoreLinksTournamentsTournamentIdScoreLinksGetData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/score_links';
+};
+
+export type GetTournamentScoreLinksTournamentsTournamentIdScoreLinksGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetTournamentScoreLinksTournamentsTournamentIdScoreLinksGetError =
+  GetTournamentScoreLinksTournamentsTournamentIdScoreLinksGetErrors[keyof GetTournamentScoreLinksTournamentsTournamentIdScoreLinksGetErrors];
+
+export type GetTournamentScoreLinksTournamentsTournamentIdScoreLinksGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: ScoreLinksResponse;
+};
+
+export type GetTournamentScoreLinksTournamentsTournamentIdScoreLinksGetResponse =
+  GetTournamentScoreLinksTournamentsTournamentIdScoreLinksGetResponses[keyof GetTournamentScoreLinksTournamentsTournamentIdScoreLinksGetResponses];
+
+export type CreateScoreLinkTournamentsTournamentIdScoreLinksPostData = {
+  body: ScoreLinkBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/score_links';
+};
+
+export type CreateScoreLinkTournamentsTournamentIdScoreLinksPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateScoreLinkTournamentsTournamentIdScoreLinksPostError =
+  CreateScoreLinkTournamentsTournamentIdScoreLinksPostErrors[keyof CreateScoreLinkTournamentsTournamentIdScoreLinksPostErrors];
+
+export type CreateScoreLinkTournamentsTournamentIdScoreLinksPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: ScoreLinkCreatedResponse;
+};
+
+export type CreateScoreLinkTournamentsTournamentIdScoreLinksPostResponse =
+  CreateScoreLinkTournamentsTournamentIdScoreLinksPostResponses[keyof CreateScoreLinkTournamentsTournamentIdScoreLinksPostResponses];
+
+export type RevokeScoreLinkTournamentsTournamentIdScoreLinksScoreLinkIdRevokePostData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+    /**
+     * Score Link Id
+     */
+    score_link_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/score_links/{score_link_id}/revoke';
+};
+
+export type RevokeScoreLinkTournamentsTournamentIdScoreLinksScoreLinkIdRevokePostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type RevokeScoreLinkTournamentsTournamentIdScoreLinksScoreLinkIdRevokePostError =
+  RevokeScoreLinkTournamentsTournamentIdScoreLinksScoreLinkIdRevokePostErrors[keyof RevokeScoreLinkTournamentsTournamentIdScoreLinksScoreLinkIdRevokePostErrors];
+
+export type RevokeScoreLinkTournamentsTournamentIdScoreLinksScoreLinkIdRevokePostResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type RevokeScoreLinkTournamentsTournamentIdScoreLinksScoreLinkIdRevokePostResponse =
+  RevokeScoreLinkTournamentsTournamentIdScoreLinksScoreLinkIdRevokePostResponses[keyof RevokeScoreLinkTournamentsTournamentIdScoreLinksScoreLinkIdRevokePostResponses];
 
 export type CreateStageItemTournamentsTournamentIdStageItemsPostData = {
   body: StageItemCreateBody;

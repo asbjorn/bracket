@@ -56,6 +56,9 @@ import type {
   CreateRoundTournamentsTournamentIdRoundsPostData,
   CreateRoundTournamentsTournamentIdRoundsPostErrors,
   CreateRoundTournamentsTournamentIdRoundsPostResponses,
+  CreateScoreLinkTournamentsTournamentIdScoreLinksPostData,
+  CreateScoreLinkTournamentsTournamentIdScoreLinksPostErrors,
+  CreateScoreLinkTournamentsTournamentIdScoreLinksPostResponses,
   CreateSinglePlayerTournamentsTournamentIdPlayersPostData,
   CreateSinglePlayerTournamentsTournamentIdPlayersPostErrors,
   CreateSinglePlayerTournamentsTournamentIdPlayersPostResponses,
@@ -110,6 +113,9 @@ import type {
   DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostData,
   DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostErrors,
   DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostResponses,
+  EnterMatchResultScoreTokenMatchesMatchIdPutData,
+  EnterMatchResultScoreTokenMatchesMatchIdPutErrors,
+  EnterMatchResultScoreTokenMatchesMatchIdPutResponses,
   GetAvailableInputsTournamentsTournamentIdAvailableInputsGetData,
   GetAvailableInputsTournamentsTournamentIdAvailableInputsGetErrors,
   GetAvailableInputsTournamentsTournamentIdAvailableInputsGetResponses,
@@ -124,6 +130,9 @@ import type {
   GetCourtsTournamentsTournamentIdCourtsGetData,
   GetCourtsTournamentsTournamentIdCourtsGetErrors,
   GetCourtsTournamentsTournamentIdCourtsGetResponses,
+  GetMatchDayNoticesTournamentsTournamentIdNoticesGetData,
+  GetMatchDayNoticesTournamentsTournamentIdNoticesGetErrors,
+  GetMatchDayNoticesTournamentsTournamentIdNoticesGetResponses,
   GetMatchesToScheduleTournamentsTournamentIdStageItemsStageItemIdUpcomingMatchesGetData,
   GetMatchesToScheduleTournamentsTournamentIdStageItemsStageItemIdUpcomingMatchesGetErrors,
   GetMatchesToScheduleTournamentsTournamentIdStageItemsStageItemIdUpcomingMatchesGetResponses,
@@ -144,12 +153,18 @@ import type {
   GetScheduleIssuesTournamentsTournamentIdScheduleIssuesGetData,
   GetScheduleIssuesTournamentsTournamentIdScheduleIssuesGetErrors,
   GetScheduleIssuesTournamentsTournamentIdScheduleIssuesGetResponses,
+  GetScoreEntryScoreTokenGetData,
+  GetScoreEntryScoreTokenGetErrors,
+  GetScoreEntryScoreTokenGetResponses,
   GetStagesTournamentsTournamentIdStagesGetData,
   GetStagesTournamentsTournamentIdStagesGetErrors,
   GetStagesTournamentsTournamentIdStagesGetResponses,
   GetTeamsTournamentsTournamentIdTeamsGetData,
   GetTeamsTournamentsTournamentIdTeamsGetErrors,
   GetTeamsTournamentsTournamentIdTeamsGetResponses,
+  GetTournamentScoreLinksTournamentsTournamentIdScoreLinksGetData,
+  GetTournamentScoreLinksTournamentsTournamentIdScoreLinksGetErrors,
+  GetTournamentScoreLinksTournamentsTournamentIdScoreLinksGetResponses,
   GetTournamentsTournamentsGetData,
   GetTournamentsTournamentsGetErrors,
   GetTournamentsTournamentsGetResponses,
@@ -181,9 +196,18 @@ import type {
   ReplaceTournamentTimeWindowsTournamentsTournamentIdTimeWindowsPutData,
   ReplaceTournamentTimeWindowsTournamentsTournamentIdTimeWindowsPutErrors,
   ReplaceTournamentTimeWindowsTournamentsTournamentIdTimeWindowsPutResponses,
+  ReportFromPitchScoreTokenNoticesPostData,
+  ReportFromPitchScoreTokenNoticesPostErrors,
+  ReportFromPitchScoreTokenNoticesPostResponses,
   RescheduleMatchTournamentsTournamentIdMatchesMatchIdReschedulePostData,
   RescheduleMatchTournamentsTournamentIdMatchesMatchIdReschedulePostErrors,
   RescheduleMatchTournamentsTournamentIdMatchesMatchIdReschedulePostResponses,
+  ResolveMatchDayNoticeTournamentsTournamentIdNoticesNoticeIdResolvePostData,
+  ResolveMatchDayNoticeTournamentsTournamentIdNoticesNoticeIdResolvePostErrors,
+  ResolveMatchDayNoticeTournamentsTournamentIdNoticesNoticeIdResolvePostResponses,
+  RevokeScoreLinkTournamentsTournamentIdScoreLinksScoreLinkIdRevokePostData,
+  RevokeScoreLinkTournamentsTournamentIdScoreLinksScoreLinkIdRevokePostErrors,
+  RevokeScoreLinkTournamentsTournamentIdScoreLinksScoreLinkIdRevokePostResponses,
   ScheduleMatchesTournamentsTournamentIdScheduleMatchesPostData,
   ScheduleMatchesTournamentsTournamentIdScheduleMatchesPostErrors,
   ScheduleMatchesTournamentsTournamentIdScheduleMatchesPostResponses,
@@ -381,6 +405,78 @@ export const pingPingGet = <ThrowOnError extends boolean = false>(
     responseType: 'json',
     url: '/ping',
     ...options,
+  });
+
+/**
+ * Get Score Entry
+ *
+ * The matches of a score link (no account needed, the token is the key).
+ */
+export const getScoreEntryScoreTokenGet = <ThrowOnError extends boolean = false>(
+  options: Options<GetScoreEntryScoreTokenGetData, ThrowOnError>,
+): RequestResult<
+  GetScoreEntryScoreTokenGetResponses,
+  GetScoreEntryScoreTokenGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetScoreEntryScoreTokenGetResponses,
+    GetScoreEntryScoreTokenGetErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    url: '/score/{token}',
+    ...options,
+  });
+
+/**
+ * Enter Match Result
+ */
+export const enterMatchResultScoreTokenMatchesMatchIdPut = <ThrowOnError extends boolean = false>(
+  options: Options<EnterMatchResultScoreTokenMatchesMatchIdPutData, ThrowOnError>,
+): RequestResult<
+  EnterMatchResultScoreTokenMatchesMatchIdPutResponses,
+  EnterMatchResultScoreTokenMatchesMatchIdPutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    EnterMatchResultScoreTokenMatchesMatchIdPutResponses,
+    EnterMatchResultScoreTokenMatchesMatchIdPutErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    url: '/score/{token}/matches/{match_id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Report From Pitch
+ *
+ * E.g. "we're running 10 minutes late": shown to the organiser on the schedule page.
+ */
+export const reportFromPitchScoreTokenNoticesPost = <ThrowOnError extends boolean = false>(
+  options: Options<ReportFromPitchScoreTokenNoticesPostData, ThrowOnError>,
+): RequestResult<
+  ReportFromPitchScoreTokenNoticesPostResponses,
+  ReportFromPitchScoreTokenNoticesPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    ReportFromPitchScoreTokenNoticesPostResponses,
+    ReportFromPitchScoreTokenNoticesPostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    url: '/score/{token}/notices',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 
 /**
@@ -1016,6 +1112,55 @@ export const getNextStageRankingsTournamentsTournamentIdNextStageRankingsGet = <
   });
 
 /**
+ * Get Match Day Notices
+ */
+export const getMatchDayNoticesTournamentsTournamentIdNoticesGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetMatchDayNoticesTournamentsTournamentIdNoticesGetData, ThrowOnError>,
+): RequestResult<
+  GetMatchDayNoticesTournamentsTournamentIdNoticesGetResponses,
+  GetMatchDayNoticesTournamentsTournamentIdNoticesGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetMatchDayNoticesTournamentsTournamentIdNoticesGetResponses,
+    GetMatchDayNoticesTournamentsTournamentIdNoticesGetErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/notices',
+    ...options,
+  });
+
+/**
+ * Resolve Match Day Notice
+ */
+export const resolveMatchDayNoticeTournamentsTournamentIdNoticesNoticeIdResolvePost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    ResolveMatchDayNoticeTournamentsTournamentIdNoticesNoticeIdResolvePostData,
+    ThrowOnError
+  >,
+): RequestResult<
+  ResolveMatchDayNoticeTournamentsTournamentIdNoticesNoticeIdResolvePostResponses,
+  ResolveMatchDayNoticeTournamentsTournamentIdNoticesNoticeIdResolvePostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    ResolveMatchDayNoticeTournamentsTournamentIdNoticesNoticeIdResolvePostResponses,
+    ResolveMatchDayNoticeTournamentsTournamentIdNoticesNoticeIdResolvePostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/notices/{notice_id}/resolve',
+    ...options,
+  });
+
+/**
  * Get Players
  */
 export const getPlayersTournamentsTournamentIdPlayersGet = <ThrowOnError extends boolean = false>(
@@ -1476,6 +1621,86 @@ export const scheduleMatchesTournamentsTournamentIdScheduleMatchesPost = <
     responseType: 'json',
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/tournaments/{tournament_id}/schedule_matches',
+    ...options,
+  });
+
+/**
+ * Get Tournament Score Links
+ */
+export const getTournamentScoreLinksTournamentsTournamentIdScoreLinksGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetTournamentScoreLinksTournamentsTournamentIdScoreLinksGetData, ThrowOnError>,
+): RequestResult<
+  GetTournamentScoreLinksTournamentsTournamentIdScoreLinksGetResponses,
+  GetTournamentScoreLinksTournamentsTournamentIdScoreLinksGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetTournamentScoreLinksTournamentsTournamentIdScoreLinksGetResponses,
+    GetTournamentScoreLinksTournamentsTournamentIdScoreLinksGetErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/score_links',
+    ...options,
+  });
+
+/**
+ * Create Score Link
+ *
+ * A link for entering results without an account, for one court or the whole tournament.
+ * Owners and collaborators can create links: they run the match day. The token is in the
+ * response only this once; the frontend link is `/score/<token>`.
+ */
+export const createScoreLinkTournamentsTournamentIdScoreLinksPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CreateScoreLinkTournamentsTournamentIdScoreLinksPostData, ThrowOnError>,
+): RequestResult<
+  CreateScoreLinkTournamentsTournamentIdScoreLinksPostResponses,
+  CreateScoreLinkTournamentsTournamentIdScoreLinksPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    CreateScoreLinkTournamentsTournamentIdScoreLinksPostResponses,
+    CreateScoreLinkTournamentsTournamentIdScoreLinksPostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/score_links',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Revoke Score Link
+ */
+export const revokeScoreLinkTournamentsTournamentIdScoreLinksScoreLinkIdRevokePost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    RevokeScoreLinkTournamentsTournamentIdScoreLinksScoreLinkIdRevokePostData,
+    ThrowOnError
+  >,
+): RequestResult<
+  RevokeScoreLinkTournamentsTournamentIdScoreLinksScoreLinkIdRevokePostResponses,
+  RevokeScoreLinkTournamentsTournamentIdScoreLinksScoreLinkIdRevokePostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    RevokeScoreLinkTournamentsTournamentIdScoreLinksScoreLinkIdRevokePostResponses,
+    RevokeScoreLinkTournamentsTournamentIdScoreLinksScoreLinkIdRevokePostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/score_links/{score_link_id}/revoke',
     ...options,
   });
 

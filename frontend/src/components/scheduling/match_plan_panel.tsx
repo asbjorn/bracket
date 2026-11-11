@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { SWRResponse } from 'swr';
 
 import { DelayForm } from '@components/scheduling/plan_issues';
+import ScoreLinksPanel from '@components/scheduling/score_links_panel';
 import TimeWindowsEditor from '@components/scheduling/time_windows_editor';
 import { DayAndTime } from '@components/utils/datetime';
 import { CourtsResponse, GameFormat, ScheduleProposal } from '@openapi';
@@ -227,6 +228,15 @@ export default function MatchPlanPanel({
               tournamentId={tournamentId}
               courts={swrCourtsResponse.data?.data ?? []}
               onDelayed={onApplied}
+            />
+          </Accordion.Panel>
+        </Accordion.Item>
+        <Accordion.Item value="score_links">
+          <Accordion.Control>{t('score_links_title')}</Accordion.Control>
+          <Accordion.Panel>
+            <ScoreLinksPanel
+              tournamentId={tournamentId}
+              courts={swrCourtsResponse.data?.data ?? []}
             />
           </Accordion.Panel>
         </Accordion.Item>

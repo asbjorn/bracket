@@ -2,12 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
 from bracket.config import config
+from bracket.logic.match_results import save_match
 from bracket.logic.planning.conflicts import handle_conflicts
 from bracket.logic.planning.matches import (
-    get_scheduled_matches,
-    get_windows,
     handle_match_reschedule,
-    reorder_matches_for_court,
     schedule_all_unscheduled_matches,
 )
 from bracket.logic.planning.propose import (
@@ -20,7 +18,6 @@ from bracket.logic.planning.propose import (
 from bracket.logic.ranking.calculation import (
     recalculate_ranking_for_stage_item,
 )
-from bracket.logic.ranking.elimination import update_inputs_in_subsequent_elimination_rounds
 from bracket.logic.scheduling.upcoming_matches import (
     get_draft_round_in_stage_item,
     get_upcoming_matches_for_swiss,
@@ -48,10 +45,8 @@ from bracket.routes.models import (
 from bracket.routes.util import disallow_archived_tournament, match_dependency
 from bracket.sql.courts import get_all_courts_in_tournament
 from bracket.sql.matches import (
-    sql_apply_default_timing,
     sql_create_match,
     sql_delete_match,
-    sql_update_match,
 )
 from bracket.sql.rounds import get_round_by_id
 from bracket.sql.stage_items import get_stage_item
@@ -59,7 +54,6 @@ from bracket.sql.stages import get_full_tournament_details
 from bracket.sql.tournaments import sql_get_tournament
 from bracket.sql.validation import check_foreign_keys_belong_to_tournament
 from bracket.utils.id_types import MatchId, StageItemId, TournamentId
-from bracket.utils.types import assert_some
 
 router = APIRouter(prefix=config.api_prefix)
 
@@ -236,32 +230,5 @@ async def update_match_by_id(
     match: Match = Depends(match_dependency),
 ) -> SuccessResponse:
     await check_foreign_keys_belong_to_tournament(match_body, tournament_id)
-    tournament = await sql_get_tournament(tournament_id)
-
-    await sql_update_match(
-        match_id, match_body, tournament, played=match_body.is_played(match.played)
-    )
-    # The class of the match may have its own duration and margin
-    await sql_apply_default_timing(tournament_id)
-
-    round_ = await get_round_by_id(tournament_id, match.round_id)
-    stage_item = await get_stage_item(tournament_id, round_.stage_item_id)
-    await recalculate_ranking_for_stage_item(tournament_id, stage_item)
-
-    if (
-        match_body.custom_duration_minutes != match.custom_duration_minutes
-        or match_body.custom_margin_minutes != match.custom_margin_minutes
-    ):
-        tournament = await sql_get_tournament(tournament_id)
-        scheduled_matches = get_scheduled_matches(await get_full_tournament_details(tournament_id))
-        await reorder_matches_for_court(
-            tournament,
-            scheduled_matches,
-            assert_some(match.court_id),
-            await get_windows(tournament_id),
-        )
-
-    if stage_item.type == StageType.SINGLE_ELIMINATION:
-        await update_inputs_in_subsequent_elimination_rounds(round_.id, stage_item, {match_id})
-
+    await save_match(tournament_id, match, match_body)
     return SuccessResponse()

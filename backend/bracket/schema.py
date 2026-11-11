@@ -327,3 +327,51 @@ rankings = Table(
         server_default=text("'{GOAL_DIFFERENCE,GOALS_SCORED,HEAD_TO_HEAD}'::text[]"),
     ),
 )
+
+
+# Links for entering results without an account, e.g. as a QR code at a pitch. Only the hash
+# of the token is stored; the token itself is shown once when the link is created.
+score_links = Table(
+    "score_links",
+    metadata,
+    Column("id", BigInteger, primary_key=True, index=True),
+    Column(
+        "tournament_id",
+        BigInteger,
+        ForeignKey("tournaments.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    ),
+    # Only this court; NULL: the whole tournament
+    Column("court_id", BigInteger, ForeignKey("courts.id", ondelete="CASCADE"), nullable=True),
+    Column("name", Text, nullable=False),
+    Column("token_hash", Text, nullable=False, unique=True),
+    Column("created", DateTimeTZ, nullable=False, server_default=func.now()),
+    Column("expires_at", DateTimeTZ, nullable=False),
+    Column("revoked_at", DateTimeTZ, nullable=True),
+)
+
+# Messages from the pitches to the organiser on match day, e.g. "running 10 minutes late"
+match_day_notices = Table(
+    "match_day_notices",
+    metadata,
+    Column("id", BigInteger, primary_key=True, index=True),
+    Column(
+        "tournament_id",
+        BigInteger,
+        ForeignKey("tournaments.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    ),
+    Column("court_id", BigInteger, ForeignKey("courts.id", ondelete="SET NULL"), nullable=True),
+    Column(
+        "score_link_id",
+        BigInteger,
+        ForeignKey("score_links.id", ondelete="SET NULL"),
+        nullable=True,
+    ),
+    Column("delay_minutes", Integer, nullable=True),
+    Column("message", Text, nullable=False, server_default=""),
+    Column("created", DateTimeTZ, nullable=False, server_default=func.now()),
+    Column("resolved", Boolean, nullable=False, server_default="f"),
+)
