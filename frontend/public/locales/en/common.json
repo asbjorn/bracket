@@ -1020,5 +1020,7 @@
     "registration_no_address_alert": "The cup has no address for its public page yet, so teams can't sign up. Set the address in the settings.",
     "registration_done_title_one": "You're signed up!",
     "registration_done_title_other": "You're signed up!",
-    "duration_minutes_only": "{{minutes}} min"
+    "duration_minutes_only": "{{minutes}} min",
+    "official_conflict_too_young": "{{name}} is younger than 13 (NFF: club referees from 13 years)",
+    "official_conflict_younger_than_players": "{{name}} is younger than the players: {{match}}"
 }

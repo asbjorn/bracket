@@ -1,4 +1,5 @@
 import { format, isSameDay, parseISO } from 'date-fns';
+import i18next from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 /**
@@ -7,7 +8,14 @@ import { useTranslation } from 'react-i18next';
  */
 function useDateLanguage(): string {
   const { i18n } = useTranslation();
-  return i18n.resolvedLanguage ?? i18n.language ?? 'en';
+  return intlLanguage(i18n.resolvedLanguage ?? i18n.language);
+}
+
+/** A language for Intl: any Norwegian code ("nb-NO", "no", "nn") formats as Bokmål. */
+function intlLanguage(language: string | undefined): string {
+  // `resolvedLanguage` can be unset; then use the language i18next actually uses
+  const code = (language ?? i18next.language ?? 'en').toLowerCase();
+  return ['nb', 'no', 'nn'].some((prefix) => code.startsWith(prefix)) ? 'nb' : code;
 }
 
 function formatWithIntl(
@@ -95,7 +103,7 @@ export function formatDayTime(
   language: string | undefined,
   kind: 'weekday' | 'weekday_time' | 'weekday_date_time' | 'long_day',
 ): string {
-  const lang = language ?? 'en';
+  const lang = intlLanguage(language);
   const date = parseISO(datetime);
   const weekday = new Intl.DateTimeFormat(lang, { weekday: 'short' }).format(date);
   const time = new Intl.DateTimeFormat(lang, timeOptions).format(date);

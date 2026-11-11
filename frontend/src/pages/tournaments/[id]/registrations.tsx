@@ -424,7 +424,7 @@ function PublicFormLink({ tournament }: { tournament: Tournament | undefined }) 
   return (
     <Group gap="xs">
       <Text size="sm">{t('registration_form_link_label')}</Text>
-      <Anchor href={url} target="_blank" size="sm">
+      <Anchor href={url} target="_blank" size="sm" style={{ wordBreak: 'break-all', minWidth: 0 }}>
         {url}
       </Anchor>
       <CopyButton value={url}>

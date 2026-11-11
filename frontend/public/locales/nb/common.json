@@ -1020,5 +1020,7 @@
     "registration_no_address_alert": "Cupen har ennå ingen adresse til den offentlige cupsiden, så lag kan ikke melde seg på. Sett adressen i innstillingene.",
     "registration_done_title_one": "Laget er påmeldt!",
     "registration_done_title_other": "Lagene er påmeldt!",
-    "duration_minutes_only": "{{minutes}} min"
+    "duration_minutes_only": "{{minutes}} min",
+    "official_conflict_too_young": "{{name}} er under 13 år (NFF: klubbdommere fra 13 år)",
+    "official_conflict_younger_than_players": "{{name}} er yngre enn spillerne: {{match}}"
 }
