@@ -33,6 +33,7 @@ import ResultsPage from './pages/tournaments/[id]/results';
 import CategoriesPage from './pages/tournaments/[id]/categories';
 import SchedulePage from './pages/tournaments/[id]/schedule';
 import SettingsPage from './pages/tournaments/[id]/settings';
+import CupSetupPage from './pages/tournaments/[id]/setup';
 import StagesPage from './pages/tournaments/[id]/stages';
 import SwissTournamentPage from './pages/tournaments/[id]/stages/swiss/[stage_item_id]';
 import TeamsPage from './pages/tournaments/[id]/teams';
@@ -95,6 +96,7 @@ createRoot(document.getElementById('root')!).render(
                     <Route path="schedule" element={<SchedulePage />} />
                     <Route path="rankings" element={<RankingsPage />} />
                     <Route path="settings" element={<SettingsPage />} />
+                    <Route path="setup" element={<CupSetupPage />} />
                     <Route path="results" element={<ResultsPage />} />
                     <Route path="stages">
                       <Route index element={<StagesPage />} />

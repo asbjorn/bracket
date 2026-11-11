@@ -15,6 +15,7 @@ import {
   IconTrophy,
   IconUser,
   IconUsers,
+  IconWand,
 } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
@@ -125,6 +126,11 @@ export function TournamentLinks({ tournament_id }: any) {
       icon: IconUser,
       label: capitalize(t('players_title')),
       link: `${tm_prefix}/players`,
+    },
+    {
+      icon: IconWand,
+      label: t('setup_title'),
+      link: `${tm_prefix}/setup`,
     },
     {
       icon: IconCategory,

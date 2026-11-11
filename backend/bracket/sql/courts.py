@@ -1,5 +1,8 @@
+from heliclockter import datetime_utc
+
 from bracket.database import database
-from bracket.models.db.court import Court, CourtBody
+from bracket.models.db.court import Court, CourtBody, CourtsMultiBody, CourtToInsert
+from bracket.schema import courts
 from bracket.utils.id_types import CourtId, TournamentId
 
 
@@ -45,3 +48,32 @@ async def sql_delete_court(tournament_id: TournamentId, court_id: CourtId) -> No
 async def sql_delete_courts_of_tournament(tournament_id: TournamentId) -> None:
     query = "DELETE FROM courts WHERE tournament_id = :tournament_id"
     await database.fetch_one(query=query, values={"tournament_id": tournament_id})
+
+
+def next_court_number(existing_names: list[str], prefix: str) -> int:
+    """
+    Continues the numbering of courts named "<prefix> <number>", e.g. after "Bane 3" comes 4.
+    """
+    numbers = [
+        int(name[len(prefix) :].strip())
+        for name in existing_names
+        if name.startswith(prefix) and name[len(prefix) :].strip().isdigit()
+    ]
+    return max(numbers, default=0) + 1
+
+
+async def sql_create_courts(tournament_id: TournamentId, body: CourtsMultiBody) -> None:
+    """Creates `count` courts, continuing the numbering of courts with the same prefix."""
+    existing_courts = await get_all_courts_in_tournament(tournament_id)
+    first = next_court_number([court.name for court in existing_courts], body.name_prefix)
+    async with database.transaction():
+        for number in range(first, first + body.count):
+            await database.execute(
+                query=courts.insert(),
+                values=CourtToInsert(
+                    name=f"{body.name_prefix} {number}",
+                    game_format=body.game_format,
+                    created=datetime_utc.now(),
+                    tournament_id=tournament_id,
+                ).model_dump(),
+            )

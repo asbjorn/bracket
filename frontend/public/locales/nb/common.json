@@ -428,5 +428,17 @@
     "win_distribution_text_losses": "tap",
     "win_distribution_text_win": "seiere",
     "win_points_input_label": "Poeng for seier",
-    "winner_of_match": "Vinner av kamp {{match}}"
+    "winner_of_match": "Vinner av kamp {{match}}",
+    "setup_title": "Oppsett av cup",
+    "setup_description": "Sett opp en ny cup på én gang: klasser med grupper og sluttspill, baner og spilledager. Lagene trekkes inn i gruppene etterpå.",
+    "setup_not_empty_alert": "Oppsettet fungerer bare for en turnering uten klasser og spill. Bruk en ny turnering, eller endre denne på sidene for klasser og spill.",
+    "setup_next_button": "Neste",
+    "setup_review_step": "Oversikt",
+    "setup_review_description": "Dette blir opprettet. Ingenting lagres før du trykker på knappen.",
+    "setup_plan_matches_label": "Sett opp tider og baner for kampene med en gang",
+    "setup_create_button": "Opprett cup",
+    "setup_group_stage_name": "Gruppespill",
+    "setup_group_name": "Gruppe",
+    "setup_playoff_stage_name": "Sluttspill",
+    "setup_playoff_name": "{}-sluttspill"
 }

@@ -443,6 +443,100 @@ export type CourtsResponse = {
 };
 
 /**
+ * CupSetupBody
+ *
+ * The whole cup. Courts are added to existing ones; the time windows replace the existing
+ * ones (unless empty). Only possible while the tournament has no classes and no stages.
+ */
+export type CupSetupBody = {
+  /**
+   * Classes
+   */
+  classes: Array<CupSetupClass>;
+  /**
+   * Courts
+   */
+  courts: Array<CourtsMultiBody>;
+  names: CupSetupNames;
+  /**
+   * Time Windows
+   */
+  time_windows: Array<TimeWindowBody>;
+};
+
+/**
+ * CupSetupClass
+ */
+export type CupSetupClass = {
+  /**
+   * Age
+   */
+  age: number | null;
+  /**
+   * Duration Minutes
+   */
+  duration_minutes: number;
+  game_format: GameFormat | null;
+  /**
+   * Group Size
+   */
+  group_size: number;
+  /**
+   * Margin Minutes
+   */
+  margin_minutes: number;
+  /**
+   * Min Rest Minutes
+   */
+  min_rest_minutes: number;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Playoff Placings
+   */
+  playoff_placings: Array<Array<number>> | null;
+  playoffs: PlayoffPreset;
+  /**
+   * Results Public
+   */
+  results_public: boolean | null;
+  /**
+   * Team Count
+   */
+  team_count: number;
+  /**
+   * Third Place Match
+   */
+  third_place_match: boolean;
+};
+
+/**
+ * CupSetupNames
+ *
+ * Names of the created stages and stage items, in the language of the organiser.
+ */
+export type CupSetupNames = {
+  /**
+   * Group
+   */
+  group: string;
+  /**
+   * Group Stage
+   */
+  group_stage: string;
+  /**
+   * Playoff
+   */
+  playoff: string;
+  /**
+   * Playoff Stage
+   */
+  playoff_stage: string;
+};
+
+/**
  * DelayBody
  *
  * Moves all matches that haven't been played yet and start at or after `from_time`.
@@ -3362,6 +3456,38 @@ export type CreateMultipleCourtsTournamentsTournamentIdCourtsMultiPostResponses 
 
 export type CreateMultipleCourtsTournamentsTournamentIdCourtsMultiPostResponse =
   CreateMultipleCourtsTournamentsTournamentIdCourtsMultiPostResponses[keyof CreateMultipleCourtsTournamentsTournamentIdCourtsMultiPostResponses];
+
+export type CreateCupStructureTournamentsTournamentIdCupSetupPostData = {
+  body: CupSetupBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/cup_setup';
+};
+
+export type CreateCupStructureTournamentsTournamentIdCupSetupPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateCupStructureTournamentsTournamentIdCupSetupPostError =
+  CreateCupStructureTournamentsTournamentIdCupSetupPostErrors[keyof CreateCupStructureTournamentsTournamentIdCupSetupPostErrors];
+
+export type CreateCupStructureTournamentsTournamentIdCupSetupPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type CreateCupStructureTournamentsTournamentIdCupSetupPostResponse =
+  CreateCupStructureTournamentsTournamentIdCupSetupPostResponses[keyof CreateCupStructureTournamentsTournamentIdCupSetupPostResponses];
 
 export type UploadLogoTournamentsTournamentIdLogoPostData = {
   body?: BodyUploadLogoTournamentsTournamentIdLogoPost;

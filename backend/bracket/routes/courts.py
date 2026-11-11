@@ -21,7 +21,12 @@ from bracket.routes.models import (
 )
 from bracket.routes.util import disallow_archived_tournament
 from bracket.schema import courts
-from bracket.sql.courts import get_all_courts_in_tournament, sql_delete_court, update_court
+from bracket.sql.courts import (
+    get_all_courts_in_tournament,
+    sql_create_courts,
+    sql_delete_court,
+    update_court,
+)
 from bracket.sql.stages import get_full_tournament_details
 from bracket.sql.time_windows import get_time_windows, sql_replace_time_windows
 from bracket.utils.db import fetch_one_parsed
@@ -122,18 +127,6 @@ async def create_court(
     )
 
 
-def next_court_number(existing_names: list[str], prefix: str) -> int:
-    """
-    Continues the numbering of courts named "<prefix> <number>", e.g. after "Bane 3" comes 4.
-    """
-    numbers = [
-        int(name[len(prefix) :].strip())
-        for name in existing_names
-        if name.startswith(prefix) and name[len(prefix) :].strip().isdigit()
-    ]
-    return max(numbers, default=0) + 1
-
-
 @router.post("/tournaments/{tournament_id}/courts_multi", response_model=CourtsResponse)
 async def create_multiple_courts(
     body: CourtsMultiBody,
@@ -146,19 +139,7 @@ async def create_multiple_courts(
     """
     existing_courts = await get_all_courts_in_tournament(tournament_id)
     check_requirement(existing_courts, user, "max_courts", additions=body.count)
-
-    first = next_court_number([court.name for court in existing_courts], body.name_prefix)
-    async with database.transaction():
-        for number in range(first, first + body.count):
-            await database.execute(
-                query=courts.insert(),
-                values=CourtToInsert(
-                    name=f"{body.name_prefix} {number}",
-                    game_format=body.game_format,
-                    created=datetime_utc.now(),
-                    tournament_id=tournament_id,
-                ).model_dump(),
-            )
+    await sql_create_courts(tournament_id, body)
     return CourtsResponse(data=await get_all_courts_in_tournament(tournament_id))
 
 

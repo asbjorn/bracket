@@ -428,5 +428,17 @@
     "win_distribution_text_losses": "losses",
     "win_distribution_text_win": "wins",
     "win_points_input_label": "Points for a win",
-    "winner_of_match": "Winner of match {{match}}"
+    "winner_of_match": "Winner of match {{match}}",
+    "setup_title": "Cup setup",
+    "setup_description": "Set up a new cup in one go: classes with groups and playoffs, courts and playing days. The groups get their teams later, in the draw.",
+    "setup_not_empty_alert": "The setup wizard only works for a tournament without classes and stages. Use a new tournament, or change this one on the pages for classes and stages.",
+    "setup_next_button": "Next",
+    "setup_review_step": "Overview",
+    "setup_review_description": "This is what will be created. Nothing is saved before you click the button.",
+    "setup_plan_matches_label": "Plan times and courts for the matches right away",
+    "setup_create_button": "Create cup",
+    "setup_group_stage_name": "Group stage",
+    "setup_group_name": "Group",
+    "setup_playoff_stage_name": "Playoffs",
+    "setup_playoff_name": "{} playoff"
 }

@@ -29,6 +29,9 @@ import type {
   CreateCourtTournamentsTournamentIdCourtsPostData,
   CreateCourtTournamentsTournamentIdCourtsPostErrors,
   CreateCourtTournamentsTournamentIdCourtsPostResponses,
+  CreateCupStructureTournamentsTournamentIdCupSetupPostData,
+  CreateCupStructureTournamentsTournamentIdCupSetupPostErrors,
+  CreateCupStructureTournamentsTournamentIdCupSetupPostResponses,
   CreateMatchTournamentsTournamentIdMatchesPostData,
   CreateMatchTournamentsTournamentIdMatchesPostErrors,
   CreateMatchTournamentsTournamentIdMatchesPostResponses,
@@ -813,6 +816,36 @@ export const createMultipleCourtsTournamentsTournamentIdCourtsMultiPost = <
     responseType: 'json',
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/tournaments/{tournament_id}/courts_multi',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Create Cup Structure
+ *
+ * Setup wizard: creates the classes, their group stages and playoffs, the courts and the
+ * playing hours of a new cup at once. Teams are drawn into the groups afterwards.
+ */
+export const createCupStructureTournamentsTournamentIdCupSetupPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CreateCupStructureTournamentsTournamentIdCupSetupPostData, ThrowOnError>,
+): RequestResult<
+  CreateCupStructureTournamentsTournamentIdCupSetupPostResponses,
+  CreateCupStructureTournamentsTournamentIdCupSetupPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    CreateCupStructureTournamentsTournamentIdCupSetupPostResponses,
+    CreateCupStructureTournamentsTournamentIdCupSetupPostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/cup_setup',
     ...options,
     headers: {
       'Content-Type': 'application/json',

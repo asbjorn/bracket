@@ -861,6 +861,213 @@
         "title": "CourtsResponse",
         "type": "object"
       },
+      "CupSetupBody": {
+        "description": "The whole cup. Courts are added to existing ones; the time windows replace the existing\nones (unless empty). Only possible while the tournament has no classes and no stages.",
+        "properties": {
+          "classes": {
+            "items": {
+              "$ref": "#/components/schemas/CupSetupClass"
+            },
+            "maxItems": 40,
+            "minItems": 1,
+            "title": "Classes",
+            "type": "array"
+          },
+          "courts": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/CourtsMultiBody"
+            },
+            "maxItems": 10,
+            "title": "Courts",
+            "type": "array"
+          },
+          "names": {
+            "$ref": "#/components/schemas/CupSetupNames",
+            "default": {
+              "group": "Group",
+              "group_stage": "Group stage",
+              "playoff": "{} playoff",
+              "playoff_stage": "Playoffs"
+            }
+          },
+          "time_windows": {
+            "items": {
+              "$ref": "#/components/schemas/TimeWindowBody"
+            },
+            "maxItems": 60,
+            "title": "Time Windows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "time_windows",
+          "classes",
+          "courts",
+          "names"
+        ],
+        "title": "CupSetupBody",
+        "type": "object"
+      },
+      "CupSetupClass": {
+        "properties": {
+          "age": {
+            "anyOf": [
+              {
+                "maximum": 99.0,
+                "minimum": 4.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "duration_minutes": {
+            "maximum": 240.0,
+            "minimum": 1.0,
+            "title": "Duration Minutes",
+            "type": "integer"
+          },
+          "game_format": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GameFormat"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "group_size": {
+            "maximum": 10.0,
+            "minimum": 2.0,
+            "title": "Group Size",
+            "type": "integer"
+          },
+          "margin_minutes": {
+            "default": 0,
+            "maximum": 120.0,
+            "minimum": 0.0,
+            "title": "Margin Minutes",
+            "type": "integer"
+          },
+          "min_rest_minutes": {
+            "default": 0,
+            "maximum": 600.0,
+            "minimum": 0.0,
+            "title": "Min Rest Minutes",
+            "type": "integer"
+          },
+          "name": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "playoff_placings": {
+            "anyOf": [
+              {
+                "items": {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Playoff Placings"
+          },
+          "playoffs": {
+            "$ref": "#/components/schemas/PlayoffPreset",
+            "default": "NONE"
+          },
+          "results_public": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Results Public"
+          },
+          "team_count": {
+            "maximum": 128.0,
+            "minimum": 2.0,
+            "title": "Team Count",
+            "type": "integer"
+          },
+          "third_place_match": {
+            "default": false,
+            "title": "Third Place Match",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "age",
+          "team_count",
+          "group_size",
+          "playoffs",
+          "playoff_placings",
+          "third_place_match",
+          "duration_minutes",
+          "margin_minutes",
+          "min_rest_minutes",
+          "game_format",
+          "results_public"
+        ],
+        "title": "CupSetupClass",
+        "type": "object"
+      },
+      "CupSetupNames": {
+        "description": "Names of the created stages and stage items, in the language of the organiser.",
+        "properties": {
+          "group": {
+            "default": "Group",
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Group",
+            "type": "string"
+          },
+          "group_stage": {
+            "default": "Group stage",
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Group Stage",
+            "type": "string"
+          },
+          "playoff": {
+            "default": "{} playoff",
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Playoff",
+            "type": "string"
+          },
+          "playoff_stage": {
+            "default": "Playoffs",
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Playoff Stage",
+            "type": "string"
+          }
+        },
+        "required": [
+          "group_stage",
+          "group",
+          "playoff_stage",
+          "playoff"
+        ],
+        "title": "CupSetupNames",
+        "type": "object"
+      },
       "DelayBody": {
         "description": "Moves all matches that haven't been played yet and start at or after `from_time`.",
         "properties": {
@@ -4726,7 +4933,7 @@
     }
   },
   "info": {
-    "description": "\n### Description\nThis API allows you to do everything the frontend of [Bracket](https://github.com/evroon/bracket)\nallows you to do (the frontend uses this API as well).\n\nFore more information, see the [documentation](https://docs.bracketapp.nl).\n\n### Table of Contents\n*(links only work for [ReDoc](https://api.bracketapp.nl/redoc), not for Swagger UI)*\n\n- [Auth](#tag/Auth)\n\n- [Capacity](#tag/Capacity)\n\n- [Categories](#tag/Categories)\n\n- [Clubs](#tag/Clubs)\n\n- [Courts](#tag/Courts)\n\n- [Internals](#tag/Internals)\n\n- [Matches](#tag/Matches)\n\n- [Players](#tag/Players)\n\n- [Rankings](#tag/Rankings)\n\n- [Rounds](#tag/Rounds)\n\n- [Stage Items](#tag/Stage-Items)\n\n- [Stage Item Inputs](#tag/Stage-Item-Inputs)\n\n- [Stages](#tag/Stages)\n\n- [Teams](#tag/Teams)\n\n- [Tournaments](#tag/Tournaments)\n\n- [Users](#tag/Users)\n\n### Links\nGitHub: <https://github.com/evroon/bracket>\n\nDocs: <https://docs.bracketapp.nl>\n\nDemo: <https://www.bracketapp.nl/demo>\n\nAPI docs (Redoc): <https://api.bracketapp.nl/redoc>\n\nAPI docs (Swagger UI): <https://api.bracketapp.nl/docs>\n",
+    "description": "\n### Description\nThis API allows you to do everything the frontend of [Bracket](https://github.com/evroon/bracket)\nallows you to do (the frontend uses this API as well).\n\nFore more information, see the [documentation](https://docs.bracketapp.nl).\n\n### Table of Contents\n*(links only work for [ReDoc](https://api.bracketapp.nl/redoc), not for Swagger UI)*\n\n- [Auth](#tag/Auth)\n\n- [Capacity](#tag/Capacity)\n\n- [Cup setup](#tag/Cup-setup)\n\n- [Categories](#tag/Categories)\n\n- [Clubs](#tag/Clubs)\n\n- [Courts](#tag/Courts)\n\n- [Internals](#tag/Internals)\n\n- [Matches](#tag/Matches)\n\n- [Players](#tag/Players)\n\n- [Rankings](#tag/Rankings)\n\n- [Rounds](#tag/Rounds)\n\n- [Stage Items](#tag/Stage-Items)\n\n- [Stage Item Inputs](#tag/Stage-Item-Inputs)\n\n- [Stages](#tag/Stages)\n\n- [Teams](#tag/Teams)\n\n- [Tournaments](#tag/Tournaments)\n\n- [Users](#tag/Users)\n\n### Links\nGitHub: <https://github.com/evroon/bracket>\n\nDocs: <https://docs.bracketapp.nl>\n\nDemo: <https://www.bracketapp.nl/demo>\n\nAPI docs (Redoc): <https://api.bracketapp.nl/redoc>\n\nAPI docs (Swagger UI): <https://api.bracketapp.nl/docs>\n",
     "license": {
       "name": "AGPL-3.0",
       "url": "https://www.gnu.org/licenses/agpl-3.0.en.html"
@@ -5937,6 +6144,64 @@
         "summary": "Create Multiple Courts",
         "tags": [
           "Courts"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/cup_setup": {
+      "post": {
+        "description": "Setup wizard: creates the classes, their group stages and playoffs, the courts and the\nplaying hours of a new cup at once. Teams are drawn into the groups afterwards.",
+        "operationId": "create_cup_structure_tournaments__tournament_id__cup_setup_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CupSetupBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Cup Structure",
+        "tags": [
+          "Cup setup"
         ]
       }
     },
