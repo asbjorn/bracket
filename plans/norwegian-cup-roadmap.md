@@ -94,6 +94,17 @@ Each item is tagged **[Fix]**, **[Core]**, **[Feature]** or **[Nice]**, and **�
 
 ### Phase 2 — Competition formats and rankings
 
+**Status (2026-11-11): items 11–17 done** (commits 2a–2f on branch `phase-0-norwegian`).
+
+- Teams are ordered by points, then tiebreakers. Positions and goals are stored per group placing.
+- Knockouts work for 2–64 teams, with standard-seeded byes and an optional bronze final.
+- Extra time, penalties and walkovers are supported.
+- The playoff wizard:
+  - creates A/B/C playoffs with crossed seeding (Hungarian assignment, about 1 ms)
+  - can add the best placed teams across groups
+- Live scores are separate from final results.
+- **Deferred to Phase 5 (rules sheet):** per-class rules text for extra time and the number of penalty takers. The result type already records how each match was decided.
+
 11. **[Feature] Configurable tiebreakers** ⬆
     - An ordered list per ranking: points, goal difference, goals scored, head-to-head (mini-table), fair play, drawing lots.
     - Default 3/1/0 points for football.
