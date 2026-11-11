@@ -7,6 +7,7 @@ import { SchedulerSettings } from '@components/utils/match';
 import { TournamentFilter } from '@components/utils/tournament';
 import { Pagination } from '@components/utils/util';
 import {
+  CategoriesResponse,
   ClubsResponse,
   CourtsResponse,
   PlayersResponse,
@@ -163,9 +164,11 @@ export function getTeams(tournament_id: number | undefined): SWRResponse<TeamsWi
 export function getTeamsPaginated(
   tournament_id: number,
   pagination: Pagination,
+  category_id: number | null = null,
 ): SWRResponse<TeamsWithPlayersResponse> {
+  const categoryFilter = category_id == null ? '' : `&category_id=${category_id}`;
   return useSWR(
-    `tournaments/${tournament_id}/teams?limit=${pagination.limit}&offset=${pagination.offset}&sort_by=${pagination.sort_by}&sort_direction=${pagination.sort_direction}`,
+    `tournaments/${tournament_id}/teams?limit=${pagination.limit}&offset=${pagination.offset}&sort_by=${pagination.sort_by}&sort_direction=${pagination.sort_direction}${categoryFilter}`,
     fetcher,
   );
 }
@@ -210,8 +213,16 @@ export function getRankings(tournament_id: number): SWRResponse<RankingsResponse
   return useSWR(`tournaments/${tournament_id}/rankings`, fetcher);
 }
 
-export function getRankingsPerStageItem(tournament_id: number): SWRResponse<StageRankingResponse> {
-  return useSWR(`tournaments/${tournament_id}/next_stage_rankings`, fetcher);
+export function getRankingsPerStageItem(
+  tournament_id: number,
+  category_id: number | null,
+): SWRResponse<StageRankingResponse> {
+  const query = category_id == null ? '' : `?category_id=${category_id}`;
+  return useSWR(`tournaments/${tournament_id}/next_stage_rankings${query}`, fetcher);
+}
+
+export function getCategories(tournament_id: number | null): SWRResponse<CategoriesResponse> {
+  return useSWR(tournament_id == null ? null : `tournaments/${tournament_id}/categories`, fetcher);
 }
 
 export function getCourts(tournament_id: number): SWRResponse<CourtsResponse> {

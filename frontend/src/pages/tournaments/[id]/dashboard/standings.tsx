@@ -1,5 +1,6 @@
-import { Container, Text } from '@mantine/core';
+import { Alert, Container, Stack, Text } from '@mantine/core';
 import { AiOutlineHourglass } from '@react-icons/all-files/ai/AiOutlineHourglass';
+import { IconInfoCircle } from '@tabler/icons-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { SWRResponse } from 'swr';
@@ -8,19 +9,30 @@ import { DashboardFooter } from '@components/dashboard/footer';
 import { DoubleHeader, getTournamentHeadTitle } from '@components/dashboard/layout';
 import { NoContent } from '@components/no_content/empty_table_info';
 import { StandingsTableForStageItem } from '@components/tables/standings';
+import {
+  CategoryFilterSelect,
+  getStageItemCategoryLookup,
+  getStageItemIdsWithHiddenResults,
+  useCategoryFilter,
+} from '@components/utils/category';
 import { TableSkeletonTwoColumns } from '@components/utils/skeletons';
 import { responseIsValid, setTitle } from '@components/utils/util';
-import { StagesWithStageItemsResponse } from '@openapi';
-import { getStagesLive } from '@services/adapter';
+import { Category, StagesWithStageItemsResponse } from '@openapi';
+import { getCategories, getStagesLive } from '@services/adapter';
 import { getTournamentResponseByEndpointName } from '@services/dashboard';
 import { getStageItemLookup, getStageItemTeamsLookup } from '@services/lookups';
 
 export function StandingsContent({
   swrStagesResponse,
+  categories,
+  filterCategoryId,
   fontSizeInPixels,
   maxTeamsToDisplay,
 }: {
   swrStagesResponse: SWRResponse<StagesWithStageItemsResponse>;
+  categories: Category[];
+  // `undefined`: all classes
+  filterCategoryId: number | null | undefined;
   fontSizeInPixels: number;
   maxTeamsToDisplay: number;
 }) {
@@ -30,9 +42,27 @@ export function StandingsContent({
   const stageItemTeamLookup = responseIsValid(swrStagesResponse)
     ? getStageItemTeamsLookup(swrStagesResponse)
     : {};
+  const stages = swrStagesResponse.data?.data ?? [];
+  const stageItemCategories = getStageItemCategoryLookup(stages);
+  const hiddenStageItemIds = getStageItemIdsWithHiddenResults(stages, categories);
 
-  const rows = Object.keys(stageItemTeamLookup)
+  const stageItemIds = Object.keys(stageItemTeamLookup)
     .filter((stageItemId) => stageItemsLookup[stageItemId] != null)
+    .filter(
+      (stageItemId) =>
+        filterCategoryId === undefined ||
+        stageItemCategories[Number(stageItemId)] === filterCategoryId,
+    );
+  // NFF children's football: no tables for classes with hidden results
+  const someTablesHidden = stageItemIds.some((id) => hiddenStageItemIds.has(Number(id)));
+  const hiddenTablesAlert = someTablesHidden ? (
+    <Alert color="gray" icon={<IconInfoCircle />} mt="md">
+      {t('standings_hidden_alert')}
+    </Alert>
+  ) : null;
+
+  const rows = stageItemIds
+    .filter((stageItemId) => !hiddenStageItemIds.has(Number(stageItemId)))
     .sort((si1: any, si2: any) =>
       stageItemsLookup[si1].name > stageItemsLookup[si2].name ? 1 : -1,
     )
@@ -53,14 +83,21 @@ export function StandingsContent({
 
   if (rows.length < 1) {
     return (
-      <NoContent
-        title={`${t('could_not_find_any_alert')} ${t('teams_title')}`}
-        description=""
-        icon={<AiOutlineHourglass />}
-      />
+      hiddenTablesAlert ?? (
+        <NoContent
+          title={`${t('could_not_find_any_alert')} ${t('teams_title')}`}
+          description=""
+          icon={<AiOutlineHourglass />}
+        />
+      )
     );
   }
-  return rows;
+  return (
+    <>
+      {rows}
+      {hiddenTablesAlert}
+    </>
+  );
 }
 
 export default function DashboardStandingsPage() {
@@ -68,6 +105,8 @@ export default function DashboardStandingsPage() {
   const tournamentValid = !React.isValidElement(tournamentDataFull);
 
   const swrStagesResponse = getStagesLive(tournamentValid ? tournamentDataFull.id : null);
+  const categories = getCategories(tournamentValid ? tournamentDataFull.id : null).data?.data ?? [];
+  const { filterValue, setFilterValue, filterCategoryId } = useCategoryFilter(categories);
 
   if (!tournamentValid) {
     return tournamentDataFull;
@@ -84,11 +123,20 @@ export default function DashboardStandingsPage() {
       <DoubleHeader tournamentData={tournamentDataFull} />
       <Container mt="1rem" px="0rem">
         <Container style={{ width: '100%' }} px="sm">
-          <StandingsContent
-            swrStagesResponse={swrStagesResponse}
-            fontSizeInPixels={16}
-            maxTeamsToDisplay={100}
-          />
+          <Stack gap={0}>
+            <CategoryFilterSelect
+              categories={categories}
+              value={filterValue}
+              setValue={setFilterValue}
+            />
+            <StandingsContent
+              swrStagesResponse={swrStagesResponse}
+              categories={categories}
+              filterCategoryId={filterCategoryId}
+              fontSizeInPixels={16}
+              maxTeamsToDisplay={100}
+            />
+          </Stack>
         </Container>
       </Container>
       <DashboardFooter />

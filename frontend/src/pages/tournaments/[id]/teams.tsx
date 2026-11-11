@@ -5,10 +5,11 @@ import { useTranslation } from 'react-i18next';
 import TeamCreateModal from '@components/modals/team_create_modal';
 import { getTableState, tableStateToPagination } from '@components/tables/table';
 import TeamsTable from '@components/tables/teams';
+import { CategoryFilterSelect, useCategoryFilter } from '@components/utils/category';
 import { capitalize, getTournamentIdFromRouter, responseIsValid } from '@components/utils/util';
 import { FullTeamWithPlayers, StageItemWithRounds } from '@openapi';
 import TournamentLayout from '@pages/tournaments/_tournament_layout';
-import { getStages, getTeamsPaginated } from '@services/adapter';
+import { getCategories, getStages, getTeamsPaginated } from '@services/adapter';
 import { getStageItemList, getStageItemTeamIdsLookup } from '@services/lookups';
 
 function StageItemSelect({
@@ -41,7 +42,15 @@ export default function TeamsPage() {
   const { t } = useTranslation();
   const [filteredStageItemId, setFilteredStageItemId] = useState(null);
   const { tournamentData } = getTournamentIdFromRouter();
-  const swrTeamsResponse = getTeamsPaginated(tournamentData.id, tableStateToPagination(tableState));
+  const categories = getCategories(tournamentData.id).data?.data ?? [];
+  const { filterValue, setFilterValue, filterCategoryId } = useCategoryFilter(categories);
+  // The API can only filter on a class, not on "no class"
+  const filteredCategoryId = filterCategoryId ?? null;
+  const swrTeamsResponse = getTeamsPaginated(
+    tournamentData.id,
+    tableStateToPagination(tableState),
+    filteredCategoryId,
+  );
   const swrStagesResponse = getStages(tournamentData.id);
   const stageItemInputLookup = responseIsValid(swrStagesResponse)
     ? getStageItemList(swrStagesResponse)
@@ -70,6 +79,13 @@ export default function TeamsPage() {
         <Grid.Col span="content">
           <Grid align="flex-end">
             <Grid.Col span="auto">
+              <CategoryFilterSelect
+                categories={categories}
+                value={filterValue}
+                setValue={setFilterValue}
+              />
+            </Grid.Col>
+            <Grid.Col span="auto">
               <StageItemSelect
                 groupStageItems={Object.values(stageItemInputLookup)}
                 setFilteredStageItemId={setFilteredStageItemId}
@@ -79,6 +95,7 @@ export default function TeamsPage() {
               <TeamCreateModal
                 swrTeamsResponse={swrTeamsResponse}
                 tournament_id={tournamentData.id}
+                defaultCategoryId={filteredCategoryId}
               />
             </Grid.Col>
           </Grid>
@@ -88,6 +105,7 @@ export default function TeamsPage() {
         swrTeamsResponse={swrTeamsResponse}
         tournamentData={tournamentData}
         teams={teams}
+        categories={categories}
         tableState={tableState}
         teamCount={teamCount}
       />

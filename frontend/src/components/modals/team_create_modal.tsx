@@ -7,24 +7,30 @@ import { SWRResponse } from 'swr';
 
 import SaveButton from '@components/buttons/save';
 import { MultiTeamsInput } from '@components/forms/player_create_csv_input';
-import { Player, TeamsWithPlayersResponse } from '@openapi';
-import { getPlayers } from '@services/adapter';
+import { CategoryInput, categoryIdToValue, valueToCategoryId } from '@components/utils/category';
+import { Category, Player, TeamsWithPlayersResponse } from '@openapi';
+import { getCategories, getPlayers } from '@services/adapter';
 import { createTeam, createTeams } from '@services/team';
 
 function MultiTeamTab({
   tournament_id,
   swrTeamsResponse,
   setOpened,
+  categories,
+  defaultCategoryId,
 }: {
   tournament_id: number;
   swrTeamsResponse: SWRResponse<TeamsWithPlayersResponse>;
   setOpened: any;
+  categories: Category[];
+  defaultCategoryId: number | null;
 }) {
   const { t } = useTranslation();
   const form = useForm({
     initialValues: {
       names: '',
       active: true,
+      category: categoryIdToValue(defaultCategoryId),
     },
 
     validate: {
@@ -34,12 +40,18 @@ function MultiTeamTab({
   return (
     <form
       onSubmit={form.onSubmit(async (values) => {
-        await createTeams(tournament_id, values.names, values.active);
+        await createTeams(
+          tournament_id,
+          values.names,
+          values.active,
+          valueToCategoryId(values.category),
+        );
         await swrTeamsResponse.mutate();
         setOpened(false);
       })}
     >
       <MultiTeamsInput form={form} />
+      <CategoryInput categories={categories} inputProps={form.getInputProps('category')} />
 
       <Checkbox
         mt="md"
@@ -57,10 +69,14 @@ function SingleTeamTab({
   tournament_id,
   swrTeamsResponse,
   setOpened,
+  categories,
+  defaultCategoryId,
 }: {
   tournament_id: number;
   swrTeamsResponse: SWRResponse<TeamsWithPlayersResponse>;
   setOpened: any;
+  categories: Category[];
+  defaultCategoryId: number | null;
 }) {
   const { t } = useTranslation();
   const { data } = getPlayers(tournament_id, false);
@@ -70,6 +86,7 @@ function SingleTeamTab({
       name: '',
       active: true,
       player_ids: [],
+      category: categoryIdToValue(defaultCategoryId),
     },
     validate: {
       name: (value) => (value.length > 0 ? null : t('too_short_name_validation')),
@@ -78,7 +95,13 @@ function SingleTeamTab({
   return (
     <form
       onSubmit={form.onSubmit(async (values) => {
-        await createTeam(tournament_id, values.name, values.active, values.player_ids);
+        await createTeam(
+          tournament_id,
+          values.name,
+          values.active,
+          values.player_ids,
+          valueToCategoryId(values.category),
+        );
         await swrTeamsResponse.mutate();
         setOpened(false);
       })}
@@ -89,6 +112,8 @@ function SingleTeamTab({
         placeholder={t('team_name_input_placeholder')}
         {...form.getInputProps('name')}
       />
+
+      <CategoryInput categories={categories} inputProps={form.getInputProps('category')} />
 
       <Checkbox
         mt="md"
@@ -116,12 +141,15 @@ function SingleTeamTab({
 export default function TeamCreateModal({
   tournament_id,
   swrTeamsResponse,
+  defaultCategoryId,
 }: {
   tournament_id: number;
   swrTeamsResponse: SWRResponse<TeamsWithPlayersResponse>;
+  defaultCategoryId: number | null;
 }) {
   const { t } = useTranslation();
   const [opened, setOpened] = useState(false);
+  const categories = getCategories(tournament_id).data?.data ?? [];
   return (
     <>
       <Modal opened={opened} onClose={() => setOpened(false)} title={t('create_team_modal_title')}>
@@ -140,6 +168,8 @@ export default function TeamCreateModal({
               swrTeamsResponse={swrTeamsResponse}
               tournament_id={tournament_id}
               setOpened={setOpened}
+              categories={categories}
+              defaultCategoryId={defaultCategoryId}
             />
           </Tabs.Panel>
 
@@ -148,6 +178,8 @@ export default function TeamCreateModal({
               swrTeamsResponse={swrTeamsResponse}
               tournament_id={tournament_id}
               setOpened={setOpened}
+              categories={categories}
+              defaultCategoryId={defaultCategoryId}
             />
           </Tabs.Panel>
         </Tabs>

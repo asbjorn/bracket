@@ -64,6 +64,7 @@ function MatchModalForm({
       stage_item_input2_score: match.stage_item_input2_score,
       custom_duration_minutes: match.custom_duration_minutes,
       custom_margin_minutes: match.custom_margin_minutes,
+      played: match.played,
     },
 
     validate: {
@@ -101,8 +102,7 @@ function MatchModalForm({
             court_id: match.court_id || null,
             custom_duration_minutes: customDurationEnabled ? values.custom_duration_minutes : null,
             custom_margin_minutes: customMarginEnabled ? values.custom_margin_minutes : null,
-            // null: the backend marks the match as played once a score is entered
-            played: null,
+            played: values.played,
           };
           await updateMatch(tournamentData.id, match.id, updatedMatch);
           await swrStagesResponse.mutate();
@@ -115,6 +115,11 @@ function MatchModalForm({
           label={`${t('score_of_label')} ${team1Name}`}
           placeholder={`${t('score_of_label')} ${team1Name}`}
           {...form.getInputProps('stage_item_input1_score')}
+          onChange={(value) => {
+            form.setFieldValue('stage_item_input1_score', Number(value));
+            // Entering a score means the match has been played
+            form.setFieldValue('played', true);
+          }}
         />
         <NumberInput
           withAsterisk
@@ -122,6 +127,16 @@ function MatchModalForm({
           label={`${t('score_of_label')} ${team2Name}`}
           placeholder={`${t('score_of_label')} ${team2Name}`}
           {...form.getInputProps('stage_item_input2_score')}
+          onChange={(value) => {
+            form.setFieldValue('stage_item_input2_score', Number(value));
+            form.setFieldValue('played', true);
+          }}
+        />
+        <Checkbox
+          mt="lg"
+          label={t('match_played_checkbox_label')}
+          description={t('match_played_checkbox_description')}
+          {...form.getInputProps('played', { type: 'checkbox' })}
         />
         <Divider mt="lg" />
 

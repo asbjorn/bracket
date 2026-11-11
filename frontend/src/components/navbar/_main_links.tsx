@@ -6,6 +6,7 @@ import {
   IconBrandGithub,
   IconBrowser,
   IconCalendar,
+  IconCategory,
   IconDots,
   IconHome,
   IconScoreboard,
@@ -122,6 +123,11 @@ export function TournamentLinks({ tournament_id }: any) {
       icon: IconUser,
       label: capitalize(t('players_title')),
       link: `${tm_prefix}/players`,
+    },
+    {
+      icon: IconCategory,
+      label: capitalize(t('categories_title')),
+      link: `${tm_prefix}/categories`,
     },
     {
       icon: IconUsers,

@@ -10,10 +10,12 @@ import { activateNextStage } from '@services/stage';
 
 export default function ActivatePreviousStageModal({
   tournamentId,
+  categoryId,
   swrStagesResponse,
   swrRankingsPerStageItemResponse,
 }: {
   tournamentId: number;
+  categoryId: number | null;
   swrStagesResponse: SWRResponse<StagesWithStageItemsResponse>;
   swrRankingsPerStageItemResponse: SWRResponse<StageRankingResponse>;
 }) {
@@ -34,7 +36,7 @@ export default function ActivatePreviousStageModal({
       >
         <form
           onSubmit={form.onSubmit(async () => {
-            await activateNextStage(tournamentId, 'previous');
+            await activateNextStage(tournamentId, 'previous', categoryId);
             swrStagesResponse.mutate();
             swrRankingsPerStageItemResponse.mutate();
             setOpened(false);

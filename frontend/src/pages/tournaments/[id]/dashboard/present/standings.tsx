@@ -11,7 +11,7 @@ import RequestErrorAlert from '@components/utils/error_alert';
 import { TableSkeletonTwoColumns } from '@components/utils/skeletons';
 import { setTitle } from '@components/utils/util';
 import { StandingsContent } from '@pages/tournaments/[id]/dashboard/standings';
-import { getStagesLive, getTeamsLive } from '@services/adapter';
+import { getCategories, getStagesLive, getTeamsLive } from '@services/adapter';
 import { getTournamentResponseByEndpointName } from '@services/dashboard';
 
 export default function StandingsPresentPage() {
@@ -20,6 +20,7 @@ export default function StandingsPresentPage() {
 
   const swrTeamsResponse = getTeamsLive(tournamentValid ? tournamentDataFull.id : null);
   const swrStagesResponse = getStagesLive(tournamentValid ? tournamentDataFull.id : null);
+  const categories = getCategories(tournamentValid ? tournamentDataFull.id : null).data?.data ?? [];
 
   if (!tournamentValid) {
     return tournamentDataFull;
@@ -45,6 +46,8 @@ export default function StandingsPresentPage() {
         <Grid.Col span="auto" style={{ fontSize: fontSizeInPixels }}>
           <StandingsContent
             swrStagesResponse={swrStagesResponse}
+            categories={categories}
+            filterCategoryId={undefined}
             fontSizeInPixels={fontSizeInPixels}
             maxTeamsToDisplay={14}
           />

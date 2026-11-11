@@ -10,7 +10,7 @@ import { DateTime } from '@components/utils/datetime';
 import RequestErrorAlert from '@components/utils/error_alert';
 import { TableSkeletonSingleColumn } from '@components/utils/skeletons';
 import { TournamentMinimal } from '@components/utils/tournament';
-import { FullTeamWithPlayers, TeamsWithPlayersResponse } from '@openapi';
+import { Category, FullTeamWithPlayers, TeamsWithPlayersResponse } from '@openapi';
 import { deleteTeam } from '@services/team';
 import TableLayout, { TableState, ThNotSortable, ThSortable, sortTableEntries } from './table';
 
@@ -18,12 +18,14 @@ export default function TeamsTable({
   tournamentData,
   swrTeamsResponse,
   teams,
+  categories,
   tableState,
   teamCount,
 }: {
   tournamentData: TournamentMinimal;
   swrTeamsResponse: SWRResponse<TeamsWithPlayersResponse>;
   teams: FullTeamWithPlayers[];
+  categories: Category[];
   tableState: TableState;
   teamCount: number;
 }) {
@@ -33,6 +35,9 @@ export default function TeamsTable({
   if (swrTeamsResponse.isLoading) {
     return <TableSkeletonSingleColumn />;
   }
+
+  const showCategories = categories.length > 0;
+  const categoryNames = Object.fromEntries(categories.map((c) => [c.id, c.name]));
 
   const rows = teams
     .sort((p1: FullTeamWithPlayers, p2: FullTeamWithPlayers) =>
@@ -48,6 +53,17 @@ export default function TeamsTable({
           )}
         </Table.Td>
         <Table.Td>{team.name}</Table.Td>
+        {showCategories ? (
+          <Table.Td>
+            {team.category_id == null ? (
+              <Badge color="gray" variant="light">
+                {t('no_category_label')}
+              </Badge>
+            ) : (
+              <Badge variant="light">{categoryNames[team.category_id]}</Badge>
+            )}
+          </Table.Td>
+        ) : null}
         <Table.Td>
           <PlayerList team={team} />
         </Table.Td>
@@ -84,6 +100,7 @@ export default function TeamsTable({
             <ThSortable state={tableState} field="name">
               {t('name_table_header')}
             </ThSortable>
+            {showCategories ? <ThNotSortable>{t('category_select_label')}</ThNotSortable> : null}
             <ThNotSortable>{t('members_table_header')}</ThNotSortable>
             <ThSortable state={tableState} field="created">
               {t('created')}

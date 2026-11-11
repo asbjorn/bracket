@@ -7,23 +7,48 @@ import { useTranslation } from 'react-i18next';
 import { DashboardFooter } from '@components/dashboard/footer';
 import { DoubleHeader, getTournamentHeadTitle } from '@components/dashboard/layout';
 import { NoContent } from '@components/no_content/empty_table_info';
+import {
+  CategoryFilterSelect,
+  getStageItemCategoryLookup,
+  getStageItemIdsWithHiddenResults,
+  useCategoryFilter,
+} from '@components/utils/category';
 import { Time, compareDateTime, spansMultipleDays } from '@components/utils/datetime';
 import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
 import { getScheduleHeaders } from '@components/utils/schedule_headers';
 import { Translator } from '@components/utils/types';
 import { responseIsValid, setTitle } from '@components/utils/util';
-import { getCourtsLive, getStagesLive } from '@services/adapter';
+import { getCategories, getCourtsLive, getStagesLive } from '@services/adapter';
 import { getTournamentResponseByEndpointName } from '@services/dashboard';
 import { getMatchLookup, getStageItemLookup, stringToColour } from '@services/lookups';
+
+function ScoreBox({ score, color }: { score: number; color: string }) {
+  return (
+    <div
+      style={{
+        backgroundColor: color,
+        borderRadius: '0.5rem',
+        width: '2.5rem',
+        color: 'white',
+        fontWeight: 800,
+      }}
+    >
+      <Center>{score}</Center>
+    </div>
+  );
+}
 
 function ScheduleRow({
   data,
   stageItemsLookup,
   matchesLookup,
+  resultsHidden,
 }: {
   data: any;
   stageItemsLookup: any;
   matchesLookup: any;
+  // NFF children's football: only show whether the match was played, not the score
+  resultsHidden: boolean;
 }) {
   const { t } = useTranslation();
   const winColor = '#2a8f37';
@@ -81,17 +106,15 @@ function ScheduleRow({
             </Text>
           </Grid.Col>
           <Grid.Col span="content" pb="0rem">
-            <div
-              style={{
-                backgroundColor: team1_color,
-                borderRadius: '0.5rem',
-                width: '2.5rem',
-                color: 'white',
-                fontWeight: 800,
-              }}
-            >
-              <Center>{data.match.stage_item_input1_score}</Center>
-            </div>
+            {resultsHidden ? (
+              data.match.played ? (
+                <Badge color="gray" variant="light">
+                  {t('played_badge')}
+                </Badge>
+              ) : null
+            ) : (
+              <ScoreBox score={data.match.stage_item_input1_score} color={team1_color} />
+            )}
           </Grid.Col>
         </Grid>
         <Grid mb="0rem">
@@ -101,17 +124,9 @@ function ScheduleRow({
             </Text>
           </Grid.Col>
           <Grid.Col span="content" pb="0rem">
-            <div
-              style={{
-                backgroundColor: team2_color,
-                borderRadius: '0.5rem',
-                width: '2.5rem',
-                color: 'white',
-                fontWeight: 800,
-              }}
-            >
-              <Center>{data.match.stage_item_input2_score}</Center>
-            </div>
+            {resultsHidden ? null : (
+              <ScoreBox score={data.match.stage_item_input2_score} color={team2_color} />
+            )}
           </Grid.Col>
         </Grid>
       </Stack>
@@ -123,14 +138,19 @@ export function Schedule({
   t,
   stageItemsLookup,
   matchesLookup,
+  stageItemIdsWithHiddenResults,
+  includeStageItem,
 }: {
   t: Translator;
   stageItemsLookup: any;
   matchesLookup: any;
+  stageItemIdsWithHiddenResults: Set<number>;
+  includeStageItem: (stageItemId: number) => boolean;
 }) {
   const matches: any[] = Object.values(matchesLookup);
   const sortedMatches = matches
     .filter((m1: any) => m1.match.start_time != null)
+    .filter((m1: any) => includeStageItem(m1.stageItem.id))
     .sort(
       (m1: any, m2: any) =>
         compareDateTime(m1.match.start_time, m2.match.start_time) ||
@@ -158,6 +178,7 @@ export function Schedule({
         data={data}
         stageItemsLookup={stageItemsLookup}
         matchesLookup={matchesLookup}
+        resultsHidden={stageItemIdsWithHiddenResults.has(data.stageItem.id)}
       />,
     );
   }
@@ -194,6 +215,8 @@ export default function DashboardSchedulePage() {
 
   const swrStagesResponse = getStagesLive(tournamentValid ? tournamentDataFull.id : null);
   const swrCourtsResponse = getCourtsLive(tournamentValid ? tournamentDataFull.id : null);
+  const categories = getCategories(tournamentValid ? tournamentDataFull.id : null).data?.data ?? [];
+  const { filterValue, setFilterValue, filterCategoryId } = useCategoryFilter(categories);
 
   if (!tournamentValid) {
     return tournamentDataFull;
@@ -210,12 +233,31 @@ export default function DashboardSchedulePage() {
   if (!responseIsValid(swrStagesResponse)) return null;
   if (!responseIsValid(swrCourtsResponse)) return null;
 
+  const stages = swrStagesResponse.data?.data ?? [];
+  const stageItemCategories = getStageItemCategoryLookup(stages);
+
   return (
     <>
       <DoubleHeader tournamentData={tournamentDataFull} />
       <Center>
         <Group style={{ maxWidth: '48rem', width: '100%' }} px="1rem">
-          <Schedule t={t} matchesLookup={matchesLookup} stageItemsLookup={stageItemsLookup} />
+          <Stack style={{ width: '100%' }}>
+            <CategoryFilterSelect
+              categories={categories}
+              value={filterValue}
+              setValue={setFilterValue}
+            />
+            <Schedule
+              t={t}
+              matchesLookup={matchesLookup}
+              stageItemsLookup={stageItemsLookup}
+              stageItemIdsWithHiddenResults={getStageItemIdsWithHiddenResults(stages, categories)}
+              includeStageItem={(stageItemId) =>
+                filterCategoryId === undefined ||
+                stageItemCategories[stageItemId] === filterCategoryId
+              }
+            />
+          </Stack>
         </Group>
       </Center>
       <DashboardFooter />

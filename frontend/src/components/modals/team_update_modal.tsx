@@ -14,9 +14,16 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SWRResponse } from 'swr';
 
+import { CategoryInput, categoryIdToValue, valueToCategoryId } from '@components/utils/category';
 import { DropzoneButton } from '@components/utils/file_upload';
 import { FullTeamWithPlayers, Player, TeamsWithPlayersResponse } from '@openapi';
-import { getBaseApiUrl, getPlayers, removeTeamLogo, requestSucceeded } from '@services/adapter';
+import {
+  getBaseApiUrl,
+  getCategories,
+  getPlayers,
+  removeTeamLogo,
+  requestSucceeded,
+} from '@services/adapter';
 import { updateTeam } from '@services/team';
 
 function TeamLogo({ team }: { team: FullTeamWithPlayers | null }) {
@@ -42,6 +49,7 @@ export default function TeamUpdateModal({
   const { t } = useTranslation();
   const { data } = getPlayers(tournament_id, false);
   const players: Player[] = data != null ? data.data.players : [];
+  const categories = getCategories(tournament_id).data?.data ?? [];
   const [opened, setOpened] = useState(false);
 
   const form = useForm({
@@ -49,6 +57,7 @@ export default function TeamUpdateModal({
       name: team.name,
       active: team.active,
       player_ids: team.players.map((player) => `${player.id}`),
+      category: categoryIdToValue(team.category_id),
     },
 
     validate: {
@@ -67,6 +76,7 @@ export default function TeamUpdateModal({
               values.name,
               values.active,
               values.player_ids,
+              valueToCategoryId(values.category),
             );
             if (requestSucceeded(result)) {
               await swrTeamsResponse.mutate();
@@ -80,6 +90,8 @@ export default function TeamUpdateModal({
             placeholder={t('team_name_input_placeholder')}
             {...form.getInputProps('name')}
           />
+
+          <CategoryInput categories={categories} inputProps={form.getInputProps('category')} />
 
           <Checkbox
             mt="md"

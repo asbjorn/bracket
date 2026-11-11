@@ -465,12 +465,15 @@ function StageColumn({
 
 export default function Builder({
   tournament,
+  categoryId,
   swrStagesResponse,
   swrAvailableInputsResponse,
   swrRankingsPerStageItemResponse,
   rankings,
 }: {
   tournament: Tournament;
+  // Only the stages of this age class are shown, `null` for stages without a class
+  categoryId: number | null;
   swrStagesResponse: SWRResponse<StagesWithStageItemsResponse>;
   swrAvailableInputsResponse: SWRResponse<StageItemInputOptionsResponse>;
   swrRankingsPerStageItemResponse: SWRResponse<StageRankingResponse>;
@@ -485,6 +488,7 @@ export default function Builder({
   }
 
   const cols = stages
+    .filter((stage) => (stage.category_id ?? null) === categoryId)
     .sort((s1: StageWithStageItems, s2: StageWithStageItems) => (s1.id > s2.id ? 1 : -1))
     .map((stage) => (
       <StageColumn
@@ -503,6 +507,7 @@ export default function Builder({
       <h4 style={{ marginTop: '0rem' }}>
         <CreateStageButton
           tournament={tournament}
+          categoryId={categoryId}
           swrStagesResponse={swrStagesResponse}
           swrAvailableInputsResponse={swrAvailableInputsResponse}
           swrRankingsPerStageItemResponse={swrRankingsPerStageItemResponse}

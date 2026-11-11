@@ -13,11 +13,13 @@ import { createStage } from '@services/stage';
 
 export default function CreateStageButton({
   tournament,
+  categoryId,
   swrStagesResponse,
   swrAvailableInputsResponse,
   swrRankingsPerStageItemResponse,
 }: {
   tournament: Tournament;
+  categoryId: number | null;
   swrStagesResponse: SWRResponse<StagesWithStageItemsResponse>;
   swrAvailableInputsResponse: SWRResponse<StageItemInputOptionsResponse>;
   swrRankingsPerStageItemResponse: SWRResponse<StageRankingResponse>;
@@ -31,7 +33,7 @@ export default function CreateStageButton({
       size="xs"
       style={{ marginRight: 10 }}
       onClick={async () => {
-        await createStage(tournament.id);
+        await createStage(tournament.id, categoryId);
         await swrStagesResponse.mutate();
         await swrAvailableInputsResponse.mutate();
         await swrRankingsPerStageItemResponse.mutate();
@@ -45,9 +47,11 @@ export default function CreateStageButton({
 
 export function CreateStageButtonLarge({
   tournament,
+  categoryId,
   swrStagesResponse,
 }: {
   tournament: Tournament;
+  categoryId: number | null;
   swrStagesResponse: SWRResponse<StagesWithStageItemsResponse>;
 }) {
   const { t } = useTranslation();
@@ -59,7 +63,7 @@ export function CreateStageButtonLarge({
       size="lg"
       style={{ marginRight: 10 }}
       onClick={async () => {
-        await createStage(tournament.id);
+        await createStage(tournament.id, categoryId);
         await swrStagesResponse.mutate();
       }}
       leftSection={<GoPlus size={24} />}

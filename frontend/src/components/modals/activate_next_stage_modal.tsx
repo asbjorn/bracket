@@ -69,10 +69,12 @@ function UpdatesToStageItemInputsTables({
 
 export default function ActivateNextStageModal({
   tournamentId,
+  categoryId,
   swrStagesResponse,
   swrRankingsPerStageItemResponse,
 }: {
   tournamentId: number;
+  categoryId: number | null;
   swrStagesResponse: SWRResponse<StagesWithStageItemsResponse>;
   swrRankingsPerStageItemResponse: SWRResponse<StageRankingResponse>;
 }) {
@@ -94,7 +96,7 @@ export default function ActivateNextStageModal({
       >
         <form
           onSubmit={form.onSubmit(async () => {
-            await activateNextStage(tournamentId, 'next');
+            await activateNextStage(tournamentId, 'next', categoryId);
             swrStagesResponse.mutate();
             setOpened(false);
           })}

@@ -6,12 +6,14 @@ import { CreateStageButtonLarge } from '@components/buttons/create_stage';
 import ActivateNextStageModal from '@components/modals/activate_next_stage_modal';
 import ActivatePreviousStageModal from '@components/modals/activate_previous_stage_modal';
 import { NoContent } from '@components/no_content/empty_table_info';
+import { CategorySelector, useSelectedCategory } from '@components/utils/category';
 import { TableSkeletonTwoColumnsSmall } from '@components/utils/skeletons';
 import { getTournamentIdFromRouter } from '@components/utils/util';
 import { StageWithStageItems } from '@openapi';
 import TournamentLayout from '@pages/tournaments/_tournament_layout';
 import {
   getAvailableStageItemInputs,
+  getCategories,
   getRankings,
   getRankingsPerStageItem,
   getStages,
@@ -25,20 +27,37 @@ export default function StagesPage() {
   const swrRankingsResponse = getRankings(tournamentData.id);
   const swrTournamentResponse = getTournamentById(tournamentData.id);
   const swrAvailableInputsResponse = getAvailableStageItemInputs(tournamentData.id);
-  const swrRankingsPerStageItemResponse = getRankingsPerStageItem(tournamentData.id);
+  const swrCategoriesResponse = getCategories(tournamentData.id);
   const tournamentDataFull =
     swrTournamentResponse.data != null ? swrTournamentResponse.data.data : null;
   const rankings = swrRankingsResponse.data != null ? swrRankingsResponse.data.data : [];
+  const categories = swrCategoriesResponse.data?.data ?? [];
 
-  const stages: StageWithStageItems[] =
+  const allStages: StageWithStageItems[] =
     swrStagesResponse.data != null ? swrStagesResponse.data.data : [];
+
+  // Every age class has its own stages, the user works on one class at a time
+  const { categoryId, selectedValue, setSelectedValue, options } = useSelectedCategory(
+    categories,
+    allStages.some((stage) => stage.category_id == null),
+  );
+  const stages = allStages.filter((stage) => (stage.category_id ?? null) === categoryId);
+  const swrRankingsPerStageItemResponse = getRankingsPerStageItem(tournamentData.id, categoryId);
+  const categorySelector = (
+    <CategorySelector
+      options={options}
+      selectedValue={selectedValue}
+      setSelectedValue={setSelectedValue}
+    />
+  );
 
   let content;
   if (
     swrStagesResponse.isLoading ||
     swrTournamentResponse.isLoading ||
     swrAvailableInputsResponse.isLoading ||
-    swrRankingsResponse.isLoading
+    swrRankingsResponse.isLoading ||
+    swrCategoriesResponse.isLoading
   ) {
     content = <TableSkeletonTwoColumnsSmall />;
   } else if (tournamentDataFull == null) {
@@ -46,25 +65,32 @@ export default function StagesPage() {
     return null;
   } else if (stages.length < 1) {
     content = (
-      <Stack align="center">
-        <NoContent title={t('no_matches_title')} description={t('no_matches_description')} />
-        <CreateStageButtonLarge
-          tournament={tournamentDataFull}
-          swrStagesResponse={swrStagesResponse}
-        />
-      </Stack>
+      <>
+        {categorySelector}
+        <Stack align="center">
+          <NoContent title={t('no_matches_title')} description={t('no_matches_description')} />
+          <CreateStageButtonLarge
+            tournament={tournamentDataFull}
+            categoryId={categoryId}
+            swrStagesResponse={swrStagesResponse}
+          />
+        </Stack>
+      </>
     );
   } else {
     content = (
       <>
+        {categorySelector}
         <Group grow mt="1rem" maw="30rem">
           <ActivatePreviousStageModal
             tournamentId={tournamentData.id}
+            categoryId={categoryId}
             swrStagesResponse={swrStagesResponse}
             swrRankingsPerStageItemResponse={swrRankingsPerStageItemResponse}
           />
           <ActivateNextStageModal
             tournamentId={tournamentData.id}
+            categoryId={categoryId}
             swrStagesResponse={swrStagesResponse}
             swrRankingsPerStageItemResponse={swrRankingsPerStageItemResponse}
           />
@@ -72,6 +98,7 @@ export default function StagesPage() {
         <Group mt="1rem" align="top">
           <Builder
             tournament={tournamentDataFull}
+            categoryId={categoryId}
             swrStagesResponse={swrStagesResponse}
             swrAvailableInputsResponse={swrAvailableInputsResponse}
             swrRankingsPerStageItemResponse={swrRankingsPerStageItemResponse}
