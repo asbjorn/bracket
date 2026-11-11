@@ -1,6 +1,6 @@
 # Roadmap: Bracket for Norwegian children's and youth football cups
 
-Status: draft (2026-11-11). This is a high-level plan; each phase needs its own design and implementation plan before coding.
+Status (2026-11-12): all phases done on branch `phase-0-norwegian` (not pushed), followed by a full review and a final browser test. See "Final status" below.
 
 ## Goal
 
@@ -251,6 +251,26 @@ The target workflow:
 35. **[Nice] Entry-fee calculator** — (fixed + variable costs + 15 %) / teams; tracks paid status (links to 32).
 36. **[Nice] Krets application export** — summary of the cup (time, rules, fee, jury chair, classes) to paste into the district application (FIKS).
 37. **[Nice] Notifications** — email to team contacts when the schedule changes or an announcement is posted.
+
+## Final status (2026-11-12)
+
+After Phase 6, a three-way review (requirements fit for Norwegian cups, an end-to-end browser test, and a code review) led to three more rounds of work:
+
+- **Bug fixes:** a "best placed" playoff slot could break a whole cup; deleting a cup with clubs failed; the pitch page lost a typed score on a bad connection; failed schedule emails were never retried; proposing a plan wrote to the database.
+- **Planning:** split pitches (an 11er as 2–4 parts), hours per pitch and per class (days and times), max matches per team per day, re-planning from a chosen time and a delay tool with preview, "started" matches that never move, the wizard ordered days → classes → pitches with per-day match counts.
+- **Match day and administration:** a single "Spilt" button for children's classes, club sign-up with several teams (one confirmation email), teams that must never play at the same time (per team or per club), final placings and prize ceremony with medal counts, a jury of at least three (NFF check), fair-play and drawing-of-lots tiebreakers, referee age warnings, class kind (G/J/Mix), level-split rounds for children's classes, error codes translated for the public, participating clubs linked to teams.
+- **Norwegian terms:** pulje/puljespill/puljetrekning, spilleopplegg, poeng og tabellregler, cup instead of turnering, offentlig cupside, arrangørklubber, kampskjema, W.O., foreløpig stilling. Swiss system is no longer offered.
+- **Final browser test (Playwright, 1400 px and 390 px):** a fresh cup through wizard (split pitch, class on one day), clubs wizard, club sign-up on a phone with waitlist, draw with pots, plan and re-plan previews, result links (start, "Spilt", score, card, W.O. with confirmation), playoffs, level-split round, jury, lots, referees, prize ceremony, public pages, big screen and print. 25 pages without console errors or sideways scrolling. Bugs found and fixed in that run: the registrations page had been overwritten by the draw page; playoffs could not start when a group had an empty place; "more time doesn't help" for classes with their own hours; English weekdays; raw keys for referee age warnings; cups created without a public address.
+
+**Out of scope:** online payment (Vipps/KID), accommodation, meal tickets and cup passes; server-side PDF (print uses the browser); upstream contribution of the generic fixes.
+
+**Known limitations:**
+- Rate limits are per server process, and behind a proxy all clients share the proxy's IP.
+- Result-link tokens are in the URL path, so they appear in access logs.
+- Officials aren't linked to players, so a referee playing at the same time isn't detected.
+- Split pitches are one level deep; there is no "shorten the remaining matches" option.
+- The wizard's capacity estimate doesn't know club "never at the same time" rules added later; the real plan shows the exact shortfall.
+- Rules text is plain text (no Markdown).
 
 ## Reference scenarios (integration tests)
 
