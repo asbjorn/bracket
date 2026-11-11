@@ -1,4 +1,5 @@
 from sqlalchemy import (
+    CheckConstraint,
     Column,
     ForeignKey,
     Index,
@@ -145,6 +146,13 @@ stage_items = Table(
     ),
 )
 
+STAGE_ITEM_INPUT_KIND_CHECK = (
+    "(best_from_stage_id IS NULL AND best_rank IS NULL"
+    " AND (winner_from_stage_item_id IS NULL) = (winner_position IS NULL))"
+    " OR (best_from_stage_id IS NOT NULL AND best_rank IS NOT NULL"
+    " AND winner_position IS NOT NULL AND winner_from_stage_item_id IS NULL)"
+)
+
 stage_item_inputs = Table(
     "stage_item_inputs",
     metadata,
@@ -175,6 +183,9 @@ stage_item_inputs = Table(
     Column("best_rank", Integer, nullable=True),
     UniqueConstraint("stage_item_id", "team_id"),
     UniqueConstraint("stage_item_id", "winner_from_stage_item_id", "winner_position"),
+    # Every row is one kind of input (empty, team, group placing or best placed); a team can be
+    # set on top of a placing. Keeps rows from ending up as something no code can read.
+    CheckConstraint(STAGE_ITEM_INPUT_KIND_CHECK, name="stage_item_inputs_kind_check"),
 )
 
 rounds = Table(

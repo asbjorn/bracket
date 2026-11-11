@@ -117,11 +117,16 @@ async def update_stage_item_input(
         stage_item_input, stage_item_body, tournament_id, stage_item_id
     )
 
+    # The body replaces the whole input: a "best placed" slot that is edited by hand becomes a
+    # team, a group placing or empty, so its best-of fields are cleared too (otherwise going
+    # back a stage leaves a row that fits no kind of input)
     query = """
         UPDATE stage_item_inputs
         SET team_id = :team_id,
             winner_position = :winner_position,
-            winner_from_stage_item_id = :winner_from_stage_item_id
+            winner_from_stage_item_id = :winner_from_stage_item_id,
+            best_from_stage_id = NULL,
+            best_rank = NULL
         WHERE stage_item_inputs.id = :stage_item_input_id
         AND stage_item_inputs.tournament_id = :tournament_id
     """

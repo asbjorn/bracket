@@ -1,9 +1,15 @@
 from contextlib import AsyncExitStack
 
+import asyncpg  # type: ignore[import-untyped]
 import pytest
 
+from bracket.database import database
 from bracket.models.db.category import CategoryInsertable
-from bracket.models.db.stage_item_inputs import StageItemInputFinal
+from bracket.models.db.stage_item_inputs import (
+    StageItemInputEmpty,
+    StageItemInputFinal,
+    StageItemInputTentative,
+)
 from bracket.models.db.util import StageWithStageItems
 from bracket.sql.shared import sql_delete_stage_item_with_foreign_keys
 from bracket.sql.stages import get_full_tournament_details, sql_delete_stage
@@ -330,6 +336,40 @@ async def test_playoff_with_best_runner_up(
             assert await request(HTTPMethod.POST, "stages/activate", {}) == SUCCESS_RESPONSE
             [_, playoff_stage] = await get_full_tournament_details(tournament_id)
             assert first_round_team_names(playoff_stage, "A") == [["A1", "C2"], ["B1", "C1"]]
+
+            # Editing the "best runner-up" slot by hand replaces it completely: it becomes an
+            # empty slot, not a broken one, also after going back to the group stage
+            [playoff] = playoff_stage.stage_items
+            [best_input] = [i for i in playoff.inputs if i.best_from_stage_id is not None]
+            response = await request(
+                HTTPMethod.PUT, f"stage_items/{playoff.id}/inputs/{best_input.id}", {}
+            )
+            assert response == SUCCESS_RESPONSE
+            response = await request(HTTPMethod.POST, "stages/activate", {"direction": "previous"})
+            assert response == SUCCESS_RESPONSE
+            [_, playoff_stage] = await get_full_tournament_details(tournament_id)
+            [edited] = [i for i in playoff_stage.stage_items[0].inputs if i.id == best_input.id]
+            assert isinstance(edited, StageItemInputEmpty)
+
+            # Choosing a group placing for it also gives a valid slot
+            [group_b] = [g for g in stage.stage_items if g.name == "Group B"]
+            response = await request(
+                HTTPMethod.PUT,
+                f"stage_items/{playoff.id}/inputs/{best_input.id}",
+                {"winner_from_stage_item_id": group_b.id, "winner_position": 2},
+            )
+            assert response == SUCCESS_RESPONSE
+            [_, playoff_stage] = await get_full_tournament_details(tournament_id)
+            [edited] = [i for i in playoff_stage.stage_items[0].inputs if i.id == best_input.id]
+            assert isinstance(edited, StageItemInputTentative)
+            assert edited.best_from_stage_id is None
+
+            # The database refuses a row that fits no kind of input
+            with pytest.raises(asyncpg.exceptions.CheckViolationError):
+                await database.execute(
+                    "UPDATE stage_item_inputs SET winner_from_stage_item_id = NULL WHERE id = :id",
+                    values={"id": best_input.id},
+                )
         finally:
             await delete_stages_except(auth_context, group_stage.id)
 

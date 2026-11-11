@@ -506,6 +506,7 @@ async def test_cannot_hide_results_of_class_with_best_placed_teams(
         assert response == NO_ADVANCING
         # Reset, so the group stage can be deleted afterwards
         await database.execute(
-            "UPDATE stage_item_inputs SET best_from_stage_id = NULL WHERE id = :id",
+            "UPDATE stage_item_inputs SET best_from_stage_id = NULL, best_rank = NULL, "
+            "winner_position = NULL WHERE id = :id",
             values={"id": next_input.id},
         )
