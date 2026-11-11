@@ -35,6 +35,12 @@ tournaments = Table(
     Column("min_rest_minutes", Integer, nullable=False, server_default="0"),
     Column("stage_buffer_minutes", Integer, nullable=False, server_default="10"),
     Column("walkover_goals", Integer, nullable=False, server_default="3"),
+    # Public banner, e.g. a weather warning: text, "INFO" or "WARNING", shown until (optional)
+    Column("announcement_text", Text, nullable=True),
+    Column("announcement_level", Text, nullable=True),
+    Column("announcement_until", DateTimeTZ, nullable=True),
+    # The rules of the cup, shown on a public page
+    Column("rules_text", Text, nullable=True),
     Column(
         "status",
         Enum(

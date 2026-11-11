@@ -30,6 +30,7 @@ import { GenericSkeletonThreeRows } from '@components/utils/skeletons';
 import { capitalize, getBaseURL, getTournamentIdFromRouter } from '@components/utils/util';
 import { Club, Tournament, TournamentResponse } from '@openapi';
 import NotFoundTitle from '@pages/404';
+import { PublicInfoSettings } from '@components/public_info/public_info_editors';
 import TournamentLayout from '@pages/tournaments/_tournament_layout';
 import {
   getBaseApiUrl,
@@ -395,11 +396,14 @@ export default function SettingsPage() {
 
   if (tournamentDataFull != null) {
     content = (
-      <GeneralTournamentForm
-        tournament={tournamentDataFull}
-        swrTournamentResponse={swrTournamentResponse}
-        clubs={clubs}
-      />
+      <>
+        <GeneralTournamentForm
+          tournament={tournamentDataFull}
+          swrTournamentResponse={swrTournamentResponse}
+          clubs={clubs}
+        />
+        <PublicInfoSettings tournament={tournamentDataFull} />
+      </>
     );
   }
 

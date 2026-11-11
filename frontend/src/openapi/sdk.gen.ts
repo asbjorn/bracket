@@ -168,9 +168,21 @@ import type {
   GetStagesTournamentsTournamentIdStagesGetData,
   GetStagesTournamentsTournamentIdStagesGetErrors,
   GetStagesTournamentsTournamentIdStagesGetResponses,
+  GetTeamCalendarTournamentsTournamentIdTeamsTeamIdCalendarIcsGetData,
+  GetTeamCalendarTournamentsTournamentIdTeamsTeamIdCalendarIcsGetErrors,
+  GetTeamCalendarTournamentsTournamentIdTeamsTeamIdCalendarIcsGetResponses,
   GetTeamsTournamentsTournamentIdTeamsGetData,
   GetTeamsTournamentsTournamentIdTeamsGetErrors,
   GetTeamsTournamentsTournamentIdTeamsGetResponses,
+  GetTournamentAnnouncementTournamentsTournamentIdAnnouncementGetData,
+  GetTournamentAnnouncementTournamentsTournamentIdAnnouncementGetErrors,
+  GetTournamentAnnouncementTournamentsTournamentIdAnnouncementGetResponses,
+  GetTournamentPublicNoticesTournamentsTournamentIdPublicNoticesGetData,
+  GetTournamentPublicNoticesTournamentsTournamentIdPublicNoticesGetErrors,
+  GetTournamentPublicNoticesTournamentsTournamentIdPublicNoticesGetResponses,
+  GetTournamentRulesTournamentsTournamentIdRulesGetData,
+  GetTournamentRulesTournamentsTournamentIdRulesGetErrors,
+  GetTournamentRulesTournamentsTournamentIdRulesGetResponses,
   GetTournamentScoreLinksTournamentsTournamentIdScoreLinksGetData,
   GetTournamentScoreLinksTournamentsTournamentIdScoreLinksGetErrors,
   GetTournamentScoreLinksTournamentsTournamentIdScoreLinksGetResponses,
@@ -265,9 +277,15 @@ import type {
   UpdateTeamLogoTournamentsTournamentIdTeamsTeamIdLogoPostData,
   UpdateTeamLogoTournamentsTournamentIdTeamsTeamIdLogoPostErrors,
   UpdateTeamLogoTournamentsTournamentIdTeamsTeamIdLogoPostResponses,
+  UpdateTournamentAnnouncementTournamentsTournamentIdAnnouncementPutData,
+  UpdateTournamentAnnouncementTournamentsTournamentIdAnnouncementPutErrors,
+  UpdateTournamentAnnouncementTournamentsTournamentIdAnnouncementPutResponses,
   UpdateTournamentByIdTournamentsTournamentIdPutData,
   UpdateTournamentByIdTournamentsTournamentIdPutErrors,
   UpdateTournamentByIdTournamentsTournamentIdPutResponses,
+  UpdateTournamentRulesTournamentsTournamentIdRulesPutData,
+  UpdateTournamentRulesTournamentsTournamentIdRulesPutErrors,
+  UpdateTournamentRulesTournamentsTournamentIdRulesPutResponses,
   UpdateUserDetailsUsersUserIdPutData,
   UpdateUserDetailsUsersUserIdPutErrors,
   UpdateUserDetailsUsersUserIdPutResponses,
@@ -683,6 +701,64 @@ export const updateTournamentByIdTournamentsTournamentIdPut = <
     responseType: 'json',
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/tournaments/{tournament_id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get Tournament Announcement
+ *
+ * The announcement as set by the organiser, also when it has expired.
+ */
+export const getTournamentAnnouncementTournamentsTournamentIdAnnouncementGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    GetTournamentAnnouncementTournamentsTournamentIdAnnouncementGetData,
+    ThrowOnError
+  >,
+): RequestResult<
+  GetTournamentAnnouncementTournamentsTournamentIdAnnouncementGetResponses,
+  GetTournamentAnnouncementTournamentsTournamentIdAnnouncementGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetTournamentAnnouncementTournamentsTournamentIdAnnouncementGetResponses,
+    GetTournamentAnnouncementTournamentsTournamentIdAnnouncementGetErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/announcement',
+    ...options,
+  });
+
+/**
+ * Update Tournament Announcement
+ */
+export const updateTournamentAnnouncementTournamentsTournamentIdAnnouncementPut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    UpdateTournamentAnnouncementTournamentsTournamentIdAnnouncementPutData,
+    ThrowOnError
+  >,
+): RequestResult<
+  UpdateTournamentAnnouncementTournamentsTournamentIdAnnouncementPutResponses,
+  UpdateTournamentAnnouncementTournamentsTournamentIdAnnouncementPutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    UpdateTournamentAnnouncementTournamentsTournamentIdAnnouncementPutResponses,
+    UpdateTournamentAnnouncementTournamentsTournamentIdAnnouncementPutErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/announcement',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -1420,6 +1496,33 @@ export const createPlayoffsAfterGroupStageTournamentsTournamentIdPlayoffsPost = 
   });
 
 /**
+ * Get Tournament Public Notices
+ *
+ * For the public pages: the current announcement and recent delays per court.
+ */
+export const getTournamentPublicNoticesTournamentsTournamentIdPublicNoticesGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    GetTournamentPublicNoticesTournamentsTournamentIdPublicNoticesGetData,
+    ThrowOnError
+  >,
+): RequestResult<
+  GetTournamentPublicNoticesTournamentsTournamentIdPublicNoticesGetResponses,
+  GetTournamentPublicNoticesTournamentsTournamentIdPublicNoticesGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetTournamentPublicNoticesTournamentsTournamentIdPublicNoticesGetResponses,
+    GetTournamentPublicNoticesTournamentsTournamentIdPublicNoticesGetErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    url: '/tournaments/{tournament_id}/public_notices',
+    ...options,
+  });
+
+/**
  * Get Rankings
  */
 export const getRankingsTournamentsTournamentIdRankingsGet = <ThrowOnError extends boolean = false>(
@@ -1584,6 +1687,55 @@ export const updateRoundByIdTournamentsTournamentIdRoundsRoundIdPut = <
     responseType: 'json',
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/tournaments/{tournament_id}/rounds/{round_id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get Tournament Rules
+ */
+export const getTournamentRulesTournamentsTournamentIdRulesGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetTournamentRulesTournamentsTournamentIdRulesGetData, ThrowOnError>,
+): RequestResult<
+  GetTournamentRulesTournamentsTournamentIdRulesGetResponses,
+  GetTournamentRulesTournamentsTournamentIdRulesGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetTournamentRulesTournamentsTournamentIdRulesGetResponses,
+    GetTournamentRulesTournamentsTournamentIdRulesGetErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    url: '/tournaments/{tournament_id}/rules',
+    ...options,
+  });
+
+/**
+ * Update Tournament Rules
+ */
+export const updateTournamentRulesTournamentsTournamentIdRulesPut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<UpdateTournamentRulesTournamentsTournamentIdRulesPutData, ThrowOnError>,
+): RequestResult<
+  UpdateTournamentRulesTournamentsTournamentIdRulesPutResponses,
+  UpdateTournamentRulesTournamentsTournamentIdRulesPutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    UpdateTournamentRulesTournamentsTournamentIdRulesPutResponses,
+    UpdateTournamentRulesTournamentsTournamentIdRulesPutErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/rules',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -2224,6 +2376,33 @@ export const updateTeamByIdTournamentsTournamentIdTeamsTeamIdPut = <
       'Content-Type': 'application/json',
       ...options.headers,
     },
+  });
+
+/**
+ * Get Team Calendar
+ *
+ * The matches of a team as a calendar feed (iCalendar), for calendar apps.
+ */
+export const getTeamCalendarTournamentsTournamentIdTeamsTeamIdCalendarIcsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    GetTeamCalendarTournamentsTournamentIdTeamsTeamIdCalendarIcsGetData,
+    ThrowOnError
+  >,
+): RequestResult<
+  GetTeamCalendarTournamentsTournamentIdTeamsTeamIdCalendarIcsGetResponses,
+  GetTeamCalendarTournamentsTournamentIdTeamsTeamIdCalendarIcsGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetTeamCalendarTournamentsTournamentIdTeamsTeamIdCalendarIcsGetResponses,
+    GetTeamCalendarTournamentsTournamentIdTeamsTeamIdCalendarIcsGetErrors,
+    ThrowOnError
+  >({
+    responseType: 'text',
+    url: '/tournaments/{tournament_id}/teams/{team_id}/calendar.ics',
+    ...options,
   });
 
 /**

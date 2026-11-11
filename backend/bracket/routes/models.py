@@ -10,6 +10,7 @@ from bracket.models.db.club import Club
 from bracket.models.db.court import Court
 from bracket.models.db.match import Match, SuggestedMatch
 from bracket.models.db.player import Player
+from bracket.models.db.public_info import Announcement, PublicNotices, Rules
 from bracket.models.db.ranking import Ranking
 from bracket.models.db.score_link import (
     MatchDayNotice,
@@ -141,6 +142,18 @@ class MatchDayNoticeResponse(DataResponse[MatchDayNotice]):
 
 
 class MatchDayNoticesResponse(DataResponse[list[MatchDayNotice]]):
+    pass
+
+
+class AnnouncementResponse(DataResponse[Announcement | None]):
+    pass
+
+
+class PublicNoticesResponse(DataResponse[PublicNotices]):
+    pass
+
+
+class RulesResponse(DataResponse[Rules]):
     pass
 
 

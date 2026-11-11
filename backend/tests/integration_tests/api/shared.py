@@ -94,6 +94,17 @@ async def send_request_raw(method: HTTPMethod, endpoint: str) -> str:
             return await resp.text()
 
 
+async def send_request_with_status(
+    method: HTTPMethod, endpoint: str
+) -> tuple[str, int, dict[str, str]]:
+    """Body as text, status code and headers, e.g. for non-JSON responses."""
+    async with aiohttp.ClientSession() as session:
+        async with session.request(
+            method=str(method.value), url=get_root_uvicorn_url() + endpoint
+        ) as resp:
+            return await resp.text(), resp.status, dict(resp.headers)
+
+
 async def send_auth_request(
     method: HTTPMethod,
     endpoint: str,

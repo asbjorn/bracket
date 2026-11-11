@@ -1,6 +1,87 @@
 {
   "components": {
     "schemas": {
+      "Announcement": {
+        "description": "A banner on all public pages, e.g. \"Lightning: all matches paused until 14:00\".",
+        "properties": {
+          "level": {
+            "$ref": "#/components/schemas/AnnouncementLevel",
+            "default": "INFO"
+          },
+          "text": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          },
+          "until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Until"
+          }
+        },
+        "required": [
+          "text",
+          "level",
+          "until"
+        ],
+        "title": "Announcement",
+        "type": "object"
+      },
+      "AnnouncementBody": {
+        "description": "`announcement: None` removes the announcement.",
+        "properties": {
+          "announcement": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Announcement"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "announcement"
+        ],
+        "title": "AnnouncementBody",
+        "type": "object"
+      },
+      "AnnouncementLevel": {
+        "enum": [
+          "INFO",
+          "WARNING"
+        ],
+        "title": "AnnouncementLevel",
+        "type": "string"
+      },
+      "AnnouncementResponse": {
+        "properties": {
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Announcement"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "AnnouncementResponse",
+        "type": "object"
+      },
       "Body_login_for_access_token_token_post": {
         "properties": {
           "client_id": {
@@ -2862,6 +2943,77 @@
         "title": "ProposedMatch",
         "type": "object"
       },
+      "PublicDelay": {
+        "description": "A delay reported from a pitch; the public only sees the court and the minutes.",
+        "properties": {
+          "court_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Court Name"
+          },
+          "created": {
+            "format": "date-time",
+            "title": "Created",
+            "type": "string"
+          },
+          "delay_minutes": {
+            "title": "Delay Minutes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "court_name",
+          "delay_minutes",
+          "created"
+        ],
+        "title": "PublicDelay",
+        "type": "object"
+      },
+      "PublicNotices": {
+        "properties": {
+          "announcement": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Announcement"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "delays": {
+            "items": {
+              "$ref": "#/components/schemas/PublicDelay"
+            },
+            "title": "Delays",
+            "type": "array"
+          }
+        },
+        "required": [
+          "announcement",
+          "delays"
+        ],
+        "title": "PublicNotices",
+        "type": "object"
+      },
+      "PublicNoticesResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PublicNotices"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "PublicNoticesResponse",
+        "type": "object"
+      },
       "Ranking": {
         "properties": {
           "add_score_points": {
@@ -3167,6 +3319,32 @@
           "matches"
         ],
         "title": "RoundWithMatches",
+        "type": "object"
+      },
+      "Rules": {
+        "properties": {
+          "text": {
+            "maxLength": 20000,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "Rules",
+        "type": "object"
+      },
+      "RulesResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Rules"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "RulesResponse",
         "type": "object"
       },
       "ScheduleProposal": {
@@ -5697,7 +5875,7 @@
     }
   },
   "info": {
-    "description": "\n### Description\nThis API allows you to do everything the frontend of [Bracket](https://github.com/evroon/bracket)\nallows you to do (the frontend uses this API as well).\n\nFore more information, see the [documentation](https://docs.bracketapp.nl).\n\n### Table of Contents\n*(links only work for [ReDoc](https://api.bracketapp.nl/redoc), not for Swagger UI)*\n\n- [Auth](#tag/Auth)\n\n- [Capacity](#tag/Capacity)\n\n- [Cup setup](#tag/Cup-setup)\n\n- [Draw](#tag/Draw)\n\n- [Score links](#tag/Score-links)\n\n- [Categories](#tag/Categories)\n\n- [Clubs](#tag/Clubs)\n\n- [Courts](#tag/Courts)\n\n- [Internals](#tag/Internals)\n\n- [Matches](#tag/Matches)\n\n- [Players](#tag/Players)\n\n- [Rankings](#tag/Rankings)\n\n- [Rounds](#tag/Rounds)\n\n- [Stage Items](#tag/Stage-Items)\n\n- [Stage Item Inputs](#tag/Stage-Item-Inputs)\n\n- [Stages](#tag/Stages)\n\n- [Teams](#tag/Teams)\n\n- [Tournaments](#tag/Tournaments)\n\n- [Users](#tag/Users)\n\n### Links\nGitHub: <https://github.com/evroon/bracket>\n\nDocs: <https://docs.bracketapp.nl>\n\nDemo: <https://www.bracketapp.nl/demo>\n\nAPI docs (Redoc): <https://api.bracketapp.nl/redoc>\n\nAPI docs (Swagger UI): <https://api.bracketapp.nl/docs>\n",
+    "description": "\n### Description\nThis API allows you to do everything the frontend of [Bracket](https://github.com/evroon/bracket)\nallows you to do (the frontend uses this API as well).\n\nFore more information, see the [documentation](https://docs.bracketapp.nl).\n\n### Table of Contents\n*(links only work for [ReDoc](https://api.bracketapp.nl/redoc), not for Swagger UI)*\n\n- [Auth](#tag/Auth)\n\n- [Capacity](#tag/Capacity)\n\n- [Cup setup](#tag/Cup-setup)\n\n- [Draw](#tag/Draw)\n\n- [Public info](#tag/Public-info)\n\n- [Score links](#tag/Score-links)\n\n- [Categories](#tag/Categories)\n\n- [Clubs](#tag/Clubs)\n\n- [Courts](#tag/Courts)\n\n- [Internals](#tag/Internals)\n\n- [Matches](#tag/Matches)\n\n- [Players](#tag/Players)\n\n- [Rankings](#tag/Rankings)\n\n- [Rounds](#tag/Rounds)\n\n- [Stage Items](#tag/Stage-Items)\n\n- [Stage Item Inputs](#tag/Stage-Item-Inputs)\n\n- [Stages](#tag/Stages)\n\n- [Teams](#tag/Teams)\n\n- [Tournaments](#tag/Tournaments)\n\n- [Users](#tag/Users)\n\n### Links\nGitHub: <https://github.com/evroon/bracket>\n\nDocs: <https://docs.bracketapp.nl>\n\nDemo: <https://www.bracketapp.nl/demo>\n\nAPI docs (Redoc): <https://api.bracketapp.nl/redoc>\n\nAPI docs (Swagger UI): <https://api.bracketapp.nl/docs>\n",
     "license": {
       "name": "AGPL-3.0",
       "url": "https://www.gnu.org/licenses/agpl-3.0.en.html"
@@ -6543,6 +6721,109 @@
         "summary": "Update Tournament By Id",
         "tags": [
           "Tournaments"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/announcement": {
+      "get": {
+        "description": "The announcement as set by the organiser, also when it has expired.",
+        "operationId": "get_tournament_announcement_tournaments__tournament_id__announcement_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Tournament Announcement",
+        "tags": [
+          "Public info"
+        ]
+      },
+      "put": {
+        "operationId": "update_tournament_announcement_tournaments__tournament_id__announcement_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnnouncementBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Tournament Announcement",
+        "tags": [
+          "Public info"
         ]
       }
     },
@@ -8190,6 +8471,49 @@
         ]
       }
     },
+    "/tournaments/{tournament_id}/public_notices": {
+      "get": {
+        "description": "For the public pages: the current announcement and recent delays per court.",
+        "operationId": "get_tournament_public_notices_tournaments__tournament_id__public_notices_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicNoticesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Tournament Public Notices",
+        "tags": [
+          "Public info"
+        ]
+      }
+    },
     "/tournaments/{tournament_id}/rankings": {
       "get": {
         "operationId": "get_rankings_tournaments__tournament_id__rankings_get",
@@ -8581,6 +8905,103 @@
         "summary": "Update Round By Id",
         "tags": [
           "Rounds"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/rules": {
+      "get": {
+        "operationId": "get_tournament_rules_tournaments__tournament_id__rules_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RulesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Tournament Rules",
+        "tags": [
+          "Public info"
+        ]
+      },
+      "put": {
+        "operationId": "update_tournament_rules_tournaments__tournament_id__rules_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Rules"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Tournament Rules",
+        "tags": [
+          "Public info"
         ]
       }
     },
@@ -10097,6 +10518,54 @@
         "summary": "Update Team By Id",
         "tags": [
           "Teams"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/teams/{team_id}/calendar.ics": {
+      "get": {
+        "description": "The matches of a team as a calendar feed (iCalendar), for calendar apps.",
+        "operationId": "get_team_calendar_tournaments__tournament_id__teams__team_id__calendar_ics_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "team_id",
+            "required": true,
+            "schema": {
+              "title": "Team Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/calendar": {}
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Team Calendar",
+        "tags": [
+          "Public info"
         ]
       }
     },

@@ -9,6 +9,7 @@ import {
   TournamentTitle,
   getTournamentHeadTitle,
 } from '@components/dashboard/layout';
+import { PublicNoticesBanner } from '@components/dashboard/public_notices';
 import { isMatchHappening, isMatchInTheFuture } from '@components/utils/match';
 import { TableSkeletonTwoColumns } from '@components/utils/skeletons';
 import { responseIsValid, setTitle } from '@components/utils/util';
@@ -17,7 +18,7 @@ import { getCourtsLive, getStagesLive } from '@services/adapter';
 import { getTournamentResponseByEndpointName } from '@services/dashboard';
 import { getMatchLookupByCourt, getStageItemLookup } from '@services/lookups';
 
-export default function CourtsPresentPage() {
+export default function CourtsPresentPage({ showNotices = true }: { showNotices?: boolean }) {
   const { t } = useTranslation();
   const tournamentDataFull = getTournamentResponseByEndpointName();
   const tournamentValid = !React.isValidElement(tournamentDataFull);
@@ -71,6 +72,9 @@ export default function CourtsPresentPage() {
           <TournamentQRCode tournamentDataFull={tournamentDataFull} />
         </Grid.Col>
         <Grid.Col span="auto">
+          {showNotices ? (
+            <PublicNoticesBanner tournamentId={tournamentDataFull.id} size="xl" />
+          ) : null}
           <Grid align="center" gutter="2rem">
             <Grid.Col span={{ sm: 2 }} />
             <Grid.Col span={{ sm: 5 }}>

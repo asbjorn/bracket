@@ -11,15 +11,17 @@ import {
   Text,
   TextInput,
 } from '@mantine/core';
-import { IconAlertTriangle, IconCalendarPlus, IconCheck } from '@tabler/icons-react';
+import { IconAlertTriangle, IconCalendarPlus, IconCheck, IconPrinter } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SWRResponse } from 'swr';
 
+import { AnnouncementEditor } from '@components/public_info/public_info_editors';
 import { DelayForm } from '@components/scheduling/plan_issues';
 import ScoreLinksPanel from '@components/scheduling/score_links_panel';
 import TimeWindowsEditor from '@components/scheduling/time_windows_editor';
 import { DayAndTime } from '@components/utils/datetime';
+import PreloadLink from '@components/utils/link';
 import { CourtsResponse, GameFormat, ScheduleProposal } from '@openapi';
 import { getTimeWindows, requestSucceeded } from '@services/adapter';
 import { applySchedule, createCourts, proposeSchedule } from '@services/planning';
@@ -221,6 +223,12 @@ export default function MatchPlanPanel({
             />
           </Accordion.Panel>
         </Accordion.Item>
+        <Accordion.Item value="announcement">
+          <Accordion.Control>{t('announcement_legend')}</Accordion.Control>
+          <Accordion.Panel>
+            <AnnouncementEditor tournamentId={tournamentId} />
+          </Accordion.Panel>
+        </Accordion.Item>
         <Accordion.Item value="delay">
           <Accordion.Control>{t('delay_title')}</Accordion.Control>
           <Accordion.Panel>
@@ -260,6 +268,16 @@ export default function MatchPlanPanel({
         }}
       >
         {t('schedule_propose_button')}
+      </Button>
+      <Button
+        component={PreloadLink}
+        href={`/tournaments/${tournamentId}/print/match_cards`}
+        variant="default"
+        size="md"
+        ml="sm"
+        leftSection={<IconPrinter size={22} />}
+      >
+        {t('match_cards_title')}
       </Button>
     </>
   );

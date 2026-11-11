@@ -5,6 +5,7 @@ import '@mantine/dropzone/styles.css';
 import { Notifications } from '@mantine/notifications';
 import '@mantine/notifications/styles.css';
 import '@mantine/spotlight/styles.css';
+import './components/print/print.css';
 import { NuqsAdapter } from 'nuqs/adapters/react-router/v7';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -28,6 +29,12 @@ import DashboardNotFoundPage from './pages/tournaments/[id]/dashboard/dashboard_
 import CourtsPresentPage from './pages/tournaments/[id]/dashboard/present/courts';
 import StandingsPresentPage from './pages/tournaments/[id]/dashboard/present/standings';
 import DashboardStandingsPage from './pages/tournaments/[id]/dashboard/standings';
+import DashboardCourtsPage from './pages/tournaments/[id]/dashboard/courts';
+import DashboardPosterPage from './pages/tournaments/[id]/dashboard/poster';
+import RotationPresentPage from './pages/tournaments/[id]/dashboard/present/rotation';
+import DashboardRulesPage from './pages/tournaments/[id]/dashboard/rules';
+import DashboardTeamsPage from './pages/tournaments/[id]/dashboard/teams';
+import DashboardTeamPage from './pages/tournaments/[id]/dashboard/teams/team';
 import PlayersPage from './pages/tournaments/[id]/players';
 import RankingsPage from './pages/tournaments/[id]/rankings';
 import ResultsPage from './pages/tournaments/[id]/results';
@@ -36,6 +43,7 @@ import SchedulePage from './pages/tournaments/[id]/schedule';
 import SettingsPage from './pages/tournaments/[id]/settings';
 import CupSetupPage from './pages/tournaments/[id]/setup';
 import DrawPage from './pages/tournaments/[id]/draw';
+import MatchCardsPage from './pages/tournaments/[id]/print/match_cards';
 import StagesPage from './pages/tournaments/[id]/stages';
 import SwissTournamentPage from './pages/tournaments/[id]/stages/swiss/[stage_item_id]';
 import TeamsPage from './pages/tournaments/[id]/teams';
@@ -101,6 +109,7 @@ createRoot(document.getElementById('root')!).render(
                     <Route path="settings" element={<SettingsPage />} />
                     <Route path="setup" element={<CupSetupPage />} />
                     <Route path="draw" element={<DrawPage />} />
+                    <Route path="print/match_cards" element={<MatchCardsPage />} />
                     <Route path="results" element={<ResultsPage />} />
                     <Route path="stages">
                       <Route index element={<StagesPage />} />
@@ -109,9 +118,17 @@ createRoot(document.getElementById('root')!).render(
                     <Route path="dashboard">
                       <Route index element={<DashboardSchedulePage />} />
                       <Route path="standings" element={<DashboardStandingsPage />} />
+                      <Route path="teams">
+                        <Route index element={<DashboardTeamsPage />} />
+                        <Route path=":team_id" element={<DashboardTeamPage />} />
+                      </Route>
+                      <Route path="courts" element={<DashboardCourtsPage />} />
+                      <Route path="rules" element={<DashboardRulesPage />} />
+                      <Route path="poster" element={<DashboardPosterPage />} />
                       <Route path="present">
                         <Route path="courts" element={<CourtsPresentPage />} />
                         <Route path="standings" element={<StandingsPresentPage />} />
+                        <Route path="rotation" element={<RotationPresentPage />} />
                       </Route>
                       <Route path="*" element={<DashboardNotFoundPage />} />
                     </Route>

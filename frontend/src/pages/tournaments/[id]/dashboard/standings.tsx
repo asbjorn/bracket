@@ -1,4 +1,4 @@
-import { Alert, Container, Stack, Text } from '@mantine/core';
+import { Alert, Container, Group, Stack, Text } from '@mantine/core';
 import { AiOutlineHourglass } from '@react-icons/all-files/ai/AiOutlineHourglass';
 import { IconInfoCircle } from '@tabler/icons-react';
 import React from 'react';
@@ -8,6 +8,7 @@ import { SWRResponse } from 'swr';
 import { DashboardFooter } from '@components/dashboard/footer';
 import { DoubleHeader, getTournamentHeadTitle } from '@components/dashboard/layout';
 import { NoContent } from '@components/no_content/empty_table_info';
+import { PrintButton } from '@components/print/print_button';
 import { StandingsTableForStageItem } from '@components/tables/standings';
 import {
   CategoryFilterSelect,
@@ -124,11 +125,16 @@ export default function DashboardStandingsPage() {
       <Container mt="1rem" px="0rem">
         <Container style={{ width: '100%' }} px="sm">
           <Stack gap={0}>
-            <CategoryFilterSelect
-              categories={categories}
-              value={filterValue}
-              setValue={setFilterValue}
-            />
+            <Group align="end" className="no-print">
+              <div style={{ flex: 1 }}>
+                <CategoryFilterSelect
+                  categories={categories}
+                  value={filterValue}
+                  setValue={setFilterValue}
+                />
+              </div>
+              <PrintButton />
+            </Group>
             <StandingsContent
               swrStagesResponse={swrStagesResponse}
               categories={categories}

@@ -1,9 +1,9 @@
 import {
-  Box,
   Center,
   Container,
   Group,
   Image,
+  ScrollArea,
   Skeleton,
   Title,
   UnstyledButton,
@@ -12,6 +12,7 @@ import QRCode from 'react-qr-code';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
 
+import { PublicNoticesBanner } from '@components/dashboard/public_notices';
 import PreloadLink from '@components/utils/link';
 import { getBaseURL } from '@components/utils/util';
 import { Tournament } from '@openapi';
@@ -81,9 +82,13 @@ export function DoubleHeader({ tournamentData }: { tournamentData: Tournament })
   const endpoint = tournamentData.dashboard_endpoint || '';
   const pathName = navigate.pathname.replace('[id]', endpoint).replace(/\/+$/, '');
 
+  const base = `/tournaments/${endpoint}/dashboard`;
   const mainLinks = [
-    { link: `/tournaments/${endpoint}/dashboard`, label: t('dashboard_matches_tab') },
-    { link: `/tournaments/${endpoint}/dashboard/standings`, label: t('dashboard_standings_tab') },
+    { link: base, label: t('dashboard_matches_tab') },
+    { link: `${base}/teams`, label: t('dashboard_teams_tab') },
+    { link: `${base}/courts`, label: t('dashboard_courts_tab') },
+    { link: `${base}/standings`, label: t('dashboard_standings_tab') },
+    { link: `${base}/rules`, label: t('dashboard_rules_tab') },
   ];
 
   const mainItems = mainLinks.map((item) => (
@@ -91,26 +96,36 @@ export function DoubleHeader({ tournamentData }: { tournamentData: Tournament })
       href={item.link}
       key={item.label}
       className={classes.mainLink}
-      data-active={item.link === pathName || undefined}
+      data-active={
+        (item.link === base ? pathName === base : pathName.startsWith(item.link)) || undefined
+      }
     >
       {item.label}
     </PreloadLink>
   ));
 
   return (
-    <header className={classes.header}>
-      <Container className={classes.inner}>
-        <UnstyledButton component={PreloadLink} href={`/tournaments/${endpoint}/dashboard`}>
-          <Title size="lg" lineClamp={1}>
-            {tournamentData.name}
-          </Title>
-        </UnstyledButton>
-        <Box className={classes.links}>
-          <Group gap={0} className={classes.mainLinks}>
-            {mainItems}
-          </Group>
-        </Box>
+    <>
+      <header className={classes.header}>
+        <Container className={classes.inner}>
+          <UnstyledButton component={PreloadLink} href={base}>
+            <Title size="lg" lineClamp={1}>
+              {tournamentData.name}
+            </Title>
+          </UnstyledButton>
+          <ScrollArea type="never" className={classes.links}>
+            <Group gap={0} wrap="nowrap" className={classes.mainLinks}>
+              {mainItems}
+            </Group>
+          </ScrollArea>
+        </Container>
+      </header>
+      <Container className="print-only">
+        <Title order={2}>{tournamentData.name}</Title>
       </Container>
-    </header>
+      <Container className="no-print">
+        <PublicNoticesBanner tournamentId={tournamentData.id} />
+      </Container>
+    </>
   );
 }

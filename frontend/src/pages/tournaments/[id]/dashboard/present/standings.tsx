@@ -7,6 +7,7 @@ import {
   TournamentTitle,
   getTournamentHeadTitle,
 } from '@components/dashboard/layout';
+import { PublicNoticesBanner } from '@components/dashboard/public_notices';
 import RequestErrorAlert from '@components/utils/error_alert';
 import { TableSkeletonTwoColumns } from '@components/utils/skeletons';
 import { setTitle } from '@components/utils/util';
@@ -14,7 +15,7 @@ import { StandingsContent } from '@pages/tournaments/[id]/dashboard/standings';
 import { getCategories, getStagesLive, getTeamsLive } from '@services/adapter';
 import { getTournamentResponseByEndpointName } from '@services/dashboard';
 
-export default function StandingsPresentPage() {
+export default function StandingsPresentPage({ showNotices = true }: { showNotices?: boolean }) {
   const tournamentDataFull = getTournamentResponseByEndpointName();
   const tournamentValid = !React.isValidElement(tournamentDataFull);
 
@@ -44,6 +45,9 @@ export default function StandingsPresentPage() {
           <TournamentQRCode tournamentDataFull={tournamentDataFull} />
         </Grid.Col>
         <Grid.Col span="auto" style={{ fontSize: fontSizeInPixels }}>
+          {showNotices ? (
+            <PublicNoticesBanner tournamentId={tournamentDataFull.id} size="xl" />
+          ) : null}
           <StandingsContent
             swrStagesResponse={swrStagesResponse}
             categories={categories}

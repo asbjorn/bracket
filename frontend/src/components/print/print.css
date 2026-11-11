@@ -1,0 +1,49 @@
+/* Printing: only the content, no navigation or buttons; cards are not split over pages. */
+@media print {
+  .no-print,
+  .mantine-AppShell-header,
+  .mantine-AppShell-navbar,
+  .mantine-AppShell-footer,
+  header,
+  nav,
+  footer {
+    display: none !important;
+  }
+
+  .mantine-AppShell-main {
+    padding: 0 !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .mantine-Card-root,
+  .print-keep-together,
+  tr {
+    break-inside: avoid;
+  }
+
+  .print-page-break {
+    break-after: page;
+  }
+
+  a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+}
+
+/* Only on paper, e.g. a header with the name of the tournament */
+.print-only {
+  display: none;
+}
+
+@media print {
+  .print-only {
+    display: block;
+  }
+}

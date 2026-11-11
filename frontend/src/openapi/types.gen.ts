@@ -5,6 +5,44 @@ export type ClientOptions = {
 };
 
 /**
+ * Announcement
+ *
+ * A banner on all public pages, e.g. "Lightning: all matches paused until 14:00".
+ */
+export type Announcement = {
+  level: AnnouncementLevel;
+  /**
+   * Text
+   */
+  text: string;
+  /**
+   * Until
+   */
+  until: string | null;
+};
+
+/**
+ * AnnouncementBody
+ *
+ * `announcement: None` removes the announcement.
+ */
+export type AnnouncementBody = {
+  announcement: Announcement | null;
+};
+
+/**
+ * AnnouncementLevel
+ */
+export type AnnouncementLevel = 'INFO' | 'WARNING';
+
+/**
+ * AnnouncementResponse
+ */
+export type AnnouncementResponse = {
+  data: Announcement | null;
+};
+
+/**
  * Body_login_for_access_token_token_post
  */
 export type BodyLoginForAccessTokenTokenPost = {
@@ -1462,6 +1500,44 @@ export type ProposedMatch = {
 };
 
 /**
+ * PublicDelay
+ *
+ * A delay reported from a pitch; the public only sees the court and the minutes.
+ */
+export type PublicDelay = {
+  /**
+   * Court Name
+   */
+  court_name: string | null;
+  /**
+   * Created
+   */
+  created: string;
+  /**
+   * Delay Minutes
+   */
+  delay_minutes: number;
+};
+
+/**
+ * PublicNotices
+ */
+export type PublicNotices = {
+  announcement: Announcement | null;
+  /**
+   * Delays
+   */
+  delays: Array<PublicDelay>;
+};
+
+/**
+ * PublicNoticesResponse
+ */
+export type PublicNoticesResponse = {
+  data: PublicNotices;
+};
+
+/**
  * Ranking
  */
 export type Ranking = {
@@ -1625,6 +1701,23 @@ export type RoundWithMatches = {
    * Stage Item Id
    */
   stage_item_id: number;
+};
+
+/**
+ * Rules
+ */
+export type Rules = {
+  /**
+   * Text
+   */
+  text: string;
+};
+
+/**
+ * RulesResponse
+ */
+export type RulesResponse = {
+  data: Rules;
 };
 
 /**
@@ -3636,6 +3729,70 @@ export type UpdateTournamentByIdTournamentsTournamentIdPutResponses = {
 export type UpdateTournamentByIdTournamentsTournamentIdPutResponse =
   UpdateTournamentByIdTournamentsTournamentIdPutResponses[keyof UpdateTournamentByIdTournamentsTournamentIdPutResponses];
 
+export type GetTournamentAnnouncementTournamentsTournamentIdAnnouncementGetData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/announcement';
+};
+
+export type GetTournamentAnnouncementTournamentsTournamentIdAnnouncementGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetTournamentAnnouncementTournamentsTournamentIdAnnouncementGetError =
+  GetTournamentAnnouncementTournamentsTournamentIdAnnouncementGetErrors[keyof GetTournamentAnnouncementTournamentsTournamentIdAnnouncementGetErrors];
+
+export type GetTournamentAnnouncementTournamentsTournamentIdAnnouncementGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: AnnouncementResponse;
+};
+
+export type GetTournamentAnnouncementTournamentsTournamentIdAnnouncementGetResponse =
+  GetTournamentAnnouncementTournamentsTournamentIdAnnouncementGetResponses[keyof GetTournamentAnnouncementTournamentsTournamentIdAnnouncementGetResponses];
+
+export type UpdateTournamentAnnouncementTournamentsTournamentIdAnnouncementPutData = {
+  body: AnnouncementBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/announcement';
+};
+
+export type UpdateTournamentAnnouncementTournamentsTournamentIdAnnouncementPutErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateTournamentAnnouncementTournamentsTournamentIdAnnouncementPutError =
+  UpdateTournamentAnnouncementTournamentsTournamentIdAnnouncementPutErrors[keyof UpdateTournamentAnnouncementTournamentsTournamentIdAnnouncementPutErrors];
+
+export type UpdateTournamentAnnouncementTournamentsTournamentIdAnnouncementPutResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type UpdateTournamentAnnouncementTournamentsTournamentIdAnnouncementPutResponse =
+  UpdateTournamentAnnouncementTournamentsTournamentIdAnnouncementPutResponses[keyof UpdateTournamentAnnouncementTournamentsTournamentIdAnnouncementPutResponses];
+
 export type GetAvailableInputsTournamentsTournamentIdAvailableInputsGetData = {
   body?: never;
   path: {
@@ -4614,6 +4771,38 @@ export type CreatePlayoffsAfterGroupStageTournamentsTournamentIdPlayoffsPostResp
 export type CreatePlayoffsAfterGroupStageTournamentsTournamentIdPlayoffsPostResponse =
   CreatePlayoffsAfterGroupStageTournamentsTournamentIdPlayoffsPostResponses[keyof CreatePlayoffsAfterGroupStageTournamentsTournamentIdPlayoffsPostResponses];
 
+export type GetTournamentPublicNoticesTournamentsTournamentIdPublicNoticesGetData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/public_notices';
+};
+
+export type GetTournamentPublicNoticesTournamentsTournamentIdPublicNoticesGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetTournamentPublicNoticesTournamentsTournamentIdPublicNoticesGetError =
+  GetTournamentPublicNoticesTournamentsTournamentIdPublicNoticesGetErrors[keyof GetTournamentPublicNoticesTournamentsTournamentIdPublicNoticesGetErrors];
+
+export type GetTournamentPublicNoticesTournamentsTournamentIdPublicNoticesGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: PublicNoticesResponse;
+};
+
+export type GetTournamentPublicNoticesTournamentsTournamentIdPublicNoticesGetResponse =
+  GetTournamentPublicNoticesTournamentsTournamentIdPublicNoticesGetResponses[keyof GetTournamentPublicNoticesTournamentsTournamentIdPublicNoticesGetResponses];
+
 export type GetRankingsTournamentsTournamentIdRankingsGetData = {
   body?: never;
   path: {
@@ -4853,6 +5042,70 @@ export type UpdateRoundByIdTournamentsTournamentIdRoundsRoundIdPutResponses = {
 
 export type UpdateRoundByIdTournamentsTournamentIdRoundsRoundIdPutResponse =
   UpdateRoundByIdTournamentsTournamentIdRoundsRoundIdPutResponses[keyof UpdateRoundByIdTournamentsTournamentIdRoundsRoundIdPutResponses];
+
+export type GetTournamentRulesTournamentsTournamentIdRulesGetData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/rules';
+};
+
+export type GetTournamentRulesTournamentsTournamentIdRulesGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetTournamentRulesTournamentsTournamentIdRulesGetError =
+  GetTournamentRulesTournamentsTournamentIdRulesGetErrors[keyof GetTournamentRulesTournamentsTournamentIdRulesGetErrors];
+
+export type GetTournamentRulesTournamentsTournamentIdRulesGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: RulesResponse;
+};
+
+export type GetTournamentRulesTournamentsTournamentIdRulesGetResponse =
+  GetTournamentRulesTournamentsTournamentIdRulesGetResponses[keyof GetTournamentRulesTournamentsTournamentIdRulesGetResponses];
+
+export type UpdateTournamentRulesTournamentsTournamentIdRulesPutData = {
+  body: Rules;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/rules';
+};
+
+export type UpdateTournamentRulesTournamentsTournamentIdRulesPutErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateTournamentRulesTournamentsTournamentIdRulesPutError =
+  UpdateTournamentRulesTournamentsTournamentIdRulesPutErrors[keyof UpdateTournamentRulesTournamentsTournamentIdRulesPutErrors];
+
+export type UpdateTournamentRulesTournamentsTournamentIdRulesPutResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type UpdateTournamentRulesTournamentsTournamentIdRulesPutResponse =
+  UpdateTournamentRulesTournamentsTournamentIdRulesPutResponses[keyof UpdateTournamentRulesTournamentsTournamentIdRulesPutResponses];
 
 export type ApplyMatchScheduleTournamentsTournamentIdScheduleApplyPostData = {
   body?: never;
@@ -5753,6 +6006,39 @@ export type UpdateTeamByIdTournamentsTournamentIdTeamsTeamIdPutResponses = {
 
 export type UpdateTeamByIdTournamentsTournamentIdTeamsTeamIdPutResponse =
   UpdateTeamByIdTournamentsTournamentIdTeamsTeamIdPutResponses[keyof UpdateTeamByIdTournamentsTournamentIdTeamsTeamIdPutResponses];
+
+export type GetTeamCalendarTournamentsTournamentIdTeamsTeamIdCalendarIcsGetData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+    /**
+     * Team Id
+     */
+    team_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/teams/{team_id}/calendar.ics';
+};
+
+export type GetTeamCalendarTournamentsTournamentIdTeamsTeamIdCalendarIcsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetTeamCalendarTournamentsTournamentIdTeamsTeamIdCalendarIcsGetError =
+  GetTeamCalendarTournamentsTournamentIdTeamsTeamIdCalendarIcsGetErrors[keyof GetTeamCalendarTournamentsTournamentIdTeamsTeamIdCalendarIcsGetErrors];
+
+export type GetTeamCalendarTournamentsTournamentIdTeamsTeamIdCalendarIcsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: unknown;
+};
 
 export type CheckInTeamTournamentsTournamentIdTeamsTeamIdCheckInPutData = {
   body: CheckInBody;

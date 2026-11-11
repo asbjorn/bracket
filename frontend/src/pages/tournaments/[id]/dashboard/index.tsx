@@ -1,12 +1,25 @@
-import { Alert, Badge, Card, Center, Flex, Grid, Group, Stack, Text } from '@mantine/core';
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Center,
+  Flex,
+  Grid,
+  Group,
+  Stack,
+  Text,
+  Title,
+} from '@mantine/core';
 import { AiOutlineHourglass } from '@react-icons/all-files/ai/AiOutlineHourglass';
-import { IconAlertCircle } from '@tabler/icons-react';
+import { IconAlertCircle, IconQrcode } from '@tabler/icons-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { DashboardFooter } from '@components/dashboard/footer';
 import { DoubleHeader, getTournamentHeadTitle } from '@components/dashboard/layout';
 import { NoContent } from '@components/no_content/empty_table_info';
+import { PrintButton } from '@components/print/print_button';
 import {
   CategoryFilterSelect,
   getStageItemCategoryLookup,
@@ -23,7 +36,9 @@ import {
 } from '@components/utils/match';
 import { getScheduleHeaders } from '@components/utils/schedule_headers';
 import { Translator } from '@components/utils/types';
+import PreloadLink from '@components/utils/link';
 import { responseIsValid, setTitle } from '@components/utils/util';
+import { MatchWithDetails } from '@openapi';
 import { getCategories, getCourtsLive, getStagesLive } from '@services/adapter';
 import { getTournamentResponseByEndpointName } from '@services/dashboard';
 import { getMatchLookup, getStageItemLookup, stringToColour } from '@services/lookups';
@@ -49,12 +64,15 @@ function ScheduleRow({
   stageItemsLookup,
   matchesLookup,
   resultsHidden,
+  highlighted = false,
 }: {
   data: any;
   stageItemsLookup: any;
   matchesLookup: any;
   // NFF children's football: only show whether the match was played, not the score
   resultsHidden: boolean;
+  // E.g. the next match of a team
+  highlighted?: boolean;
 }) {
   const { t } = useTranslation();
   const winColor = '#2a8f37';
@@ -67,13 +85,27 @@ function ScheduleRow({
   const resultNote = formatResultNote(t, data.match);
 
   return (
-    <Card shadow="sm" radius="md" withBorder mt="md" pt="0rem">
+    <Card
+      shadow="sm"
+      radius="md"
+      withBorder
+      mt="md"
+      pt="0rem"
+      style={
+        highlighted ? { borderColor: 'var(--mantine-color-indigo-6)', borderWidth: 2 } : undefined
+      }
+    >
       <Card.Section withBorder>
         <Grid pt="0.75rem" pb="0.5rem">
           <Grid.Col mb="0rem" span={4}>
             <Text pl="sm" mt="sm" fw={800}>
-              {data.match.court.name}
+              {data.match.court?.name}
             </Text>
+            {highlighted ? (
+              <Badge color="indigo" ml="sm" size="sm">
+                {t('next_match_badge')}
+              </Badge>
+            ) : null}
           </Grid.Col>
           <Grid.Col mb="0rem" span={4}>
             <Center>
@@ -149,17 +181,22 @@ export function Schedule({
   matchesLookup,
   stageItemIdsWithHiddenResults,
   includeStageItem,
+  includeMatch = () => true,
+  highlightMatchId = null,
 }: {
   t: Translator;
   stageItemsLookup: any;
   matchesLookup: any;
   stageItemIdsWithHiddenResults: Set<number>;
   includeStageItem: (stageItemId: number) => boolean;
+  includeMatch?: (match: MatchWithDetails) => boolean;
+  highlightMatchId?: number | null;
 }) {
   const matches: any[] = Object.values(matchesLookup);
   const sortedMatches = matches
     .filter((m1: any) => m1.match.start_time != null)
     .filter((m1: any) => includeStageItem(m1.stageItem.id))
+    .filter((m1: any) => includeMatch(m1.match))
     .sort(
       (m1: any, m2: any) =>
         compareDateTime(m1.match.start_time, m2.match.start_time) ||
@@ -188,6 +225,7 @@ export function Schedule({
         stageItemsLookup={stageItemsLookup}
         matchesLookup={matchesLookup}
         resultsHidden={stageItemIdsWithHiddenResults.has(data.stageItem.id)}
+        highlighted={data.match.id === highlightMatchId}
       />,
     );
   }
@@ -251,11 +289,31 @@ export default function DashboardSchedulePage() {
       <Center>
         <Group style={{ maxWidth: '48rem', width: '100%' }} px="1rem">
           <Stack style={{ width: '100%' }}>
-            <CategoryFilterSelect
-              categories={categories}
-              value={filterValue}
-              setValue={setFilterValue}
-            />
+            <Group align="end" className="no-print">
+              <div style={{ flex: 1 }}>
+                <CategoryFilterSelect
+                  categories={categories}
+                  value={filterValue}
+                  setValue={setFilterValue}
+                />
+              </div>
+              {filterCategoryId != null ? (
+                <Button
+                  component={PreloadLink}
+                  href={`/tournaments/${tournamentDataFull.dashboard_endpoint}/dashboard/poster?category=${filterValue}`}
+                  variant="default"
+                  leftSection={<IconQrcode size={18} />}
+                >
+                  {t('poster_button')}
+                </Button>
+              ) : null}
+              <PrintButton />
+            </Group>
+            {filterCategoryId != null ? (
+              <Title order={3} className="print-only">
+                {categories.find((c) => c.id === filterCategoryId)?.name}
+              </Title>
+            ) : null}
             <Schedule
               t={t}
               matchesLookup={matchesLookup}
