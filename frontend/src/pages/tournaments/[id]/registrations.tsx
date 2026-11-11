@@ -411,10 +411,12 @@ function EntryFeeCalculator({
 function PublicFormLink({ tournament }: { tournament: Tournament | undefined }) {
   const { t } = useTranslation();
   if (tournament == null) return null;
-  if (!tournament.dashboard_public || tournament.dashboard_endpoint == null) {
+  if (!tournament.dashboard_public || !tournament.dashboard_endpoint) {
     return (
       <Alert color="orange" icon={<IconInfoCircle />}>
-        {t('registration_not_public_alert')}
+        {tournament.dashboard_public
+          ? t('registration_no_address_alert')
+          : t('registration_not_public_alert')}
       </Alert>
     );
   }

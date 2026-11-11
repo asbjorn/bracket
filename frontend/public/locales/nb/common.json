@@ -1015,5 +1015,9 @@
     "round_name_round": "runde {{number}}",
     "official_block_title": "Dommer for en blokk med kamper på en bane",
     "court_host_block_title": "Kampvert for en bane og periode",
-    "officials_show_court_label": "Vis kamper på"
+    "officials_show_court_label": "Vis kamper på",
+    "dashboard_link_auto_description": "Tom: lages ut fra navnet. Foreldre bruker denne adressen og QR-kodene.",
+    "registration_no_address_alert": "Cupen har ennå ingen adresse til den offentlige cupsiden, så lag kan ikke melde seg på. Sett adressen i innstillingene.",
+    "registration_done_title_one": "Laget er påmeldt!",
+    "registration_done_title_other": "Lagene er påmeldt!"
 }

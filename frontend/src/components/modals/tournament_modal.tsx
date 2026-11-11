@@ -18,6 +18,7 @@ import { SWRResponse } from 'swr';
 import SaveButton from '@components/buttons/save';
 import { assert_not_none } from '@components/utils/assert';
 import { DateTimeField } from '@components/utils/time_fields';
+import { slugify } from '@components/utils/util';
 import { Club, Tournament, TournamentsResponse } from '@openapi';
 import { getBaseApiUrl, getClubs } from '@services/adapter';
 import { createTournament } from '@services/tournament';
@@ -75,7 +76,8 @@ function GeneralTournamentForm({
           parseInt(assert_not_none(values.club_id as unknown as string), 10),
           values.name,
           values.dashboard_public,
-          values.dashboard_endpoint,
+          // Empty: an address made from the name, so the cup always gets a public page
+          values.dashboard_endpoint.trim() || slugify(values.name),
           values.players_can_be_in_multiple_teams,
           values.auto_assign_courts,
           values.start_time,
@@ -106,7 +108,8 @@ function GeneralTournamentForm({
 
       <TextInput
         label={t('dashboard_link_label')}
-        placeholder={t('dashboard_link_placeholder')}
+        placeholder={slugify(form.values.name) || t('dashboard_link_placeholder')}
+        description={t('dashboard_link_auto_description')}
         mt="lg"
         {...form.getInputProps('dashboard_endpoint')}
       />

@@ -26,7 +26,7 @@ import { SWRResponse } from 'swr';
 import { assert_not_none } from '@components/utils/assert';
 import { DropzoneButton } from '@components/utils/file_upload';
 import { GenericSkeletonThreeRows } from '@components/utils/skeletons';
-import { capitalize, getBaseURL, getTournamentIdFromRouter } from '@components/utils/util';
+import { capitalize, getBaseURL, getTournamentIdFromRouter, slugify } from '@components/utils/util';
 import { Club, Tournament, TournamentResponse } from '@openapi';
 import NotFoundTitle from '@pages/404';
 import { PublicInfoSettings } from '@components/public_info/public_info_editors';
@@ -132,7 +132,7 @@ function GeneralTournamentForm({
       name: tournament.name,
       club_id: `${tournament.club_id}`,
       dashboard_public: tournament.dashboard_public,
-      dashboard_endpoint: tournament.dashboard_endpoint,
+      dashboard_endpoint: tournament.dashboard_endpoint ?? '',
       players_can_be_in_multiple_teams: tournament.players_can_be_in_multiple_teams,
       auto_assign_courts: tournament.auto_assign_courts,
       duration_minutes: tournament.duration_minutes,
@@ -264,11 +264,11 @@ function GeneralTournamentForm({
         </Grid>
       </Fieldset>
       <Fieldset legend={t('dashboard_settings_title')} mt="lg" radius="md">
-        <Text fz="sm">{t('dashboard_link_label')}</Text>
-        <Grid>
+        <Grid align="end">
           <Grid.Col span={{ sm: 9 }}>
             <TextInput
-              placeholder={t('dashboard_link_placeholder')}
+              label={t('dashboard_link_label')}
+              placeholder={slugify(form.values.name) || t('dashboard_link_placeholder')}
               {...form.getInputProps('dashboard_endpoint')}
             />
           </Grid.Col>

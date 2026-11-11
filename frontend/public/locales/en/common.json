@@ -1015,5 +1015,9 @@
     "round_name_round": "round {{number}}",
     "official_block_title": "Referee for a block of matches on a court",
     "court_host_block_title": "Match host for a court and period",
-    "officials_show_court_label": "Show matches on"
+    "officials_show_court_label": "Show matches on",
+    "dashboard_link_auto_description": "Empty: made from the name. Parents use this address and the QR codes.",
+    "registration_no_address_alert": "The cup has no address for its public page yet, so teams can't sign up. Set the address in the settings.",
+    "registration_done_title_one": "You're signed up!",
+    "registration_done_title_other": "You're signed up!"
 }

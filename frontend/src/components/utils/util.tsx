@@ -5,6 +5,21 @@ import { SWRResponse } from 'swr';
 
 import classes from '@pages/create_account.module.css';
 
+/** A web address from a cup name: "Vårcupen 2027" → "varcupen-2027". */
+export function slugify(name: string) {
+  return name
+    .toLowerCase()
+    .replace(/æ/g, 'ae')
+    .replace(/ø/g, 'o')
+    .replace(/å/g, 'a')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40)
+    .replace(/-+$/g, '');
+}
+
 export function capitalize(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }

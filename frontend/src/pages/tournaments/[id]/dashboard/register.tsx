@@ -80,7 +80,9 @@ function Result({
           {allWaitlist ? <IconHourglass size={36} /> : <IconCircleCheck size={36} />}
         </ThemeIcon>
         <Title order={2}>
-          {allWaitlist ? t('registration_waitlist_title') : t('registration_done_title')}
+          {allWaitlist
+            ? t('registration_waitlist_title')
+            : t('registration_done_title', { count: result.teams.length })}
         </Title>
         <Stack gap="xs" w="100%">
           {result.teams.map((team) => (
