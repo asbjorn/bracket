@@ -483,7 +483,6 @@
     "score_penalties_title": "Straffesparkkonkurranse",
     "score_problem_penalties_equal": "Straffesparkkonkurranse brukes bare når stillingen er lik.",
     "score_problem_penalties_winner": "Straffesparkkonkurransen må ha en vinner.",
-    "score_problem_walkover_winner": "W.O. må ha en vinner, f.eks. 3–0.",
     "score_saved_title": "Resultatet er lagret",
     "score_save_button": "Lagre resultat",
     "score_update_button": "Endre resultat",
@@ -501,5 +500,19 @@
     "score_all_played": "Alle kampene er spilt. Takk for innsatsen!",
     "score_upcoming_title": "Neste kamper",
     "score_show_played": "Vis spilte kamper ({{count}})",
-    "score_hide_played": "Skjul spilte kamper"
+    "score_hide_played": "Skjul spilte kamper",
+    "walkover_goals_label": "Resultat ved W.O. (mål)",
+    "walkover_goals_description": "Et lag som ikke møter, taper med så mange mål mot 0",
+    "withdrawn_badge": "Trukket",
+    "checked_in_label": "Innsjekket",
+    "check_in_button": "{{team}} har kommet",
+    "withdraw_team_button": "Trekk laget",
+    "withdraw_team_title": "Trekke {{team}}?",
+    "withdraw_team_description": "Alle kampene laget ikke har spilt ennå, gis til motstanderne som W.O. Kampoppsettet endres ikke. Dette kan ikke angres automatisk: tar du laget inn igjen, står W.O.-resultatene.",
+    "team_withdrawn_message": "{{team}} er trukket; {{count}} kamper ble gitt som W.O.",
+    "reinstate_team_button": "Ta inn igjen",
+    "team_reinstated_message": "{{team}} er med igjen. Endre W.O.-resultater per kamp om nødvendig.",
+    "score_walkover_description": "Hvilket lag møtte? Det vinner {{goals}}–0.",
+    "score_walkover_winner_button": "{{team}} møtte",
+    "score_walkover_saved": "W.O. til {{team}}"
 }

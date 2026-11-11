@@ -23,6 +23,12 @@ import type {
   ChangeStatusTournamentsTournamentIdChangeStatusPostData,
   ChangeStatusTournamentsTournamentIdChangeStatusPostErrors,
   ChangeStatusTournamentsTournamentIdChangeStatusPostResponses,
+  CheckInTeamAtPitchScoreTokenTeamsTeamIdCheckInPutData,
+  CheckInTeamAtPitchScoreTokenTeamsTeamIdCheckInPutErrors,
+  CheckInTeamAtPitchScoreTokenTeamsTeamIdCheckInPutResponses,
+  CheckInTeamTournamentsTournamentIdTeamsTeamIdCheckInPutData,
+  CheckInTeamTournamentsTournamentIdTeamsTeamIdCheckInPutErrors,
+  CheckInTeamTournamentsTournamentIdTeamsTeamIdCheckInPutResponses,
   CreateCategoryTournamentsTournamentIdCategoriesPostData,
   CreateCategoryTournamentsTournamentIdCategoriesPostErrors,
   CreateCategoryTournamentsTournamentIdCategoriesPostResponses,
@@ -116,6 +122,9 @@ import type {
   EnterMatchResultScoreTokenMatchesMatchIdPutData,
   EnterMatchResultScoreTokenMatchesMatchIdPutErrors,
   EnterMatchResultScoreTokenMatchesMatchIdPutResponses,
+  EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutData,
+  EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutErrors,
+  EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutResponses,
   GetAvailableInputsTournamentsTournamentIdAvailableInputsGetData,
   GetAvailableInputsTournamentsTournamentIdAvailableInputsGetErrors,
   GetAvailableInputsTournamentsTournamentIdAvailableInputsGetResponses,
@@ -176,6 +185,9 @@ import type {
   GetTournamentTournamentsTournamentIdGetResponses,
   GetUserUsersMeGetData,
   GetUserUsersMeGetResponses,
+  GiveWalkoverTournamentsTournamentIdMatchesMatchIdWalkoverPostData,
+  GiveWalkoverTournamentsTournamentIdMatchesMatchIdWalkoverPostErrors,
+  GiveWalkoverTournamentsTournamentIdMatchesMatchIdWalkoverPostResponses,
   LoginForAccessTokenTokenPostData,
   LoginForAccessTokenTokenPostErrors,
   LoginForAccessTokenTokenPostResponses,
@@ -193,6 +205,9 @@ import type {
   RegisterUserUsersRegisterPostData,
   RegisterUserUsersRegisterPostErrors,
   RegisterUserUsersRegisterPostResponses,
+  ReinstateTeamTournamentsTournamentIdTeamsTeamIdReinstatePostData,
+  ReinstateTeamTournamentsTournamentIdTeamsTeamIdReinstatePostErrors,
+  ReinstateTeamTournamentsTournamentIdTeamsTeamIdReinstatePostResponses,
   ReplaceTournamentTimeWindowsTournamentsTournamentIdTimeWindowsPutData,
   ReplaceTournamentTimeWindowsTournamentsTournamentIdTimeWindowsPutErrors,
   ReplaceTournamentTimeWindowsTournamentsTournamentIdTimeWindowsPutResponses,
@@ -259,6 +274,9 @@ import type {
   UploadLogoTournamentsTournamentIdLogoPostData,
   UploadLogoTournamentsTournamentIdLogoPostErrors,
   UploadLogoTournamentsTournamentIdLogoPostResponses,
+  WithdrawTeamFromTournamentTournamentsTournamentIdTeamsTeamIdWithdrawPostData,
+  WithdrawTeamFromTournamentTournamentsTournamentIdTeamsTeamIdWithdrawPostErrors,
+  WithdrawTeamFromTournamentTournamentsTournamentIdTeamsTeamIdWithdrawPostResponses,
 } from './types.gen';
 
 export type Options<
@@ -454,6 +472,34 @@ export const enterMatchResultScoreTokenMatchesMatchIdPut = <ThrowOnError extends
   });
 
 /**
+ * Enter Match Walkover
+ *
+ * The other team didn't show up: `winner_team_id` wins by the tournament's walkover score.
+ */
+export const enterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutData, ThrowOnError>,
+): RequestResult<
+  EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutResponses,
+  EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutResponses,
+    EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    url: '/score/{token}/matches/{match_id}/walkover',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
  * Report From Pitch
  *
  * E.g. "we're running 10 minutes late": shown to the organiser on the schedule page.
@@ -472,6 +518,32 @@ export const reportFromPitchScoreTokenNoticesPost = <ThrowOnError extends boolea
   >({
     responseType: 'json',
     url: '/score/{token}/notices',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Check In Team At Pitch
+ */
+export const checkInTeamAtPitchScoreTokenTeamsTeamIdCheckInPut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CheckInTeamAtPitchScoreTokenTeamsTeamIdCheckInPutData, ThrowOnError>,
+): RequestResult<
+  CheckInTeamAtPitchScoreTokenTeamsTeamIdCheckInPutResponses,
+  CheckInTeamAtPitchScoreTokenTeamsTeamIdCheckInPutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    CheckInTeamAtPitchScoreTokenTeamsTeamIdCheckInPutResponses,
+    CheckInTeamAtPitchScoreTokenTeamsTeamIdCheckInPutErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    url: '/score/{token}/teams/{team_id}/check_in',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -1076,6 +1148,35 @@ export const rescheduleMatchTournamentsTournamentIdMatchesMatchIdReschedulePost 
     responseType: 'json',
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/tournaments/{tournament_id}/matches/{match_id}/reschedule',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Give Walkover
+ *
+ * The other team didn't show up: `winner_team_id` wins by the tournament's walkover score.
+ */
+export const giveWalkoverTournamentsTournamentIdMatchesMatchIdWalkoverPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GiveWalkoverTournamentsTournamentIdMatchesMatchIdWalkoverPostData, ThrowOnError>,
+): RequestResult<
+  GiveWalkoverTournamentsTournamentIdMatchesMatchIdWalkoverPostResponses,
+  GiveWalkoverTournamentsTournamentIdMatchesMatchIdWalkoverPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    GiveWalkoverTournamentsTournamentIdMatchesMatchIdWalkoverPostResponses,
+    GiveWalkoverTournamentsTournamentIdMatchesMatchIdWalkoverPostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/matches/{match_id}/walkover',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -2126,6 +2227,33 @@ export const updateTeamByIdTournamentsTournamentIdTeamsTeamIdPut = <
   });
 
 /**
+ * Check In Team
+ */
+export const checkInTeamTournamentsTournamentIdTeamsTeamIdCheckInPut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CheckInTeamTournamentsTournamentIdTeamsTeamIdCheckInPutData, ThrowOnError>,
+): RequestResult<
+  CheckInTeamTournamentsTournamentIdTeamsTeamIdCheckInPutResponses,
+  CheckInTeamTournamentsTournamentIdTeamsTeamIdCheckInPutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    CheckInTeamTournamentsTournamentIdTeamsTeamIdCheckInPutResponses,
+    CheckInTeamTournamentsTournamentIdTeamsTeamIdCheckInPutErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/teams/{team_id}/check_in',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
  * Update Team Logo
  */
 export const updateTeamLogoTournamentsTournamentIdTeamsTeamIdLogoPost = <
@@ -2151,6 +2279,60 @@ export const updateTeamLogoTournamentsTournamentIdTeamsTeamIdLogoPost = <
       'Content-Type': null,
       ...options.headers,
     },
+  });
+
+/**
+ * Reinstate Team
+ *
+ * Undoes the withdrawal mark. Walkovers that were given stay; change them per match.
+ */
+export const reinstateTeamTournamentsTournamentIdTeamsTeamIdReinstatePost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ReinstateTeamTournamentsTournamentIdTeamsTeamIdReinstatePostData, ThrowOnError>,
+): RequestResult<
+  ReinstateTeamTournamentsTournamentIdTeamsTeamIdReinstatePostResponses,
+  ReinstateTeamTournamentsTournamentIdTeamsTeamIdReinstatePostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    ReinstateTeamTournamentsTournamentIdTeamsTeamIdReinstatePostResponses,
+    ReinstateTeamTournamentsTournamentIdTeamsTeamIdReinstatePostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/teams/{team_id}/reinstate',
+    ...options,
+  });
+
+/**
+ * Withdraw Team From Tournament
+ *
+ * The team withdraws: its opponents get a walkover in all matches it hasn't played yet; the
+ * schedule stays as it is. Returns the number of matches given as walkover.
+ */
+export const withdrawTeamFromTournamentTournamentsTournamentIdTeamsTeamIdWithdrawPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    WithdrawTeamFromTournamentTournamentsTournamentIdTeamsTeamIdWithdrawPostData,
+    ThrowOnError
+  >,
+): RequestResult<
+  WithdrawTeamFromTournamentTournamentsTournamentIdTeamsTeamIdWithdrawPostResponses,
+  WithdrawTeamFromTournamentTournamentsTournamentIdTeamsTeamIdWithdrawPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    WithdrawTeamFromTournamentTournamentsTournamentIdTeamsTeamIdWithdrawPostResponses,
+    WithdrawTeamFromTournamentTournamentsTournamentIdTeamsTeamIdWithdrawPostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/teams/{team_id}/withdraw',
+    ...options,
   });
 
 /**

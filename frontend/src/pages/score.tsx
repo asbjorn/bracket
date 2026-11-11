@@ -24,6 +24,8 @@ import {
   IconClockPause,
   IconMinus,
   IconPlus,
+  IconUser,
+  IconUserCheck,
 } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -32,7 +34,13 @@ import { useParams } from 'react-router';
 import { Time } from '@components/utils/datetime';
 import { MatchResultType, ScoreEntryMatch } from '@openapi';
 import { requestSucceeded } from '@services/adapter';
-import { enterResult, getScoreEntry, reportFromPitch } from '@services/score_links';
+import {
+  checkInAtPitch,
+  enterResult,
+  enterWalkover,
+  getScoreEntry,
+  reportFromPitch,
+} from '@services/score_links';
 
 const RESULT_TYPES: MatchResultType[] = ['NORMAL', 'EXTRA_TIME', 'PENALTIES', 'WALKOVER'];
 const DELAY_CHOICES = [5, 10, 15, 30];
@@ -106,13 +114,55 @@ function MatchHeader({ match }: { match: ScoreEntryMatch }) {
   );
 }
 
+/** Who has arrived: tap to check a team in (or out again). */
+function CheckInRow({
+  token,
+  match,
+  onChanged,
+}: {
+  token: string;
+  match: ScoreEntryMatch;
+  onChanged: () => Promise<void>;
+}) {
+  const { t } = useTranslation();
+  const teams = [
+    { id: match.team1_id, name: match.team1_name, checkedIn: match.team1_checked_in },
+    { id: match.team2_id, name: match.team2_name, checkedIn: match.team2_checked_in },
+  ];
+  return (
+    <Group grow>
+      {teams.map((team) =>
+        team.id != null ? (
+          <Button
+            key={team.id}
+            variant={team.checkedIn ? 'light' : 'default'}
+            color={team.checkedIn ? 'green' : 'gray'}
+            leftSection={team.checkedIn ? <IconUserCheck size={18} /> : <IconUser size={18} />}
+            onClick={async () => {
+              const teamId = team.id as number;
+              await checkInAtPitch(token, teamId, !team.checkedIn);
+              await onChanged();
+            }}
+          >
+            <Text size="sm" truncate>
+              {team.checkedIn ? t('checked_in_label') : t('check_in_button', { team: team.name })}
+            </Text>
+          </Button>
+        ) : null,
+      )}
+    </Group>
+  );
+}
+
 function ResultForm({
   token,
   match,
+  walkoverGoals,
   onSaved,
 }: {
   token: string;
   match: ScoreEntryMatch;
+  walkoverGoals: number;
   onSaved: () => Promise<void>;
 }) {
   const { t } = useTranslation();
@@ -138,22 +188,66 @@ function ResultForm({
   if (resultType === 'PENALTIES' && score1 !== score2) problem = t('score_problem_penalties_equal');
   if (resultType === 'PENALTIES' && score1 === score2 && penalties1 === penalties2)
     problem = t('score_problem_penalties_winner');
-  if (resultType === 'WALKOVER' && score1 === score2) problem = t('score_problem_walkover_winner');
+
+  const resultTypeControl = (
+    <SegmentedControl
+      fullWidth
+      size="md"
+      data={RESULT_TYPES.map((type) => ({
+        value: type,
+        label: t(`result_type_short_${type.toLowerCase()}`),
+      }))}
+      value={resultType}
+      onChange={(value) => setResultType(value as MatchResultType)}
+    />
+  );
+
+  if (resultType === 'WALKOVER') {
+    // The team that showed up wins by the tournament's walkover score
+    return (
+      <Stack>
+        {resultTypeControl}
+        <Text size="sm" c="dimmed">
+          {t('score_walkover_description', { goals: walkoverGoals })}
+        </Text>
+        {[
+          { id: match.team1_id, name: team1 },
+          { id: match.team2_id, name: team2 },
+        ].map((winner) => (
+          <Button
+            key={winner.id}
+            size="lg"
+            color="green"
+            variant="light"
+            fullWidth
+            loading={saving}
+            onClick={async () => {
+              setSaving(true);
+              const response = await enterWalkover(token, match.id, winner.id as number);
+              setSaving(false);
+              if (requestSucceeded(response)) {
+                showNotification({
+                  color: 'green',
+                  icon: <IconCheck />,
+                  title: t('score_saved_title'),
+                  message: t('score_walkover_saved', { team: winner.name }),
+                });
+                await onSaved();
+              }
+            }}
+          >
+            {t('score_walkover_winner_button', { team: winner.name })}
+          </Button>
+        ))}
+      </Stack>
+    );
+  }
 
   return (
     <Stack>
       <ScoreStepper label={team1} value={score1} onChange={setScore1} />
       <ScoreStepper label={team2} value={score2} onChange={setScore2} />
-      <SegmentedControl
-        fullWidth
-        size="md"
-        data={RESULT_TYPES.map((type) => ({
-          value: type,
-          label: t(`result_type_short_${type.toLowerCase()}`),
-        }))}
-        value={resultType}
-        onChange={(value) => setResultType(value as MatchResultType)}
-      />
+      {resultTypeControl}
       {resultType === 'PENALTIES' ? (
         <Card withBorder>
           <Text size="sm" c="dimmed" mb="xs">
@@ -371,9 +465,19 @@ export default function ScoreEntryPage() {
                 ) : null}
               </Group>
               {canBeEntered(selected) ? (
+                <CheckInRow
+                  token={token}
+                  match={selected}
+                  onChanged={async () => {
+                    await swrView.mutate();
+                  }}
+                />
+              ) : null}
+              {canBeEntered(selected) ? (
                 <ResultForm
                   token={token}
                   match={selected}
+                  walkoverGoals={view.walkover_goals}
                   onSaved={async () => {
                     setSelectedId(null);
                     await swrView.mutate();

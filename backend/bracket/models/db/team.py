@@ -26,6 +26,8 @@ class TeamInsertable(BaseModelORM):
     logo_path: str | None = None
     category_id: CategoryId | None = None
     club_name: str | None = None
+    withdrawn: bool = False
+    checked_in: bool = False
 
 
 class Team(TeamInsertable):
@@ -44,6 +46,8 @@ class TeamWithPlayers(BaseModel):
     logo_path: str | None = None
     category_id: CategoryId | None = None
     club_name: str | None = None
+    withdrawn: bool = False
+    checked_in: bool = False
 
     @property
     def player_ids(self) -> list[PlayerId]:

@@ -65,3 +65,15 @@ export async function enterResult(token: string, match_id: number, body: ScoreEn
 export async function reportFromPitch(token: string, body: MatchDayNoticeBody) {
   return awaitRequestAndHandleError(async (axios) => axios.post(`score/${token}/notices`, body));
 }
+
+export async function enterWalkover(token: string, match_id: number, winner_team_id: number) {
+  return awaitRequestAndHandleError(async (axios) =>
+    axios.put(`score/${token}/matches/${match_id}/walkover`, { winner_team_id }),
+  );
+}
+
+export async function checkInAtPitch(token: string, team_id: number, checked_in: boolean) {
+  return awaitRequestAndHandleError(async (axios) =>
+    axios.put(`score/${token}/teams/${team_id}/check_in`, { checked_in }),
+  );
+}

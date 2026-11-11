@@ -1,4 +1,4 @@
-import { Badge, Center, Pagination, Table } from '@mantine/core';
+import { Badge, Center, Group, Pagination, Switch, Table } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
 import { SWRResponse } from 'swr';
 
@@ -11,7 +11,8 @@ import RequestErrorAlert from '@components/utils/error_alert';
 import { TableSkeletonSingleColumn } from '@components/utils/skeletons';
 import { TournamentMinimal } from '@components/utils/tournament';
 import { Category, FullTeamWithPlayers, TeamsWithPlayersResponse } from '@openapi';
-import { deleteTeam } from '@services/team';
+import { deleteTeam, setTeamCheckedIn } from '@services/team';
+import WithdrawButton from '@components/buttons/withdraw_team';
 import TableLayout, { TableState, ThNotSortable, ThSortable, sortTableEntries } from './table';
 
 export default function TeamsTable({
@@ -52,7 +53,27 @@ export default function TeamsTable({
             <Badge color="red">{t('inactive')}</Badge>
           )}
         </Table.Td>
-        <Table.Td>{team.name}</Table.Td>
+        <Table.Td>
+          <Group gap="xs">
+            {team.name}
+            {team.withdrawn ? (
+              <Badge color="red" variant="outline">
+                {t('withdrawn_badge')}
+              </Badge>
+            ) : null}
+          </Group>
+        </Table.Td>
+        <Table.Td>
+          <Switch
+            checked={team.checked_in}
+            color="green"
+            aria-label={t('checked_in_label')}
+            onChange={async (event) => {
+              await setTeamCheckedIn(tournamentData.id, team.id, event.currentTarget.checked);
+              await swrTeamsResponse.mutate();
+            }}
+          />
+        </Table.Td>
         {showCategories ? (
           <Table.Td>
             {team.category_id == null ? (
@@ -75,6 +96,13 @@ export default function TeamsTable({
             tournament_id={tournamentData.id}
             team={team}
             swrTeamsResponse={swrTeamsResponse}
+          />
+          <WithdrawButton
+            tournamentId={tournamentData.id}
+            team={team}
+            onChanged={async () => {
+              await swrTeamsResponse.mutate();
+            }}
           />
           <DeleteButton
             onClick={async () => {
@@ -100,6 +128,7 @@ export default function TeamsTable({
             <ThSortable state={tableState} field="name">
               {t('name_table_header')}
             </ThSortable>
+            <ThNotSortable>{t('checked_in_label')}</ThNotSortable>
             {showCategories ? <ThNotSortable>{t('category_select_label')}</ThNotSortable> : null}
             <ThNotSortable>{t('members_table_header')}</ThNotSortable>
             <ThSortable state={tableState} field="created">

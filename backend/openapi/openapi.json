@@ -648,6 +648,19 @@
         "title": "CategoryWarningsResponse",
         "type": "object"
       },
+      "CheckInBody": {
+        "properties": {
+          "checked_in": {
+            "title": "Checked In",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "checked_in"
+        ],
+        "title": "CheckInBody",
+        "type": "object"
+      },
       "Club": {
         "properties": {
           "created": {
@@ -1229,6 +1242,11 @@
             ],
             "title": "Category Id"
           },
+          "checked_in": {
+            "default": false,
+            "title": "Checked In",
+            "type": "boolean"
+          },
           "club_name": {
             "anyOf": [
               {
@@ -1301,6 +1319,11 @@
             "default": 0,
             "title": "Wins",
             "type": "integer"
+          },
+          "withdrawn": {
+            "default": false,
+            "title": "Withdrawn",
+            "type": "boolean"
           }
         },
         "required": [
@@ -1316,6 +1339,8 @@
           "logo_path",
           "category_id",
           "club_name",
+          "withdrawn",
+          "checked_in",
           "id",
           "players"
         ],
@@ -3415,6 +3440,10 @@
             ],
             "title": "Start Time"
           },
+          "team1_checked_in": {
+            "title": "Team1 Checked In",
+            "type": "boolean"
+          },
           "team1_id": {
             "anyOf": [
               {
@@ -3436,6 +3465,10 @@
               }
             ],
             "title": "Team1 Name"
+          },
+          "team2_checked_in": {
+            "title": "Team2 Checked In",
+            "type": "boolean"
           },
           "team2_id": {
             "anyOf": [
@@ -3473,6 +3506,8 @@
           "team1_name",
           "team2_id",
           "team2_name",
+          "team1_checked_in",
+          "team2_checked_in",
           "score1",
           "score2",
           "penalties1",
@@ -3526,6 +3561,10 @@
           "tournament_name": {
             "title": "Tournament Name",
             "type": "string"
+          },
+          "walkover_goals": {
+            "title": "Walkover Goals",
+            "type": "integer"
           }
         },
         "required": [
@@ -3534,6 +3573,7 @@
           "court_id",
           "court_name",
           "expires_at",
+          "walkover_goals",
           "matches"
         ],
         "title": "ScoreEntryView",
@@ -4811,6 +4851,11 @@
             ],
             "title": "Category Id"
           },
+          "checked_in": {
+            "default": false,
+            "title": "Checked In",
+            "type": "boolean"
+          },
           "club_name": {
             "anyOf": [
               {
@@ -4876,6 +4921,11 @@
             "default": 0,
             "title": "Wins",
             "type": "integer"
+          },
+          "withdrawn": {
+            "default": false,
+            "title": "Withdrawn",
+            "type": "boolean"
           }
         },
         "required": [
@@ -4891,6 +4941,8 @@
           "logo_path",
           "category_id",
           "club_name",
+          "withdrawn",
+          "checked_in",
           "id"
         ],
         "title": "Team",
@@ -5206,6 +5258,12 @@
           "status": {
             "$ref": "#/components/schemas/TournamentStatus",
             "default": "OPEN"
+          },
+          "walkover_goals": {
+            "default": 3,
+            "minimum": 1.0,
+            "title": "Walkover Goals",
+            "type": "integer"
           }
         },
         "required": [
@@ -5217,6 +5275,7 @@
           "margin_minutes",
           "min_rest_minutes",
           "stage_buffer_minutes",
+          "walkover_goals",
           "dashboard_public",
           "dashboard_endpoint",
           "logo_path",
@@ -5287,6 +5346,13 @@
             "format": "date-time",
             "title": "Start Time",
             "type": "string"
+          },
+          "walkover_goals": {
+            "default": 3,
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Walkover Goals",
+            "type": "integer"
           }
         },
         "required": [
@@ -5300,6 +5366,7 @@
           "margin_minutes",
           "min_rest_minutes",
           "stage_buffer_minutes",
+          "walkover_goals",
           "club_id"
         ],
         "title": "TournamentBody",
@@ -5392,6 +5459,13 @@
             "format": "date-time",
             "title": "Start Time",
             "type": "string"
+          },
+          "walkover_goals": {
+            "default": 3,
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Walkover Goals",
+            "type": "integer"
           }
         },
         "required": [
@@ -5404,7 +5478,8 @@
           "duration_minutes",
           "margin_minutes",
           "min_rest_minutes",
-          "stage_buffer_minutes"
+          "stage_buffer_minutes",
+          "walkover_goals"
         ],
         "title": "TournamentUpdateBody",
         "type": "object"
@@ -5593,6 +5668,19 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "WalkoverBody": {
+        "properties": {
+          "winner_team_id": {
+            "title": "Winner Team Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "winner_team_id"
+        ],
+        "title": "WalkoverBody",
         "type": "object"
       }
     },
@@ -5986,6 +6074,68 @@
         ]
       }
     },
+    "/score/{token}/matches/{match_id}/walkover": {
+      "put": {
+        "description": "The other team didn't show up: `winner_team_id` wins by the tournament's walkover score.",
+        "operationId": "enter_match_walkover_score__token__matches__match_id__walkover_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "match_id",
+            "required": true,
+            "schema": {
+              "title": "Match Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WalkoverBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Enter Match Walkover",
+        "tags": [
+          "Score links"
+        ]
+      }
+    },
     "/score/{token}/notices": {
       "post": {
         "description": "E.g. \"we're running 10 minutes late\": shown to the organiser on the schedule page.",
@@ -6034,6 +6184,67 @@
           }
         },
         "summary": "Report From Pitch",
+        "tags": [
+          "Score links"
+        ]
+      }
+    },
+    "/score/{token}/teams/{team_id}/check_in": {
+      "put": {
+        "operationId": "check_in_team_at_pitch_score__token__teams__team_id__check_in_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "team_id",
+            "required": true,
+            "schema": {
+              "title": "Team Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckInBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Check In Team At Pitch",
         "tags": [
           "Score links"
         ]
@@ -7332,6 +7543,73 @@
           }
         ],
         "summary": "Reschedule Match",
+        "tags": [
+          "Matches"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/matches/{match_id}/walkover": {
+      "post": {
+        "description": "The other team didn't show up: `winner_team_id` wins by the tournament's walkover score.",
+        "operationId": "give_walkover_tournaments__tournament_id__matches__match_id__walkover_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "match_id",
+            "required": true,
+            "schema": {
+              "title": "Match Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WalkoverBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Give Walkover",
         "tags": [
           "Matches"
         ]
@@ -9822,6 +10100,72 @@
         ]
       }
     },
+    "/tournaments/{tournament_id}/teams/{team_id}/check_in": {
+      "put": {
+        "operationId": "check_in_team_tournaments__tournament_id__teams__team_id__check_in_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "team_id",
+            "required": true,
+            "schema": {
+              "title": "Team Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckInBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Check In Team",
+        "tags": [
+          "Teams"
+        ]
+      }
+    },
     "/tournaments/{tournament_id}/teams/{team_id}/logo": {
       "post": {
         "operationId": "update_team_logo_tournaments__tournament_id__teams__team_id__logo_post",
@@ -9882,6 +10226,120 @@
           }
         ],
         "summary": "Update Team Logo",
+        "tags": [
+          "Teams"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/teams/{team_id}/reinstate": {
+      "post": {
+        "description": "Undoes the withdrawal mark. Walkovers that were given stay; change them per match.",
+        "operationId": "reinstate_team_tournaments__tournament_id__teams__team_id__reinstate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "team_id",
+            "required": true,
+            "schema": {
+              "title": "Team Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Reinstate Team",
+        "tags": [
+          "Teams"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/teams/{team_id}/withdraw": {
+      "post": {
+        "description": "The team withdraws: its opponents get a walkover in all matches it hasn't played yet; the\nschedule stays as it is. Returns the number of matches given as walkover.",
+        "operationId": "withdraw_team_from_tournament_tournaments__tournament_id__teams__team_id__withdraw_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "team_id",
+            "required": true,
+            "schema": {
+              "title": "Team Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Withdraw Team From Tournament",
         "tags": [
           "Teams"
         ]

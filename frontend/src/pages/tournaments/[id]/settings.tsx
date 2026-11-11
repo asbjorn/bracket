@@ -138,6 +138,7 @@ function GeneralTournamentForm({
       margin_minutes: tournament.margin_minutes,
       min_rest_minutes: tournament.min_rest_minutes,
       stage_buffer_minutes: tournament.stage_buffer_minutes,
+      walkover_goals: tournament.walkover_goals,
     },
 
     validate: {
@@ -147,7 +148,7 @@ function GeneralTournamentForm({
       duration_minutes: (value) =>
         value != null && value > 0 ? null : t('duration_minutes_choose_title'),
       margin_minutes: (value) =>
-        value != null && value > 0 ? null : t('margin_minutes_choose_title'),
+        value != null && value >= 0 ? null : t('margin_minutes_choose_title'),
     },
   });
 
@@ -168,6 +169,7 @@ function GeneralTournamentForm({
           values.margin_minutes,
           values.min_rest_minutes,
           values.stage_buffer_minutes,
+          values.walkover_goals,
         );
 
         await swrTournamentResponse.mutate();
@@ -246,6 +248,16 @@ function GeneralTournamentForm({
               min={0}
               mt="lg"
               {...form.getInputProps('stage_buffer_minutes')}
+            />
+          </Grid.Col>
+          <Grid.Col span={{ sm: 6 }}>
+            <NumberInput
+              label={t('walkover_goals_label')}
+              description={t('walkover_goals_description')}
+              min={1}
+              max={20}
+              mt="lg"
+              {...form.getInputProps('walkover_goals')}
             />
           </Grid.Col>
         </Grid>

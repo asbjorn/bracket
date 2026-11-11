@@ -22,6 +22,7 @@ from bracket.logic.scheduling.upcoming_matches import (
     get_draft_round_in_stage_item,
     get_upcoming_matches_for_swiss,
 )
+from bracket.logic.walkovers import record_walkover_by_id
 from bracket.models.db.match import (
     Match,
     MatchBody,
@@ -30,6 +31,7 @@ from bracket.models.db.match import (
     MatchFilter,
     MatchRescheduleBody,
 )
+from bracket.models.db.score_link import WalkoverBody
 from bracket.models.db.stage_item import StageType
 from bracket.models.db.tournament import Tournament
 from bracket.models.db.user import UserPublic
@@ -217,6 +219,21 @@ async def reschedule_match(
     await check_foreign_keys_belong_to_tournament(body, tournament_id)
     await handle_match_reschedule(tournament, body, match_id)
     await handle_conflicts(await get_full_tournament_details(tournament_id))
+    return SuccessResponse()
+
+
+@router.post(
+    "/tournaments/{tournament_id}/matches/{match_id}/walkover", response_model=SuccessResponse
+)
+async def give_walkover(
+    tournament_id: TournamentId,
+    match_id: MatchId,
+    body: WalkoverBody,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+    __: Tournament = Depends(disallow_archived_tournament),
+) -> SuccessResponse:
+    """The other team didn't show up: `winner_team_id` wins by the tournament's walkover score."""
+    await record_walkover_by_id(tournament_id, match_id, body.winner_team_id)
     return SuccessResponse()
 
 

@@ -1,3 +1,4 @@
+import { CountResponse } from '@openapi';
 import { awaitRequestAndHandleError, createAxios, handleRequestError } from './adapter';
 
 export async function createTeam(
@@ -53,5 +54,27 @@ export async function updateTeam(
       category_id,
       club_name,
     }),
+  );
+}
+
+export async function withdrawTeam(tournament_id: number, team_id: number) {
+  return awaitRequestAndHandleError(async (axios) =>
+    axios.post<CountResponse>(`tournaments/${tournament_id}/teams/${team_id}/withdraw`),
+  );
+}
+
+export async function reinstateTeam(tournament_id: number, team_id: number) {
+  return awaitRequestAndHandleError(async (axios) =>
+    axios.post(`tournaments/${tournament_id}/teams/${team_id}/reinstate`),
+  );
+}
+
+export async function setTeamCheckedIn(
+  tournament_id: number,
+  team_id: number,
+  checked_in: boolean,
+) {
+  return awaitRequestAndHandleError(async (axios) =>
+    axios.put(`tournaments/${tournament_id}/teams/${team_id}/check_in`, { checked_in }),
   );
 }

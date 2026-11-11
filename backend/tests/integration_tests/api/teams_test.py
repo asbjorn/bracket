@@ -46,6 +46,8 @@ async def test_teams_endpoint(
                         "logo_path": None,
                         "category_id": None,
                         "club_name": None,
+                        "withdrawn": False,
+                        "checked_in": False,
                     }
                 ],
                 "count": 1,

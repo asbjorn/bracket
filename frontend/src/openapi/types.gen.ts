@@ -317,6 +317,16 @@ export type CategoryWarningsResponse = {
 };
 
 /**
+ * CheckInBody
+ */
+export type CheckInBody = {
+  /**
+   * Checked In
+   */
+  checked_in: boolean;
+};
+
+/**
  * Club
  */
 export type Club = {
@@ -635,6 +645,10 @@ export type FullTeamWithPlayers = {
    */
   category_id: number | null;
   /**
+   * Checked In
+   */
+  checked_in: boolean;
+  /**
    * Club Name
    */
   club_name: string | null;
@@ -682,6 +696,10 @@ export type FullTeamWithPlayers = {
    * Wins
    */
   wins: number;
+  /**
+   * Withdrawn
+   */
+  withdrawn: boolean;
 };
 
 /**
@@ -1749,6 +1767,10 @@ export type ScoreEntryMatch = {
    */
   start_time: string | null;
   /**
+   * Team1 Checked In
+   */
+  team1_checked_in: boolean;
+  /**
    * Team1 Id
    */
   team1_id: number | null;
@@ -1756,6 +1778,10 @@ export type ScoreEntryMatch = {
    * Team1 Name
    */
   team1_name: string | null;
+  /**
+   * Team2 Checked In
+   */
+  team2_checked_in: boolean;
   /**
    * Team2 Id
    */
@@ -1794,6 +1820,10 @@ export type ScoreEntryView = {
    * Tournament Name
    */
   tournament_name: string;
+  /**
+   * Walkover Goals
+   */
+  walkover_goals: number;
 };
 
 /**
@@ -2555,6 +2585,10 @@ export type Team = {
    */
   category_id: number | null;
   /**
+   * Checked In
+   */
+  checked_in: boolean;
+  /**
    * Club Name
    */
   club_name: string | null;
@@ -2598,6 +2632,10 @@ export type Team = {
    * Wins
    */
   wins: number;
+  /**
+   * Withdrawn
+   */
+  withdrawn: boolean;
 };
 
 /**
@@ -2803,6 +2841,10 @@ export type Tournament = {
    */
   start_time: string;
   status: TournamentStatus;
+  /**
+   * Walkover Goals
+   */
+  walkover_goals: number;
 };
 
 /**
@@ -2853,6 +2895,10 @@ export type TournamentBody = {
    * Start Time
    */
   start_time: string;
+  /**
+   * Walkover Goals
+   */
+  walkover_goals: number;
 };
 
 /**
@@ -2918,6 +2964,10 @@ export type TournamentUpdateBody = {
    * Start Time
    */
   start_time: string;
+  /**
+   * Walkover Goals
+   */
+  walkover_goals: number;
 };
 
 /**
@@ -3047,6 +3097,16 @@ export type ValidationError = {
    * Error Type
    */
   type: string;
+};
+
+/**
+ * WalkoverBody
+ */
+export type WalkoverBody = {
+  /**
+   * Winner Team Id
+   */
+  winner_team_id: number;
 };
 
 export type CalculateCupCapacityCapacityPostData = {
@@ -3286,6 +3346,42 @@ export type EnterMatchResultScoreTokenMatchesMatchIdPutResponses = {
 export type EnterMatchResultScoreTokenMatchesMatchIdPutResponse =
   EnterMatchResultScoreTokenMatchesMatchIdPutResponses[keyof EnterMatchResultScoreTokenMatchesMatchIdPutResponses];
 
+export type EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutData = {
+  body: WalkoverBody;
+  path: {
+    /**
+     * Match Id
+     */
+    match_id: number;
+    /**
+     * Token
+     */
+    token: string;
+  };
+  query?: never;
+  url: '/score/{token}/matches/{match_id}/walkover';
+};
+
+export type EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutError =
+  EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutErrors[keyof EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutErrors];
+
+export type EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutResponse =
+  EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutResponses[keyof EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutResponses];
+
 export type ReportFromPitchScoreTokenNoticesPostData = {
   body: MatchDayNoticeBody;
   path: {
@@ -3317,6 +3413,42 @@ export type ReportFromPitchScoreTokenNoticesPostResponses = {
 
 export type ReportFromPitchScoreTokenNoticesPostResponse =
   ReportFromPitchScoreTokenNoticesPostResponses[keyof ReportFromPitchScoreTokenNoticesPostResponses];
+
+export type CheckInTeamAtPitchScoreTokenTeamsTeamIdCheckInPutData = {
+  body: CheckInBody;
+  path: {
+    /**
+     * Team Id
+     */
+    team_id: number;
+    /**
+     * Token
+     */
+    token: string;
+  };
+  query?: never;
+  url: '/score/{token}/teams/{team_id}/check_in';
+};
+
+export type CheckInTeamAtPitchScoreTokenTeamsTeamIdCheckInPutErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CheckInTeamAtPitchScoreTokenTeamsTeamIdCheckInPutError =
+  CheckInTeamAtPitchScoreTokenTeamsTeamIdCheckInPutErrors[keyof CheckInTeamAtPitchScoreTokenTeamsTeamIdCheckInPutErrors];
+
+export type CheckInTeamAtPitchScoreTokenTeamsTeamIdCheckInPutResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type CheckInTeamAtPitchScoreTokenTeamsTeamIdCheckInPutResponse =
+  CheckInTeamAtPitchScoreTokenTeamsTeamIdCheckInPutResponses[keyof CheckInTeamAtPitchScoreTokenTeamsTeamIdCheckInPutResponses];
 
 export type LoginForAccessTokenTokenPostData = {
   body: BodyLoginForAccessTokenTokenPost;
@@ -4107,6 +4239,42 @@ export type RescheduleMatchTournamentsTournamentIdMatchesMatchIdReschedulePostRe
 
 export type RescheduleMatchTournamentsTournamentIdMatchesMatchIdReschedulePostResponse =
   RescheduleMatchTournamentsTournamentIdMatchesMatchIdReschedulePostResponses[keyof RescheduleMatchTournamentsTournamentIdMatchesMatchIdReschedulePostResponses];
+
+export type GiveWalkoverTournamentsTournamentIdMatchesMatchIdWalkoverPostData = {
+  body: WalkoverBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+    /**
+     * Match Id
+     */
+    match_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/matches/{match_id}/walkover';
+};
+
+export type GiveWalkoverTournamentsTournamentIdMatchesMatchIdWalkoverPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GiveWalkoverTournamentsTournamentIdMatchesMatchIdWalkoverPostError =
+  GiveWalkoverTournamentsTournamentIdMatchesMatchIdWalkoverPostErrors[keyof GiveWalkoverTournamentsTournamentIdMatchesMatchIdWalkoverPostErrors];
+
+export type GiveWalkoverTournamentsTournamentIdMatchesMatchIdWalkoverPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type GiveWalkoverTournamentsTournamentIdMatchesMatchIdWalkoverPostResponse =
+  GiveWalkoverTournamentsTournamentIdMatchesMatchIdWalkoverPostResponses[keyof GiveWalkoverTournamentsTournamentIdMatchesMatchIdWalkoverPostResponses];
 
 export type GetNextStageRankingsTournamentsTournamentIdNextStageRankingsGetData = {
   body?: never;
@@ -5586,6 +5754,42 @@ export type UpdateTeamByIdTournamentsTournamentIdTeamsTeamIdPutResponses = {
 export type UpdateTeamByIdTournamentsTournamentIdTeamsTeamIdPutResponse =
   UpdateTeamByIdTournamentsTournamentIdTeamsTeamIdPutResponses[keyof UpdateTeamByIdTournamentsTournamentIdTeamsTeamIdPutResponses];
 
+export type CheckInTeamTournamentsTournamentIdTeamsTeamIdCheckInPutData = {
+  body: CheckInBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+    /**
+     * Team Id
+     */
+    team_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/teams/{team_id}/check_in';
+};
+
+export type CheckInTeamTournamentsTournamentIdTeamsTeamIdCheckInPutErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CheckInTeamTournamentsTournamentIdTeamsTeamIdCheckInPutError =
+  CheckInTeamTournamentsTournamentIdTeamsTeamIdCheckInPutErrors[keyof CheckInTeamTournamentsTournamentIdTeamsTeamIdCheckInPutErrors];
+
+export type CheckInTeamTournamentsTournamentIdTeamsTeamIdCheckInPutResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type CheckInTeamTournamentsTournamentIdTeamsTeamIdCheckInPutResponse =
+  CheckInTeamTournamentsTournamentIdTeamsTeamIdCheckInPutResponses[keyof CheckInTeamTournamentsTournamentIdTeamsTeamIdCheckInPutResponses];
+
 export type UpdateTeamLogoTournamentsTournamentIdTeamsTeamIdLogoPostData = {
   body?: BodyUpdateTeamLogoTournamentsTournamentIdTeamsTeamIdLogoPost;
   path: {
@@ -5621,6 +5825,78 @@ export type UpdateTeamLogoTournamentsTournamentIdTeamsTeamIdLogoPostResponses = 
 
 export type UpdateTeamLogoTournamentsTournamentIdTeamsTeamIdLogoPostResponse =
   UpdateTeamLogoTournamentsTournamentIdTeamsTeamIdLogoPostResponses[keyof UpdateTeamLogoTournamentsTournamentIdTeamsTeamIdLogoPostResponses];
+
+export type ReinstateTeamTournamentsTournamentIdTeamsTeamIdReinstatePostData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+    /**
+     * Team Id
+     */
+    team_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/teams/{team_id}/reinstate';
+};
+
+export type ReinstateTeamTournamentsTournamentIdTeamsTeamIdReinstatePostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ReinstateTeamTournamentsTournamentIdTeamsTeamIdReinstatePostError =
+  ReinstateTeamTournamentsTournamentIdTeamsTeamIdReinstatePostErrors[keyof ReinstateTeamTournamentsTournamentIdTeamsTeamIdReinstatePostErrors];
+
+export type ReinstateTeamTournamentsTournamentIdTeamsTeamIdReinstatePostResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type ReinstateTeamTournamentsTournamentIdTeamsTeamIdReinstatePostResponse =
+  ReinstateTeamTournamentsTournamentIdTeamsTeamIdReinstatePostResponses[keyof ReinstateTeamTournamentsTournamentIdTeamsTeamIdReinstatePostResponses];
+
+export type WithdrawTeamFromTournamentTournamentsTournamentIdTeamsTeamIdWithdrawPostData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+    /**
+     * Team Id
+     */
+    team_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/teams/{team_id}/withdraw';
+};
+
+export type WithdrawTeamFromTournamentTournamentsTournamentIdTeamsTeamIdWithdrawPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type WithdrawTeamFromTournamentTournamentsTournamentIdTeamsTeamIdWithdrawPostError =
+  WithdrawTeamFromTournamentTournamentsTournamentIdTeamsTeamIdWithdrawPostErrors[keyof WithdrawTeamFromTournamentTournamentsTournamentIdTeamsTeamIdWithdrawPostErrors];
+
+export type WithdrawTeamFromTournamentTournamentsTournamentIdTeamsTeamIdWithdrawPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: CountResponse;
+};
+
+export type WithdrawTeamFromTournamentTournamentsTournamentIdTeamsTeamIdWithdrawPostResponse =
+  WithdrawTeamFromTournamentTournamentsTournamentIdTeamsTeamIdWithdrawPostResponses[keyof WithdrawTeamFromTournamentTournamentsTournamentIdTeamsTeamIdWithdrawPostResponses];
 
 export type CreateMultipleTeamsTournamentsTournamentIdTeamsMultiPostData = {
   body: TeamMultiBody;

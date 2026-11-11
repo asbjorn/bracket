@@ -81,7 +81,8 @@ async def sql_update_tournament(
             duration_minutes = :duration_minutes,
             margin_minutes = :margin_minutes,
             min_rest_minutes = :min_rest_minutes,
-            stage_buffer_minutes = :stage_buffer_minutes
+            stage_buffer_minutes = :stage_buffer_minutes,
+            walkover_goals = :walkover_goals
         WHERE tournaments.id = :tournament_id
         """
     await database.execute(
@@ -121,7 +122,8 @@ async def sql_create_tournament(tournament: TournamentBody) -> TournamentId:
             duration_minutes,
             margin_minutes,
             min_rest_minutes,
-            stage_buffer_minutes
+            stage_buffer_minutes,
+            walkover_goals
         )
         VALUES (
             :name,
@@ -135,7 +137,8 @@ async def sql_create_tournament(tournament: TournamentBody) -> TournamentId:
             :duration_minutes,
             :margin_minutes,
             :min_rest_minutes,
-            :stage_buffer_minutes
+            :stage_buffer_minutes,
+            :walkover_goals
         )
         RETURNING id
         """

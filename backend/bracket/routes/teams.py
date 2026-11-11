@@ -13,7 +13,9 @@ from bracket.database import database
 from bracket.logic.results_visibility import hide_team_statistics_of_private_categories
 from bracket.logic.subscriptions import check_requirement
 from bracket.logic.teams import get_team_logo_path
+from bracket.logic.walkovers import set_team_flag, withdraw_team
 from bracket.models.db.player import PlayerBody
+from bracket.models.db.score_link import CheckInBody
 from bracket.models.db.team import (
     FullTeamWithPlayers,
     Team,
@@ -28,6 +30,7 @@ from bracket.routes.auth import (
     user_authenticated_or_public_dashboard,
 )
 from bracket.routes.models import (
+    CountResponse,
     PaginatedTeams,
     SingleTeamResponse,
     SuccessResponse,
@@ -214,6 +217,45 @@ async def delete_team(
     ):
         await sql_delete_team(tournament_id, team.id)
 
+    return SuccessResponse()
+
+
+@router.post("/tournaments/{tournament_id}/teams/{team_id}/withdraw", response_model=CountResponse)
+async def withdraw_team_from_tournament(
+    tournament_id: TournamentId,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+    __: Tournament = Depends(disallow_archived_tournament),
+    team: Team = Depends(team_dependency),
+) -> CountResponse:
+    """
+    The team withdraws: its opponents get a walkover in all matches it hasn't played yet; the
+    schedule stays as it is. Returns the number of matches given as walkover.
+    """
+    return CountResponse(data=await withdraw_team(tournament_id, team.id))
+
+
+@router.post(
+    "/tournaments/{tournament_id}/teams/{team_id}/reinstate", response_model=SuccessResponse
+)
+async def reinstate_team(
+    tournament_id: TournamentId,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+    __: Tournament = Depends(disallow_archived_tournament),
+    team: Team = Depends(team_dependency),
+) -> SuccessResponse:
+    """Undoes the withdrawal mark. Walkovers that were given stay; change them per match."""
+    await set_team_flag(tournament_id, team.id, withdrawn=False)
+    return SuccessResponse()
+
+
+@router.put("/tournaments/{tournament_id}/teams/{team_id}/check_in", response_model=SuccessResponse)
+async def check_in_team(
+    tournament_id: TournamentId,
+    body: CheckInBody,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+    team: Team = Depends(team_dependency),
+) -> SuccessResponse:
+    await set_team_flag(tournament_id, team.id, checked_in=body.checked_in)
     return SuccessResponse()
 
 

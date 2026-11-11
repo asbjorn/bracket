@@ -51,6 +51,7 @@ export async function updateTournament(
   margin_minutes: number,
   min_rest_minutes: number,
   stage_buffer_minutes: number,
+  walkover_goals: number,
 ) {
   return createAxios()
     .put(`tournaments/${tournament_id}`, {
@@ -64,6 +65,7 @@ export async function updateTournament(
       margin_minutes,
       min_rest_minutes,
       stage_buffer_minutes,
+      walkover_goals,
     })
     .catch((response: any) => handleRequestError(response));
 }

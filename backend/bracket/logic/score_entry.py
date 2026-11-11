@@ -7,6 +7,7 @@ from fastapi import HTTPException
 from starlette import status
 
 from bracket.logic.match_results import save_match
+from bracket.logic.walkovers import record_walkover, set_team_flag, team_of
 from bracket.models.db.match import MatchWithDetails, MatchWithDetailsDefinitive
 from bracket.models.db.score_link import (
     ScoreEntryBody,
@@ -14,7 +15,7 @@ from bracket.models.db.score_link import (
     ScoreEntryView,
     ScoreLink,
 )
-from bracket.models.db.stage_item_inputs import StageItemInput, StageItemInputFinal
+from bracket.models.db.stage_item_inputs import StageItemInputFinal
 from bracket.models.db.tournament import TournamentStatus
 from bracket.sql.categories import get_all_categories_in_tournament
 from bracket.sql.courts import get_all_courts_in_tournament
@@ -32,12 +33,6 @@ async def score_link_dependency(token: str) -> ScoreLink:
             detail="This link is not valid (any more). Ask the organiser for a new one.",
         )
     return link
-
-
-def team_of(input_: StageItemInput | None) -> tuple[TeamId | None, str | None]:
-    if isinstance(input_, StageItemInputFinal):
-        return input_.team.id, input_.team.name
-    return None, None
 
 
 async def get_link_matches(
@@ -59,6 +54,11 @@ async def get_link_matches(
                         continue
                     team1_id, team1_name = team_of(match.stage_item_input1)
                     team2_id, team2_name = team_of(match.stage_item_input2)
+                    checked_in = {
+                        input_.team.id
+                        for input_ in (match.stage_item_input1, match.stage_item_input2)
+                        if isinstance(input_, StageItemInputFinal) and input_.team.checked_in
+                    }
                     entry = ScoreEntryMatch(
                         id=match.id,
                         round_id=match.round_id,
@@ -76,6 +76,8 @@ async def get_link_matches(
                         team1_name=team1_name,
                         team2_id=team2_id,
                         team2_name=team2_name,
+                        team1_checked_in=team1_id in checked_in,
+                        team2_checked_in=team2_id in checked_in,
                         score1=match.stage_item_input1_score,
                         score2=match.stage_item_input2_score,
                         penalties1=match.stage_item_input1_penalties,
@@ -97,11 +99,15 @@ async def get_score_entry_view(link: ScoreLink) -> ScoreEntryView:
         court_id=link.court_id,
         court_name=courts.get(link.court_id) if link.court_id is not None else None,
         expires_at=link.expires_at,
+        walkover_goals=tournament.walkover_goals,
         matches=[entry for entry, _ in await get_link_matches(link)],
     )
 
 
-async def enter_result(link: ScoreLink, match_id: MatchId, body: ScoreEntryBody) -> None:
+async def get_enterable_match(
+    link: ScoreLink, match_id: MatchId
+) -> tuple[ScoreEntryMatch, MatchWithDetails | MatchWithDetailsDefinitive]:
+    """A match of the link whose teams are known, in a tournament that isn't archived."""
     tournament = await sql_get_tournament(link.tournament_id)
     if tournament.status is TournamentStatus.ARCHIVED:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "The tournament is archived")
@@ -109,13 +115,36 @@ async def enter_result(link: ScoreLink, match_id: MatchId, body: ScoreEntryBody)
     found = next((pair for pair in await get_link_matches(link) if pair[0].id == match_id), None)
     if found is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "This match can't be entered with this link")
-    entry, match = found
-    if entry.team1_id is None or entry.team2_id is None:
+    if found[0].team1_id is None or found[0].team2_id is None:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST, "The teams of this match are not known yet"
         )
+    return found
 
+
+async def enter_result(link: ScoreLink, match_id: MatchId, body: ScoreEntryBody) -> None:
+    _, match = await get_enterable_match(link, match_id)
     match_body = body.to_match_body(
         match.round_id, match.court_id, match.custom_duration_minutes, match.custom_margin_minutes
     )
     await save_match(link.tournament_id, match, match_body)
+
+
+async def enter_walkover(link: ScoreLink, match_id: MatchId, winner_team_id: TeamId) -> None:
+    _, match = await get_enterable_match(link, match_id)
+    await record_walkover(link.tournament_id, match, winner_team_id)
+
+
+async def check_in_team(link: ScoreLink, team_id: TeamId, checked_in: bool) -> None:
+    """At the pitch, only teams that play a match of the link can be checked in."""
+    teams_of_link = {
+        team
+        for entry, _ in await get_link_matches(link)
+        for team in (entry.team1_id, entry.team2_id)
+        if team is not None
+    }
+    if team_id not in teams_of_link:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, "This team can't be checked in with this link"
+        )
+    await set_team_flag(link.tournament_id, team_id, checked_in=checked_in)

@@ -4,13 +4,21 @@ from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
 from bracket.config import config
-from bracket.logic.score_entry import enter_result, get_score_entry_view, score_link_dependency
+from bracket.logic.score_entry import (
+    check_in_team,
+    enter_result,
+    enter_walkover,
+    get_score_entry_view,
+    score_link_dependency,
+)
 from bracket.models.db.score_link import (
+    CheckInBody,
     MatchDayNoticeBody,
     ScoreEntryBody,
     ScoreLink,
     ScoreLinkBody,
     ScoreLinkCreated,
+    WalkoverBody,
 )
 from bracket.models.db.tournament import Tournament
 from bracket.models.db.user import UserPublic
@@ -33,7 +41,7 @@ from bracket.sql.score_links import (
     sql_revoke_score_link,
 )
 from bracket.sql.validation import check_foreign_keys_belong_to_tournament
-from bracket.utils.id_types import MatchDayNoticeId, MatchId, ScoreLinkId, TournamentId
+from bracket.utils.id_types import MatchDayNoticeId, MatchId, ScoreLinkId, TeamId, TournamentId
 
 router = APIRouter(prefix=config.api_prefix)
 
@@ -126,3 +134,20 @@ async def report_from_pitch(
     """E.g. "we're running 10 minutes late": shown to the organiser on the schedule page."""
     notice = await sql_create_notice(link.tournament_id, link.court_id, link.id, body)
     return MatchDayNoticeResponse(data=notice)
+
+
+@router.put("/score/{token}/matches/{match_id}/walkover", response_model=SuccessResponse)
+async def enter_match_walkover(
+    match_id: MatchId, body: WalkoverBody, link: ScoreLink = Depends(score_link_dependency)
+) -> SuccessResponse:
+    """The other team didn't show up: `winner_team_id` wins by the tournament's walkover score."""
+    await enter_walkover(link, match_id, body.winner_team_id)
+    return SuccessResponse()
+
+
+@router.put("/score/{token}/teams/{team_id}/check_in", response_model=SuccessResponse)
+async def check_in_team_at_pitch(
+    team_id: TeamId, body: CheckInBody, link: ScoreLink = Depends(score_link_dependency)
+) -> SuccessResponse:
+    await check_in_team(link, team_id, body.checked_in)
+    return SuccessResponse()

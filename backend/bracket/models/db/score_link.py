@@ -57,6 +57,8 @@ class ScoreEntryMatch(BaseModel):
     team1_name: str | None
     team2_id: TeamId | None
     team2_name: str | None
+    team1_checked_in: bool
+    team2_checked_in: bool
     score1: int
     score2: int
     penalties1: int | None
@@ -71,6 +73,8 @@ class ScoreEntryView(BaseModel):
     court_id: CourtId | None
     court_name: str | None
     expires_at: datetime_utc
+    # The result of a walkover, e.g. 3 for 3-0
+    walkover_goals: int
     matches: list[ScoreEntryMatch]
 
 
@@ -132,3 +136,11 @@ class MatchDayNotice(BaseModelORM):
     message: str
     created: datetime_utc
     resolved: bool
+
+
+class WalkoverBody(BaseModel):
+    winner_team_id: TeamId
+
+
+class CheckInBody(BaseModel):
+    checked_in: bool

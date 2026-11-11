@@ -23,6 +23,7 @@ class TournamentInsertable(BaseModelORM):
     margin_minutes: int = Field(..., ge=0)
     min_rest_minutes: int = Field(default=0, ge=0)
     stage_buffer_minutes: int = Field(default=10, ge=0)
+    walkover_goals: int = Field(default=3, ge=1)
     dashboard_public: bool
     dashboard_endpoint: str | None = None
     logo_path: str | None = None
@@ -48,6 +49,8 @@ class TournamentUpdateBody(BaseModelORM):
     min_rest_minutes: int = Field(default=0, ge=0, le=600)
     # Time between the last match of a stage and the first match of the next stage of a class
     stage_buffer_minutes: int = Field(default=10, ge=0, le=600)
+    # The result of a walkover: the team that showed up wins by this many goals to 0
+    walkover_goals: int = Field(default=3, ge=1, le=20)
 
 
 class TournamentChangeStatusBody(BaseModelORM):

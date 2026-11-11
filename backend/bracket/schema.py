@@ -34,6 +34,7 @@ tournaments = Table(
     # between the last match of a stage and the first match of the next stage of a class
     Column("min_rest_minutes", Integer, nullable=False, server_default="0"),
     Column("stage_buffer_minutes", Integer, nullable=False, server_default="10"),
+    Column("walkover_goals", Integer, nullable=False, server_default="3"),
     Column(
         "status",
         Enum(
@@ -235,6 +236,9 @@ teams = Table(
     Column("category_id", BigInteger, ForeignKey("categories.id"), index=True, nullable=True),
     # The club the team plays for, e.g. "Brann" for "Brann 2"; used in the group draw
     Column("club_name", String, nullable=True),
+    # A withdrawn team loses its remaining matches by walkover
+    Column("withdrawn", Boolean, nullable=False, server_default="f"),
+    Column("checked_in", Boolean, nullable=False, server_default="f"),
 )
 
 players = Table(

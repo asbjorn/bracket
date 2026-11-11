@@ -483,7 +483,6 @@
     "score_penalties_title": "Penalty shootout",
     "score_problem_penalties_equal": "A penalty shootout only follows an equal score.",
     "score_problem_penalties_winner": "The penalty shootout must have a winner.",
-    "score_problem_walkover_winner": "A walkover needs a winner, e.g. 3–0.",
     "score_saved_title": "Result saved",
     "score_save_button": "Save result",
     "score_update_button": "Change result",
@@ -501,5 +500,19 @@
     "score_all_played": "All matches have been played. Thank you!",
     "score_upcoming_title": "Next matches",
     "score_show_played": "Show played matches ({{count}})",
-    "score_hide_played": "Hide played matches"
+    "score_hide_played": "Hide played matches",
+    "walkover_goals_label": "Walkover score (goals)",
+    "walkover_goals_description": "A team that doesn't show up loses by this many goals to 0",
+    "withdrawn_badge": "Withdrawn",
+    "checked_in_label": "Checked in",
+    "check_in_button": "{{team}} is here",
+    "withdraw_team_button": "Withdraw",
+    "withdraw_team_title": "Withdraw {{team}}?",
+    "withdraw_team_description": "All matches the team hasn't played yet are given to its opponents as a walkover. The schedule stays the same. This can't be undone automatically: reinstating the team keeps the walkovers.",
+    "team_withdrawn_message": "{{team}} has been withdrawn; {{count}} matches were given as walkover.",
+    "reinstate_team_button": "Reinstate",
+    "team_reinstated_message": "{{team}} takes part again. Change walkovers per match if needed.",
+    "score_walkover_description": "Which team showed up? It wins {{goals}}–0.",
+    "score_walkover_winner_button": "{{team}} showed up",
+    "score_walkover_saved": "Walkover to {{team}}"
 }
