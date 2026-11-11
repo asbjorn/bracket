@@ -293,3 +293,26 @@ def test_merge_overlapping_windows() -> None:
         Window(at(13), at(15)),
         Window(at(15), at(16)),  # Touching windows stay separate: no match across them
     ]
+
+
+def test_shortfall_time_with_class_hours() -> None:
+    """
+    A class with its own hours that end with the day: more time at the end of the day helps
+    that class too (it used to say "more time doesn't help").
+    """
+    day = Window(at(9), at(10))
+    matches = [
+        MatchToPlan(
+            MatchId(index),
+            duration_minutes=60,
+            margin_minutes=0,
+            teams=frozenset({f"t{index}a", f"t{index}b"}),
+            windows=(day,),
+        )
+        for index in range(1, 4)
+    ]
+    courts = [CourtToPlan(CourtId(1))]
+    result = schedule_matches(matches, courts, [day])
+    assert len(result.unscheduled) == 2
+    shortfall = determine_shortfall(matches, courts, [day], result)
+    assert shortfall.extra_minutes == 120

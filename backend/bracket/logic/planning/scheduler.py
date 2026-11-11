@@ -488,11 +488,19 @@ def determine_shortfall(
         last = max(windows, key=lambda w: w.end)
 
         def fits_with_extra_steps(steps: int) -> bool:
-            minutes = steps * EXTRA_MINUTES_STEP
-            longer = [w for w in windows if w != last] + [
-                replace(last, end=last.end + minutes * MINUTE)
-            ]
-            return schedule_matches(matches, courts, longer).fits
+            later = last.end + steps * EXTRA_MINUTES_STEP * MINUTE
+
+            # The day gets longer for everyone: class and court hours that end with the cup's
+            # last window end later too, otherwise those classes could never use the extra time
+            def extended(own: tuple[Window, ...] | None) -> tuple[Window, ...] | None:
+                if own is None:
+                    return None
+                return tuple(replace(w, end=later) if w.end == last.end else w for w in own)
+
+            longer = [w for w in windows if w != last] + [replace(last, end=later)]
+            longer_matches = [replace(m, windows=extended(m.windows)) for m in matches]
+            longer_courts = [replace(c, windows=extended(c.windows)) for c in courts]
+            return schedule_matches(longer_matches, longer_courts, longer).fits
 
         steps = smallest_that_fits(
             1, MAX_EXTRA_MINUTES // EXTRA_MINUTES_STEP, fits_with_extra_steps
