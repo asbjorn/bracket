@@ -63,9 +63,9 @@ export default function PlayersTable({
       <Table.Tr key={player.id}>
         <Table.Td>
           {player.active ? (
-            <Badge color="green">Active</Badge>
+            <Badge color="green">{t('active')}</Badge>
           ) : (
-            <Badge color="red">Inactive</Badge>
+            <Badge color="red">{t('inactive')}</Badge>
           )}
         </Table.Td>
         <Table.Td>

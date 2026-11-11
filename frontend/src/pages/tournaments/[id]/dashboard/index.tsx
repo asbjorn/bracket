@@ -7,8 +7,9 @@ import { useTranslation } from 'react-i18next';
 import { DashboardFooter } from '@components/dashboard/footer';
 import { DoubleHeader, getTournamentHeadTitle } from '@components/dashboard/layout';
 import { NoContent } from '@components/no_content/empty_table_info';
-import { Time, compareDateTime, formatTime } from '@components/utils/datetime';
+import { Time, compareDateTime, spansMultipleDays } from '@components/utils/datetime';
 import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
+import { getScheduleHeaders } from '@components/utils/schedule_headers';
 import { Translator } from '@components/utils/types';
 import { responseIsValid, setTitle } from '@components/utils/util';
 import { getCourtsLive, getStagesLive } from '@services/adapter';
@@ -133,27 +134,23 @@ export function Schedule({
     .sort(
       (m1: any, m2: any) =>
         compareDateTime(m1.match.start_time, m2.match.start_time) ||
-        m1.match.court?.name.localeCompare(m2.match.court?.name),
+        (m1.match.court?.name ?? '').localeCompare(m2.match.court?.name ?? ''),
     );
+  const multipleDays = spansMultipleDays(sortedMatches.map((m: any) => m.match.start_time));
 
   const rows: React.JSX.Element[] = [];
 
   for (let c = 0; c < sortedMatches.length; c += 1) {
     const data = sortedMatches[c];
 
-    if (c < 1 || sortedMatches[c - 1].match.start_time) {
-      const startTime = formatTime(data.match.start_time);
-
-      if (c < 1 || startTime !== formatTime(sortedMatches[c - 1].match.start_time)) {
-        rows.push(
-          <Center mt="md" key={`time-${c}`}>
-            <Text size="xl" fw={800}>
-              {startTime}
-            </Text>
-          </Center>,
-        );
-      }
-    }
+    rows.push(
+      ...getScheduleHeaders({
+        startTime: data.match.start_time,
+        previousStartTime: c > 0 ? sortedMatches[c - 1].match.start_time : null,
+        multipleDays,
+        keySuffix: c,
+      }),
+    );
 
     rows.push(
       <ScheduleRow

@@ -22,14 +22,15 @@ import {
   UserPublicResponse,
 } from '@openapi';
 import dayjs from 'dayjs';
+import i18n from '../../i18n';
 import { getLogin, performLogout, tokenPresent } from './local_storage';
 
 export function handleRequestError(response: AxiosError) {
   if (response.code === 'ERR_NETWORK') {
     showNotification({
       color: 'red',
-      title: 'An error occurred',
-      message: 'Internal server error',
+      title: i18n.t('error_occurred_title'),
+      message: i18n.t('internal_server_error'),
       autoClose: 10000,
     });
     return;
@@ -51,7 +52,7 @@ export function handleRequestError(response: AxiosError) {
 
     showNotification({
       color: 'red',
-      title: 'An error occurred',
+      title: i18n.t('error_occurred_title'),
       message,
       autoClose: 10000,
     });

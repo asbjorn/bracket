@@ -43,6 +43,19 @@ class Config(BaseSettings):
     serve_frontend: bool = False
     api_prefix: str = ""
 
+    # Limits for regular (non-demo) accounts, see `bracket.logic.subscriptions`.
+    # Teams, players, courts, stages, stage items, rounds and rankings are counted per tournament,
+    # clubs per user and tournaments per club.
+    limit_max_teams: int = Field(128, ge=1)
+    limit_max_players: int = Field(256, ge=1)
+    limit_max_clubs: int = Field(32, ge=1)
+    limit_max_tournaments: int = Field(64, ge=1)
+    limit_max_courts: int = Field(32, ge=1)
+    limit_max_stages: int = Field(16, ge=1)
+    limit_max_stage_items: int = Field(64, ge=1)
+    limit_max_rounds: int = Field(64, ge=1)
+    limit_max_rankings: int = Field(16, ge=1)
+
     def is_cors_enabled(self) -> bool:
         return self.cors_origins != "*"
 

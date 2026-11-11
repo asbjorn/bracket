@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from heliclockter import datetime_utc
 
 from bracket.logic.ranking.calculation import recalculate_ranking_for_stage_item
 from bracket.logic.scheduling.elimination import (
@@ -22,7 +23,6 @@ from bracket.models.db.util import StageWithStageItems
 from bracket.sql.rounds import get_next_round_name, sql_create_round
 from bracket.sql.stage_items import get_stage_item
 from bracket.utils.id_types import StageId, StageItemId, TournamentId
-from tests.integration_tests.mocks import MOCK_NOW
 
 
 async def create_rounds_for_new_stage_item(
@@ -42,7 +42,7 @@ async def create_rounds_for_new_stage_item(
     for _ in range(rounds_count):
         await sql_create_round(
             RoundInsertable(
-                created=MOCK_NOW,
+                created=datetime_utc.now(),
                 is_draft=False,
                 stage_item_id=stage_item.id,
                 name=await get_next_round_name(tournament_id, stage_item.id),

@@ -18,8 +18,9 @@ import { useTranslation } from 'react-i18next';
 
 import MatchModal from '@components/modals/match_modal';
 import { NoContent } from '@components/no_content/empty_table_info';
-import { Time, formatTime } from '@components/utils/datetime';
+import { Time, compareDateTime, spansMultipleDays } from '@components/utils/datetime';
 import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
+import { getScheduleHeaders } from '@components/utils/schedule_headers';
 import { Translator } from '@components/utils/types';
 import { getTournamentIdFromRouter, responseIsValid } from '@components/utils/util';
 import { MatchWithDetails } from '@openapi';
@@ -159,27 +160,26 @@ function Schedule({
   const matches: any[] = Object.values(matchesLookup);
   const sortedMatches = matches
     .filter((m1: any) => m1.match.start_time != null)
-    .sort((m1: any, m2: any) => (m1.match.court?.name > m2.match.court?.name ? 1 : -1))
-    .sort((m1: any, m2: any) => (m1.match.start_time > m2.match.start_time ? 1 : -1));
+    .sort(
+      (m1: any, m2: any) =>
+        compareDateTime(m1.match.start_time, m2.match.start_time) ||
+        (m1.match.court?.name ?? '').localeCompare(m2.match.court?.name ?? ''),
+    );
+  const multipleDays = spansMultipleDays(sortedMatches.map((m: any) => m.match.start_time));
 
   const rows: React.JSX.Element[] = [];
 
   for (let c = 0; c < sortedMatches.length; c += 1) {
     const data = sortedMatches[c];
 
-    if (c < 1 || sortedMatches[c - 1].match.start_time) {
-      const startTime = formatTime(data.match.start_time);
-
-      if (c < 1 || startTime !== formatTime(sortedMatches[c - 1].match.start_time)) {
-        rows.push(
-          <Center mt="md" key={`time-${c}`}>
-            <Text size="xl" fw={800}>
-              {startTime}
-            </Text>
-          </Center>,
-        );
-      }
-    }
+    rows.push(
+      ...getScheduleHeaders({
+        startTime: data.match.start_time,
+        previousStartTime: c > 0 ? sortedMatches[c - 1].match.start_time : null,
+        multipleDays,
+        keySuffix: c,
+      }),
+    );
 
     rows.push(
       <ScheduleRow

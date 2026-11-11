@@ -21,7 +21,7 @@ import { SWRResponse } from 'swr';
 import CourtModal from '@components/modals/create_court_modal';
 import MatchModal from '@components/modals/match_modal';
 import { NoContent } from '@components/no_content/empty_table_info';
-import { Time } from '@components/utils/datetime';
+import { DayAndTime, Time, spansMultipleDays } from '@components/utils/datetime';
 import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
 import { TournamentMinimal } from '@components/utils/tournament';
 import { Translator } from '@components/utils/types';
@@ -45,12 +45,14 @@ function ScheduleRow({
   openMatchModal,
   stageItemsLookup,
   matchesLookup,
+  multipleDays,
 }: {
   index: number;
   match: MatchWithDetails;
   openMatchModal: any;
   stageItemsLookup: any;
   matchesLookup: any;
+  multipleDays: boolean;
 }) {
   const { t } = useTranslation();
   return (
@@ -86,7 +88,11 @@ function ScheduleRow({
               <Grid.Col span="content">
                 <Stack gap="xs" align="end">
                   <Badge variant="default" size="lg">
-                    {match.start_time != null ? <Time datetime={match.start_time} /> : null}
+                    {match.start_time == null ? null : multipleDays ? (
+                      <DayAndTime datetime={match.start_time} />
+                    ) : (
+                      <Time datetime={match.start_time} />
+                    )}
                   </Badge>
                   <Badge
                     color={stringToColour(`${matchesLookup[match.id].stageItem.id}`)}
@@ -112,6 +118,7 @@ function ScheduleColumn({
   stageItemsLookup,
   swrCourtsResponse,
   matchesLookup,
+  multipleDays,
 }: {
   tournamentId: number;
   court: Court;
@@ -120,6 +127,7 @@ function ScheduleColumn({
   stageItemsLookup: any;
   swrCourtsResponse: SWRResponse<CourtsResponse>;
   matchesLookup: any;
+  multipleDays: boolean;
 }) {
   const { t } = useTranslation();
   const rows = matches.map((match: MatchWithDetails, index: number) => (
@@ -129,6 +137,7 @@ function ScheduleColumn({
       matchesLookup={matchesLookup}
       match={match}
       openMatchModal={openMatchModal}
+      multipleDays={multipleDays}
       key={match.id}
     />
   ));
@@ -203,6 +212,11 @@ function Schedule({
   schedule: { court: Court; matches: MatchWithDetails[] }[];
   openMatchModal: CallableFunction;
 }) {
+  const multipleDays = spansMultipleDays(
+    schedule.flatMap((item) =>
+      item.matches.flatMap((match) => (match.start_time == null ? [] : [match.start_time])),
+    ),
+  );
   const columns = schedule.map((item) => (
     <ScheduleColumn
       tournamentId={tournament.id}
@@ -213,6 +227,7 @@ function Schedule({
       court={item.court}
       matches={item.matches}
       openMatchModal={openMatchModal}
+      multipleDays={multipleDays}
     />
   ));
 

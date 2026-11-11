@@ -26,11 +26,11 @@ export default function HomePage() {
         <Grid.Col span="content" className={classes.fullWithMobile}>
           <Select
             size="md"
-            placeholder="Pick value"
+            placeholder={t('tournament_filter_placeholder')}
             data={[
-              { label: 'All', value: 'ALL' },
-              { label: 'Archived', value: 'ARCHIVED' },
-              { label: 'Open', value: 'OPEN' },
+              { label: t('tournament_filter_all'), value: 'ALL' },
+              { label: t('archived_label'), value: 'ARCHIVED' },
+              { label: t('tournament_filter_open'), value: 'OPEN' },
             ]}
             allowDeselect={false}
             value={filter}

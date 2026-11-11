@@ -15,10 +15,10 @@ def matches_overlap(match1: Match, match2: Match) -> bool:
     ):
         return False
 
-    return not (
-        (match1.end_time < match2.end_time and match1.start_time < match2.start_time)
-        or (match1.start_time > match2.start_time or match1.end_time > match2.end_time)
-    )
+    # Two half-open intervals [start, end) overlap if each one starts before the other ends.
+    # `end_time` includes the margin, so a match starting exactly when the previous one
+    # (including margin) ends is not a conflict.
+    return match1.start_time < match2.end_time and match2.start_time < match1.end_time
 
 
 def get_conflicting_matches(

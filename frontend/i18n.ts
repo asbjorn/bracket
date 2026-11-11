@@ -8,7 +8,8 @@ i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    fallbackLng: 'en',
+    // Norwegian browsers may report `no` (Norwegian) or `nn` (Nynorsk), show those in Bokmål.
+    fallbackLng: { no: ['nb'], nn: ['nb'], default: ['en'] },
     defaultNS: 'common',
     interpolation: {
       escapeValue: false,

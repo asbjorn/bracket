@@ -90,7 +90,7 @@ function StageItemInputComboBox({
     .map((option: StageItemInputChoice, i: number) => (
       <Combobox.Option key={i} value={option.value}>
         <Group gap="xs" justify="space-between">
-          {option.label || <i>None</i>}
+          {option.label || <i>{t('none')}</i>}
           {option.value === selectedInput?.value && <CheckIcon size={12} />}
         </Group>
       </Combobox.Option>

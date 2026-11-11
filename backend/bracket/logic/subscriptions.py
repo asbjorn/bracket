@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from heliclockter import datetime_utc
 from pydantic import BaseModel
 
+from bracket.config import config
 from bracket.models.db.account import UserAccountType
 from bracket.models.db.club import ClubCreateBody
 from bracket.models.db.ranking import RankingCreateBody
@@ -45,15 +46,15 @@ demo_subscription = Subscription(
 
 
 regular_subscription = Subscription(
-    max_teams=128,
-    max_players=256,
-    max_clubs=32,
-    max_tournaments=64,
-    max_courts=32,
-    max_stages=16,
-    max_stage_items=64,
-    max_rounds=64,
-    max_rankings=16,
+    max_teams=config.limit_max_teams,
+    max_players=config.limit_max_players,
+    max_clubs=config.limit_max_clubs,
+    max_tournaments=config.limit_max_tournaments,
+    max_courts=config.limit_max_courts,
+    max_stages=config.limit_max_stages,
+    max_stage_items=config.limit_max_stage_items,
+    max_rounds=config.limit_max_rounds,
+    max_rankings=config.limit_max_rankings,
 )
 
 subscription_lookup = {

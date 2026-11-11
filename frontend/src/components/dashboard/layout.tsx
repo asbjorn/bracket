@@ -9,6 +9,7 @@ import {
   UnstyledButton,
 } from '@mantine/core';
 import QRCode from 'react-qr-code';
+import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
 
 import PreloadLink from '@components/utils/link';
@@ -75,13 +76,14 @@ export function TournamentTitle({ tournamentDataFull }: { tournamentDataFull: To
 }
 
 export function DoubleHeader({ tournamentData }: { tournamentData: Tournament }) {
+  const { t } = useTranslation();
   const navigate = useLocation();
   const endpoint = tournamentData.dashboard_endpoint || '';
   const pathName = navigate.pathname.replace('[id]', endpoint).replace(/\/+$/, '');
 
   const mainLinks = [
-    { link: `/tournaments/${endpoint}/dashboard`, label: 'Matches' },
-    { link: `/tournaments/${endpoint}/dashboard/standings`, label: 'Standings' },
+    { link: `/tournaments/${endpoint}/dashboard`, label: t('dashboard_matches_tab') },
+    { link: `/tournaments/${endpoint}/dashboard/standings`, label: t('dashboard_standings_tab') },
   ];
 
   const mainItems = mainLinks.map((item) => (

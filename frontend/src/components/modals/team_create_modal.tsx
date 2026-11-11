@@ -124,7 +124,7 @@ export default function TeamCreateModal({
   const [opened, setOpened] = useState(false);
   return (
     <>
-      <Modal opened={opened} onClose={() => setOpened(false)} title="Create Team">
+      <Modal opened={opened} onClose={() => setOpened(false)} title={t('create_team_modal_title')}>
         <Tabs defaultValue="single">
           <Tabs.List justify="center" grow>
             <Tabs.Tab value="single" leftSection={<IconUser size="0.8rem" />}>

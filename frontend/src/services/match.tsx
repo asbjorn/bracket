@@ -1,6 +1,7 @@
 import { showNotification } from '@mantine/notifications';
 
 import { MatchBody, MatchCreateBodyFrontend, MatchRescheduleBody } from '@openapi';
+import i18n from '../../i18n';
 import { createAxios, handleRequestError } from './adapter';
 
 export async function createMatch(tournament_id: number, match: MatchCreateBodyFrontend) {
@@ -33,7 +34,7 @@ export async function rescheduleMatch(
       if (response != null && response.status === 200) {
         showNotification({
           color: 'green',
-          title: 'Successfully rescheduled match',
+          title: i18n.t('match_rescheduled_title'),
           message: '',
         });
       }
