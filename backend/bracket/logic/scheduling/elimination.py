@@ -3,8 +3,7 @@ Single elimination (knockout) brackets for any number of teams.
 
 When the number of teams is not a power of two, some teams get a bye: they skip the first round
 and start in the second round. Teams fill the bracket from top to bottom in slot order, and the
-byes are spread evenly over the bracket, so teams with a bye meet winners of the first round
-where possible.
+byes follow standard seeding (see `get_seed_per_slot`), so they are spread over the bracket.
 """
 
 import math
@@ -45,15 +44,41 @@ Source = FromInput | FromMatch
 PlannedMatch = tuple[Source, Source]
 
 
+def standard_seed_order(bracket_size: int) -> list[int]:
+    """
+    The seeds (1 = best) at each position of a bracket, such that seed 1 plays the lowest seed,
+    and the best seeds can only meet as late as possible. E.g. for 8: [1, 8, 4, 5, 2, 7, 3, 6].
+    """
+    order = [1]
+    while len(order) < bracket_size:
+        size = len(order) * 2
+        order = [seed for previous in order for seed in (previous, size + 1 - previous)]
+    return order
+
+
+def get_bracket_size(team_count: int) -> int:
+    return 1 << math.ceil(math.log2(team_count))
+
+
 def get_bye_pairs(team_count: int) -> set[int]:
     """
     The pairs of the first round (of a bracket rounded up to a power of two) where a team gets
-    a bye, spread evenly over the bracket.
+    a bye: following standard seeding, the best seeds get a bye, spread over the bracket.
     """
-    bracket_size = 2 ** math.ceil(math.log2(team_count))
-    pair_count = bracket_size // 2
-    bye_count = bracket_size - team_count
-    return {(i * pair_count) // bye_count for i in range(bye_count)}
+    order = standard_seed_order(get_bracket_size(team_count))
+    return {
+        pair for pair in range(len(order) // 2) if max(order[2 * pair : 2 * pair + 2]) > team_count
+    }
+
+
+def get_seed_per_slot(team_count: int) -> list[int]:
+    """
+    Which seed to put in each slot, so that the bracket follows standard seeding: seed 1 plays
+    the lowest seed (or has a bye), etc. Slots fill the bracket from top to bottom.
+    """
+    return [
+        seed for seed in standard_seed_order(get_bracket_size(team_count)) if seed <= team_count
+    ]
 
 
 def plan_single_elimination(
@@ -69,7 +94,7 @@ def plan_single_elimination(
         raise ValueError("A third place match needs at least 4 teams")
 
     bye_pairs = get_bye_pairs(team_count)
-    pair_count = 2 ** math.ceil(math.log2(team_count)) // 2
+    pair_count = get_bracket_size(team_count) // 2
 
     first_round: list[PlannedMatch] = []
     positions: list[Source] = []

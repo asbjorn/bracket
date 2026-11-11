@@ -1706,6 +1706,69 @@
         "title": "PlayersResponse",
         "type": "object"
       },
+      "PlayoffBody": {
+        "description": "One knockout bracket, e.g. \"A playoff\" for placings [1, 2] of every group.",
+        "properties": {
+          "name": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "placings": {
+            "items": {
+              "minimum": 1.0,
+              "type": "integer"
+            },
+            "minItems": 1,
+            "title": "Placings",
+            "type": "array"
+          },
+          "third_place_match": {
+            "default": false,
+            "title": "Third Place Match",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "placings",
+          "third_place_match"
+        ],
+        "title": "PlayoffBody",
+        "type": "object"
+      },
+      "PlayoffsCreateBody": {
+        "description": "Creates a new stage after `group_stage_id` with a knockout bracket per playoff.",
+        "properties": {
+          "group_stage_id": {
+            "title": "Group Stage Id",
+            "type": "integer"
+          },
+          "playoffs": {
+            "items": {
+              "$ref": "#/components/schemas/PlayoffBody"
+            },
+            "minItems": 1,
+            "title": "Playoffs",
+            "type": "array"
+          },
+          "stage_name": {
+            "default": "Playoffs",
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Stage Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "group_stage_id",
+          "stage_name",
+          "playoffs"
+        ],
+        "title": "PlayoffsCreateBody",
+        "type": "object"
+      },
       "Ranking": {
         "properties": {
           "add_score_points": {
@@ -5421,6 +5484,64 @@
         "summary": "Create Multiple Players",
         "tags": [
           "Players"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/playoffs": {
+      "post": {
+        "description": "Creates a new stage with knockout playoffs, e.g. an A and a B playoff, after a group stage.\nTeams are seeded by their placing and teams from the same group meet as late as possible.",
+        "operationId": "create_playoffs_after_group_stage_tournaments__tournament_id__playoffs_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlayoffsCreateBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Playoffs After Group Stage",
+        "tags": [
+          "Stages"
         ]
       }
     },

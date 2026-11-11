@@ -7,6 +7,7 @@ import { CreateStageButtonLarge } from '@components/buttons/create_stage';
 import { CategoryWarnings } from '@components/info/category_warnings';
 import ActivateNextStageModal from '@components/modals/activate_next_stage_modal';
 import ActivatePreviousStageModal from '@components/modals/activate_previous_stage_modal';
+import CreatePlayoffsModal from '@components/modals/create_playoffs_modal';
 import { NoContent } from '@components/no_content/empty_table_info';
 import { CategorySelector, useSelectedCategory } from '@components/utils/category';
 import { TableSkeletonTwoColumnsSmall } from '@components/utils/skeletons';
@@ -47,6 +48,16 @@ export default function StagesPage() {
   );
   const stages = allStages.filter((stage) => (stage.category_id ?? null) === categoryId);
   const swrRankingsPerStageItemResponse = getRankingsPerStageItem(tournamentData.id, categoryId);
+
+  // Playoffs can follow the last stage with groups, unless the class hides results
+  const resultsHidden = categories.some((c) => c.id === categoryId && !c.results_public);
+  const groupStage = [...stages]
+    .sort((s1, s2) => s2.id - s1.id)
+    .find(
+      (stage) =>
+        stage.stage_items.length > 0 &&
+        stage.stage_items.every((item) => item.type === 'ROUND_ROBIN' || item.type === 'SWISS'),
+    );
   // Warnings depend on the structure of the stages, so check again after every change
   useEffect(() => {
     swrWarningsResponse.mutate();
@@ -108,6 +119,15 @@ export default function StagesPage() {
             swrRankingsPerStageItemResponse={swrRankingsPerStageItemResponse}
           />
         </Group>
+        {groupStage != null && !resultsHidden ? (
+          <CreatePlayoffsModal
+            // Remount when the group stage changes, so the presets fit its groups
+            key={groupStage.id}
+            tournamentId={tournamentData.id}
+            groupStage={groupStage}
+            swrStagesResponse={swrStagesResponse}
+          />
+        ) : null}
         <Group mt="1rem" align="top">
           <Builder
             tournament={tournamentDataFull}

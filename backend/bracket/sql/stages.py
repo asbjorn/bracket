@@ -133,7 +133,7 @@ async def sql_delete_stage(tournament_id: TournamentId, stage_id: StageId) -> No
 
 
 async def sql_create_stage(
-    tournament_id: TournamentId, category_id: CategoryId | None = None
+    tournament_id: TournamentId, category_id: CategoryId | None = None, name: str = "Stage"
 ) -> Stage:
     query = """
         INSERT INTO stages (created, is_active, name, tournament_id, category_id)
@@ -142,7 +142,7 @@ async def sql_create_stage(
         """
     result = await database.fetch_one(
         query=query,
-        values={"tournament_id": tournament_id, "name": "Stage", "category_id": category_id},
+        values={"tournament_id": tournament_id, "name": name, "category_id": category_id},
     )
 
     if result is None:

@@ -4,7 +4,9 @@ from bracket.logic.scheduling.elimination import (
     FromInput,
     FromMatch,
     get_bye_pairs,
+    get_seed_per_slot,
     plan_single_elimination,
+    standard_seed_order,
 )
 
 
@@ -70,3 +72,21 @@ def test_third_place_match() -> None:
 
     with pytest.raises(ValueError, match="at least 4 teams"):
         plan_single_elimination(3, third_place_match=True)
+
+
+def test_standard_seed_order() -> None:
+    assert standard_seed_order(2) == [1, 2]
+    assert standard_seed_order(4) == [1, 4, 2, 3]
+    assert standard_seed_order(8) == [1, 8, 4, 5, 2, 7, 3, 6]
+
+
+def test_five_teams_follow_standard_seeding() -> None:
+    """
+    Seed 1 meets the winner of 4 vs 5, seed 2 meets seed 3 (both had a bye).
+    """
+    assert get_seed_per_slot(5) == [1, 4, 5, 2, 3]
+    assert plan_single_elimination(5) == [
+        [(FromInput(1), FromInput(2))],
+        [(FromInput(0), winner(0, 0)), (FromInput(3), FromInput(4))],
+        [(winner(1, 0), winner(1, 1))],
+    ]

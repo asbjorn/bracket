@@ -859,6 +859,46 @@ export type PlayersResponse = {
 };
 
 /**
+ * PlayoffBody
+ *
+ * One knockout bracket, e.g. "A playoff" for placings [1, 2] of every group.
+ */
+export type PlayoffBody = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Placings
+   */
+  placings: Array<number>;
+  /**
+   * Third Place Match
+   */
+  third_place_match: boolean;
+};
+
+/**
+ * PlayoffsCreateBody
+ *
+ * Creates a new stage after `group_stage_id` with a knockout bracket per playoff.
+ */
+export type PlayoffsCreateBody = {
+  /**
+   * Group Stage Id
+   */
+  group_stage_id: number;
+  /**
+   * Playoffs
+   */
+  playoffs: Array<PlayoffBody>;
+  /**
+   * Stage Name
+   */
+  stage_name: string;
+};
+
+/**
  * Ranking
  */
 export type Ranking = {
@@ -3094,6 +3134,38 @@ export type CreateMultiplePlayersTournamentsTournamentIdPlayersMultiPostResponse
 
 export type CreateMultiplePlayersTournamentsTournamentIdPlayersMultiPostResponse =
   CreateMultiplePlayersTournamentsTournamentIdPlayersMultiPostResponses[keyof CreateMultiplePlayersTournamentsTournamentIdPlayersMultiPostResponses];
+
+export type CreatePlayoffsAfterGroupStageTournamentsTournamentIdPlayoffsPostData = {
+  body: PlayoffsCreateBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/playoffs';
+};
+
+export type CreatePlayoffsAfterGroupStageTournamentsTournamentIdPlayoffsPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreatePlayoffsAfterGroupStageTournamentsTournamentIdPlayoffsPostError =
+  CreatePlayoffsAfterGroupStageTournamentsTournamentIdPlayoffsPostErrors[keyof CreatePlayoffsAfterGroupStageTournamentsTournamentIdPlayoffsPostErrors];
+
+export type CreatePlayoffsAfterGroupStageTournamentsTournamentIdPlayoffsPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type CreatePlayoffsAfterGroupStageTournamentsTournamentIdPlayoffsPostResponse =
+  CreatePlayoffsAfterGroupStageTournamentsTournamentIdPlayoffsPostResponses[keyof CreatePlayoffsAfterGroupStageTournamentsTournamentIdPlayoffsPostResponses];
 
 export type GetRankingsTournamentsTournamentIdRankingsGetData = {
   body?: never;

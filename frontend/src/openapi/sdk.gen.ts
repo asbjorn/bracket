@@ -35,6 +35,9 @@ import type {
   CreateNewClubClubsPostData,
   CreateNewClubClubsPostErrors,
   CreateNewClubClubsPostResponses,
+  CreatePlayoffsAfterGroupStageTournamentsTournamentIdPlayoffsPostData,
+  CreatePlayoffsAfterGroupStageTournamentsTournamentIdPlayoffsPostErrors,
+  CreatePlayoffsAfterGroupStageTournamentsTournamentIdPlayoffsPostResponses,
   CreateRankingTournamentsTournamentIdRankingsPostData,
   CreateRankingTournamentsTournamentIdRankingsPostErrors,
   CreateRankingTournamentsTournamentIdRankingsPostResponses,
@@ -1013,6 +1016,39 @@ export const createMultiplePlayersTournamentsTournamentIdPlayersMultiPost = <
     responseType: 'json',
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/tournaments/{tournament_id}/players_multi',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Create Playoffs After Group Stage
+ *
+ * Creates a new stage with knockout playoffs, e.g. an A and a B playoff, after a group stage.
+ * Teams are seeded by their placing and teams from the same group meet as late as possible.
+ */
+export const createPlayoffsAfterGroupStageTournamentsTournamentIdPlayoffsPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    CreatePlayoffsAfterGroupStageTournamentsTournamentIdPlayoffsPostData,
+    ThrowOnError
+  >,
+): RequestResult<
+  CreatePlayoffsAfterGroupStageTournamentsTournamentIdPlayoffsPostResponses,
+  CreatePlayoffsAfterGroupStageTournamentsTournamentIdPlayoffsPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    CreatePlayoffsAfterGroupStageTournamentsTournamentIdPlayoffsPostResponses,
+    CreatePlayoffsAfterGroupStageTournamentsTournamentIdPlayoffsPostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/playoffs',
     ...options,
     headers: {
       'Content-Type': 'application/json',

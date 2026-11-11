@@ -5,12 +5,14 @@ from bracket.config import config
 from bracket.database import database
 from bracket.logic.results_visibility import hide_results_of_private_categories
 from bracket.logic.scheduling.builder import determine_available_inputs
+from bracket.logic.scheduling.create_playoffs import create_playoffs
 from bracket.logic.scheduling.handle_stage_activation import (
     get_updates_to_inputs_in_activated_stage,
     update_matches_in_activated_stage,
     update_matches_in_deactivated_stage,
 )
 from bracket.logic.subscriptions import check_requirement
+from bracket.models.db.playoffs import PlayoffsCreateBody
 from bracket.models.db.stage import Stage, StageActivateBody, StageCreateBody, StageUpdateBody
 from bracket.models.db.tournament import Tournament
 from bracket.models.db.user import UserPublic
@@ -101,6 +103,22 @@ async def create_stage(
     check_requirement(existing_stages, user, "max_stages")
 
     await sql_create_stage(tournament_id, stage_body.category_id)
+    return SuccessResponse()
+
+
+@router.post("/tournaments/{tournament_id}/playoffs", response_model=SuccessResponse)
+async def create_playoffs_after_group_stage(
+    tournament_id: TournamentId,
+    body: PlayoffsCreateBody,
+    user: UserPublic = Depends(user_authenticated_for_tournament),
+    _: Tournament = Depends(disallow_archived_tournament),
+) -> SuccessResponse:
+    """
+    Creates a new stage with knockout playoffs, e.g. an A and a B playoff, after a group stage.
+    Teams are seeded by their placing and teams from the same group meet as late as possible.
+    """
+    await check_foreign_keys_belong_to_tournament(body, tournament_id)
+    await create_playoffs(tournament_id, body, user)
     return SuccessResponse()
 
 
