@@ -253,6 +253,7 @@ async def check_in_team(
     tournament_id: TournamentId,
     body: CheckInBody,
     _: UserPublic = Depends(user_authenticated_for_tournament),
+    __: Tournament = Depends(disallow_archived_tournament),
     team: Team = Depends(team_dependency),
 ) -> SuccessResponse:
     await set_team_flag(tournament_id, team.id, checked_in=body.checked_in)

@@ -75,6 +75,7 @@ async def delete_stage_item(
     stage_item_id: StageItemId,
     _: UserPublic = Depends(user_authenticated_for_tournament),
     __: StageItemWithRounds = Depends(stage_item_dependency),
+    ___: Tournament = Depends(disallow_archived_tournament),
 ) -> SuccessResponse:
     with check_foreign_key_violation(
         {ForeignKey.matches_stage_item_input1_id_fkey, ForeignKey.matches_stage_item_input2_id_fkey}
@@ -89,6 +90,7 @@ async def create_stage_item(
     tournament_id: TournamentId,
     stage_body: StageItemCreateBody,
     user: UserPublic = Depends(user_authenticated_for_tournament),
+    _: Tournament = Depends(disallow_archived_tournament),
 ) -> SuccessResponse:
     await check_foreign_keys_belong_to_tournament(stage_body, tournament_id)
 
