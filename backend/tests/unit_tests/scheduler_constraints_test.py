@@ -226,3 +226,51 @@ def test_new_schedule_from_now_never_plans_in_the_past() -> None:
     result = schedule_matches(planned, [CourtToPlan(CourtId(1))], cup)
     assert result.assignments[MatchId(1)].start == at(9)
     assert [result.assignments[m.id].start for m in matches[1:]] == [at(13), at(13, 20)]
+
+
+def test_match_can_go_before_a_fixed_match_of_its_team() -> None:
+    """Team a's 09:30 match is already played; its other match still fits at 09:00."""
+    cup = [Window(at(9), at(17))]
+    played = match(1, "a b", None, fixed_court_id=CourtId(1), fixed_start=at(9, 30))
+    other = match(2, "a c", None)
+    result = schedule_matches(
+        [played, other], [CourtToPlan(CourtId(1)), CourtToPlan(CourtId(2))], cup
+    )
+    assert result.assignments[MatchId(2)].start == at(9)
+    # With rest it no longer fits before (20 min + 15 rest > 30): after the played match
+    rested = replace(other, rest_minutes=15)
+    result = schedule_matches(
+        [played, rested], [CourtToPlan(CourtId(1)), CourtToPlan(CourtId(2))], cup
+    )
+    assert result.assignments[MatchId(2)].start == at(9, 50)
+
+
+def test_replanning_around_fixed_matches_passes_checker() -> None:
+    """Property test: plan, fix a random part (played/started), plan the rest again."""
+    rng = random.Random(5)
+    for _ in range(60):
+        cup = [Window(at(9), at(12)), Window(at(13), at(17))]
+        courts = [CourtToPlan(CourtId(i), rng.choice([None, SEVEN])) for i in range(1, 4)]
+        matches: list[MatchToPlan] = []
+        for group_index in range(rng.randint(1, 3)):
+            matches += [
+                replace(m, game_format=SEVEN, rest_minutes=rng.choice([0, 10, 20]))
+                for m in group_matches(
+                    "ABC"[group_index], rng.randint(3, 5), 100 * (group_index + 1), duration=15
+                )
+            ]
+        first = schedule_matches(matches, courts, cup)
+        fixed_ids = {m.id for m in matches if m.id in first.assignments and rng.random() < 0.4}
+        replanned = [
+            replace(
+                m,
+                fixed_court_id=first.assignments[m.id].court_id,
+                fixed_start=first.assignments[m.id].start,
+            )
+            if m.id in fixed_ids
+            else replace(m, priority=(rng.randint(0, 9), *m.priority))
+            for m in matches
+        ]
+        result = schedule_matches(replanned, courts, cup)
+        assert not find_plan_issues(replanned, courts, cup, result.assignments)
+        assert all(result.assignments[i] == first.assignments[i] for i in fixed_ids)

@@ -182,6 +182,13 @@ class CourtBookings:
         self.starts[first:last] = [start_us]
         self.ends[first:last] = [end_us]
 
+    def overlap_end(self, start: int, end: int) -> int | None:
+        """The end of a booking that overlaps [start, end), if there is one."""
+        booking = bisect_right(self.ends, start)  # First booking that ends after the start
+        if booking < len(self.starts) and self.starts[booking] < end:
+            return self.ends[booking]
+        return None
+
     def earliest_start(
         self, ready: int, match: MatchToPlan, windows: list[tuple[int, int]], before: int | None
     ) -> int | None:
@@ -255,23 +262,29 @@ def ready_time(
     return ready
 
 
-def best_assignment(
+def best_assignment(  # pylint: disable=too-many-arguments
     match: MatchToPlan,
     ready: datetime_utc,
     courts: list[CourtToPlan],
     booked: dict[CourtId, CourtBookings],
     spans_for: Callable[[CourtToPlan, MatchToPlan], list[tuple[int, int]]],
+    team_conflict_end: Callable[[MatchToPlan, int], int | None] = lambda _match, _start: None,
 ) -> Assignment | None:
-    """The earliest start over all courts of the right format (first court on a tie)."""
+    """
+    The earliest start over all courts of the right format (first court on a tie).
+    `team_conflict_end`: when a start clashes with a fixed match of one of its teams, the end
+    of that clash (with rest), else `None`.
+    """
     ready_us = to_micros(ready)
     best: tuple[int, CourtId] | None = None
     for court in courts:
         if not court_fits(court, match):
             continue
         # Only a strictly earlier start beats the best court so far
-        start = booked[court.id].earliest_start(
-            ready_us, match, spans_for(court, match), None if best is None else best[0]
-        )
+        before = None if best is None else best[0]
+        start = booked[court.id].earliest_start(ready_us, match, spans_for(court, match), before)
+        while start is not None and (clash := team_conflict_end(match, start)) is not None:
+            start = booked[court.id].earliest_start(clash, match, spans_for(court, match), before)
         if start is not None:
             best = (start, court.id)
             if start == ready_us:
@@ -333,11 +346,32 @@ def schedule_matches(
             blocked.append(court.parent_id)
         for court_id in blocked:
             booked.setdefault(court_id, CourtBookings()).add(assignment.start, end)
-        for team in match.teams:
-            team_ready[team] = max(team_ready.get(team, end), end + match.rest_minutes * MINUTE)
+        if match.fixed_start is not None:
+            # A fixed match is a busy interval of its teams: others can be before or after it
+            for team in match.teams:
+                team_fixed.setdefault(team, CourtBookings()).add(
+                    assignment.start, end + match.rest_minutes * MINUTE
+                )
+        else:
+            for team in match.teams:
+                team_ready[team] = max(team_ready.get(team, end), end + match.rest_minutes * MINUTE)
         day_counts.add(match, assignment.start)
 
+    def team_conflict_end(match: MatchToPlan, start: int) -> int | None:
+        """A clash with a fixed match of one of the teams: when it ends (with its rest)."""
+        end = start + (match.duration_minutes + match.margin_minutes + match.rest_minutes) * (
+            60_000_000
+        )
+        clashes = [
+            clash
+            for team in match.teams
+            if team in team_fixed
+            and (clash := team_fixed[team].overlap_end(start, end)) is not None
+        ]
+        return max(clashes, default=None)
+
     # Matches that can't move are booked first
+    team_fixed: dict[str, CourtBookings] = {}
     movable = []
     for match in matches:
         if match.fixed_court_id is not None and match.fixed_start is not None:
@@ -368,7 +402,7 @@ def schedule_matches(
         ready = ready_time(match, earliest, result.assignments, match_by_id, team_ready)
         best = None
         while ready is not None:
-            best = best_assignment(match, ready, courts, booked, spans_for)
+            best = best_assignment(match, ready, courts, booked, spans_for, team_conflict_end)
             if best is None or not day_counts.is_full(match, best.start):
                 break
             # This day is full for one of its teams: try from the next day
