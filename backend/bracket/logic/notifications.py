@@ -44,6 +44,10 @@ MAX_REGISTRATION_EMAILS_HOUR = 60
 # flooded by creating many tournaments.
 MAX_EMAILS_PER_ADDRESS_DAY = 20
 MAX_EMAILS_PER_ADDRESS_DAY_CLUB = 100
+# A ceiling over the whole server as a last line of defence against flooding one address via
+# many clubs. Reaching it needs several clubs and accounts (bulk sends are limited per user).
+# All limits give the same generic error, so it reveals nothing about other organisers.
+MAX_EMAILS_PER_ADDRESS_DAY_SERVER = 300
 # A plain address, nothing that could add headers or recipients
 PLAIN_ADDRESS = re.compile(r"^[^\s@<>,;:\"()\[\]\\]+@[^\s@<>,;:\"()\[\]\\]+$")
 STALE_SENDING = timedelta(minutes=10)
@@ -273,11 +277,13 @@ async def queue(  # pylint: disable=too-many-arguments
             """
             SELECT
                 count(*) FILTER (WHERE n.tournament_id = :tournament_id) AS this_tournament,
-                count(*) AS club_tournaments
+                count(*) FILTER (
+                    WHERE t.club_id = (SELECT club_id FROM tournaments WHERE id = :tournament_id)
+                ) AS club_tournaments,
+                count(*) AS all_tournaments
             FROM notifications_sent n
             JOIN tournaments t ON t.id = n.tournament_id
-            WHERE t.club_id = (SELECT club_id FROM tournaments WHERE id = :tournament_id)
-            AND lower(n.recipient) = lower(:email)
+            WHERE lower(n.recipient) = lower(:email)
             AND n.status <> 'FAILED'
             AND n.created > now() - interval '1 day'
             """,
@@ -287,6 +293,7 @@ async def queue(  # pylint: disable=too-many-arguments
         over_limit = (
             int(counts["this_tournament"]) >= MAX_EMAILS_PER_ADDRESS_DAY
             or int(counts["club_tournaments"]) >= MAX_EMAILS_PER_ADDRESS_DAY_CLUB
+            or int(counts["all_tournaments"]) >= MAX_EMAILS_PER_ADDRESS_DAY_SERVER
         )
         inserted = await insert_notification(
             tournament_id, recipient, kind, dedupe_key, subject, body, reply_to
@@ -302,7 +309,7 @@ async def queue(  # pylint: disable=too-many-arguments
                 values={
                     "id": inserted,
                     "attempts": MAX_ATTEMPTS,
-                    "error": "Daily email limit for this address reached",
+                    "error": "Daily email limit reached",
                 },
             )
         return inserted is not None and not over_limit

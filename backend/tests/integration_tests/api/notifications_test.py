@@ -439,3 +439,40 @@ async def test_address_club_limit(
         assert sum(results) == 3
     finally:
         await clean_up(auth_context)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_address_server_limit(
+    startup_and_shutdown_uvicorn_server: None,
+    auth_context: AuthContext,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The ceiling over the whole server also holds (lowered here to test it with one cup)."""
+    monkeypatch.setattr(notifications, "MAX_EMAILS_PER_ADDRESS_DAY_SERVER", 3)
+    tournament_id = auth_context.tournament.id
+    try:
+        team_ids = await set_up_playable_cup(auth_context)
+        recipient = Recipient(
+            team_id=team_ids["Brann"],
+            team_name="Brann",
+            category_name=None,
+            contact_name="Kontakt",
+            email="server@example.org",
+        )
+        results = await asyncio.gather(
+            *(
+                queue(
+                    tournament_id,
+                    recipient,
+                    NotificationKind.ANNOUNCEMENT,
+                    f"server:{index}",
+                    "Subject",
+                    "Body",
+                    None,
+                )
+                for index in range(6)
+            )
+        )
+        assert sum(results) == 3
+    finally:
+        await clean_up(auth_context)
