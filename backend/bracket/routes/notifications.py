@@ -10,6 +10,7 @@ from bracket.logic.notifications import (
     set_language,
 )
 from bracket.logic.public_info import get_announcement
+from bracket.models.db.account import UserAccountType
 from bracket.models.db.tournament import Tournament
 from bracket.models.db.user import UserPublic
 from bracket.routes.auth import user_authenticated_for_tournament
@@ -26,14 +27,18 @@ from bracket.utils.rate_limit import SlidingWindowLimiter
 
 router = APIRouter(prefix=config.api_prefix)
 
-# Sending to all teams at once: at most 20 times an hour per tournament
+# Sending to all teams at once: at most 20 times an hour per tournament, 50 a day per user
 bulk_sends = SlidingWindowLimiter(limit=20, window_seconds=3600)
+bulk_sends_per_user = SlidingWindowLimiter(limit=50, window_seconds=24 * 3600)
 
 
-def check_can_send(tournament_id: TournamentId) -> None:
+def check_can_send(tournament_id: TournamentId, user: UserPublic) -> None:
     if get_email_sender() is None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Email is not set up on this server")
+    if user.account_type == UserAccountType.DEMO:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Demo accounts can't send emails")
     bulk_sends.check(str(tournament_id))
+    bulk_sends_per_user.check(str(user.id))
 
 
 @router.get("/tournaments/{tournament_id}/notifications", response_model=NotificationStatusResponse)
@@ -62,14 +67,14 @@ async def update_notification_settings(
 )
 async def email_announcement(
     tournament_id: TournamentId,
-    _: UserPublic = Depends(user_authenticated_for_tournament),
+    user: UserPublic = Depends(user_authenticated_for_tournament),
     __: Tournament = Depends(disallow_archived_tournament),
 ) -> NotificationsQueuedResponse:
     """Emails the current announcement to the contacts of all teams (once per text and team)."""
     announcement = await get_announcement(tournament_id)
     if announcement is None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "There is no announcement to send")
-    check_can_send(tournament_id)
+    check_can_send(tournament_id, user)
     return NotificationsQueuedResponse(
         data=await queue_announcement(tournament_id, announcement.text)
     )
@@ -81,7 +86,7 @@ async def email_announcement(
 async def email_schedule_changes(
     tournament_id: TournamentId,
     dry_run: bool = False,
-    _: UserPublic = Depends(user_authenticated_for_tournament),
+    user: UserPublic = Depends(user_authenticated_for_tournament),
     __: Tournament = Depends(disallow_archived_tournament),
 ) -> ScheduleNoticeResponse:
     """
@@ -89,5 +94,5 @@ async def email_schedule_changes(
     notice. `dry_run` only counts them.
     """
     if not dry_run:
-        check_can_send(tournament_id)
+        check_can_send(tournament_id, user)
     return ScheduleNoticeResponse(data=await queue_schedule_notices(tournament_id, dry_run=dry_run))

@@ -4,8 +4,15 @@ from email.message import EmailMessage
 import pytest
 
 from bracket.database import database
-from bracket.logic.notifications import process_pending, queue_registration_email
-from bracket.routes.notifications import bulk_sends
+from bracket.logic.notifications import (
+    MAX_EMAILS_PER_ADDRESS_DAY,
+    NotificationKind,
+    Recipient,
+    process_pending,
+    queue,
+    queue_registration_email,
+)
+from bracket.routes.notifications import bulk_sends, bulk_sends_per_user
 from bracket.schema import notifications_sent, team_registrations, teams, tournament_details
 from bracket.utils.email import set_email_sender
 from bracket.utils.http import HTTPMethod
@@ -46,6 +53,7 @@ async def clean_up(auth_context: AuthContext) -> None:
     tournament_id = auth_context.tournament.id
     set_email_sender(None)
     bulk_sends.hits.clear()
+    bulk_sends_per_user.hits.clear()
     await database.execute(
         notifications_sent.delete().where(notifications_sent.c.tournament_id == tournament_id)
     )
@@ -348,5 +356,39 @@ async def test_registration_email_limit_holds_under_concurrency(
             )
         )
         assert await process_pending(sender) == 3
+    finally:
+        await clean_up(auth_context)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_address_gets_limited_emails_per_day(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    """Whatever the kind of email, one address gets at most MAX_EMAILS_PER_ADDRESS_DAY a day."""
+    tournament_id = auth_context.tournament.id
+    try:
+        team_ids = await set_up_playable_cup(auth_context)
+        recipient = Recipient(
+            team_id=team_ids["Brann"],
+            team_name="Brann",
+            category_name=None,
+            contact_name="Kontakt",
+            email="flood@example.org",
+        )
+        results = await asyncio.gather(
+            *(
+                queue(
+                    tournament_id,
+                    recipient,
+                    NotificationKind.ANNOUNCEMENT,
+                    f"test:{index}",
+                    "Subject",
+                    "Body",
+                    None,
+                )
+                for index in range(MAX_EMAILS_PER_ADDRESS_DAY + 5)
+            )
+        )
+        assert sum(results) == MAX_EMAILS_PER_ADDRESS_DAY
     finally:
         await clean_up(auth_context)

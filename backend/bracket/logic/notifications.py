@@ -38,6 +38,8 @@ MAX_ATTEMPTS = 3
 # Sign-up confirmations (the public form can trigger them): per address a day, per cup an hour
 MAX_REGISTRATION_EMAILS_PER_ADDRESS = 3
 MAX_REGISTRATION_EMAILS_HOUR = 60
+# Any kind of email, over all tournaments: an address is never flooded
+MAX_EMAILS_PER_ADDRESS_DAY = 20
 # A plain address, nothing that could add headers or recipients
 PLAIN_ADDRESS = re.compile(r"^[^\s@<>,;:\"()\[\]\\]+@[^\s@<>,;:\"()\[\]\\]+$")
 STALE_SENDING = timedelta(minutes=10)
@@ -251,7 +253,39 @@ async def queue(  # pylint: disable=too-many-arguments
     body: str,
     reply_to: str | None,
 ) -> bool:
-    """Queues an email; `False` if this message (`dedupe_key`) was queued before."""
+    """
+    Queues an email; `False` if this message (`dedupe_key`) was queued before, or the address
+    already got `MAX_EMAILS_PER_ADDRESS_DAY` emails in the last day (checked under a lock).
+    """
+    async with database.transaction():
+        await database.execute(
+            "SELECT pg_advisory_xact_lock(hashtext(:key))",
+            values={"key": f"email-address:{recipient.email.lower()}"},
+        )
+        sent_today = await database.fetch_val(
+            """
+            SELECT count(*) FROM notifications_sent
+            WHERE lower(recipient) = lower(:email) AND created > now() - interval '1 day'
+            """,
+            values={"email": recipient.email},
+        )
+        if int(sent_today) >= MAX_EMAILS_PER_ADDRESS_DAY:
+            logger.warning(f"Not emailing team {recipient.team_id}: too many emails to the address")
+            return False
+        return await insert_notification(
+            tournament_id, recipient, kind, dedupe_key, subject, body, reply_to
+        )
+
+
+async def insert_notification(  # pylint: disable=too-many-arguments
+    tournament_id: TournamentId,
+    recipient: Recipient,
+    kind: NotificationKind,
+    dedupe_key: str,
+    subject: str,
+    body: str,
+    reply_to: str | None,
+) -> bool:
     inserted = await database.fetch_val(
         """
         INSERT INTO notifications_sent (
