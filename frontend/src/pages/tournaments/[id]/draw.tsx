@@ -108,6 +108,12 @@ export default function DrawPage() {
   const stages = (swrStagesResponse.data?.data ?? []).filter(isGroupStage);
 
   const [stageId, setStageId] = useState<string | null>(null);
+  // Start with the first class that still has empty places to draw into
+  useEffect(() => {
+    if (stageId != null || stages.length < 1) return;
+    const firstOpen = stages.find((s) => freeSlots(s) > 0) ?? stages[0];
+    setStageId(`${firstOpen.id}`);
+  }, [stageId, stages.length]);
   const stage = stages.find((s) => `${s.id}` === stageId) ?? null;
   const teams = getAllTeamsOfCategory(tournamentData.id, stage?.category_id ?? null).data ?? [];
 

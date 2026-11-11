@@ -931,7 +931,7 @@
     "server_error_registration_waitlist_empty": "Det er ingen lag på ventelisten.",
     "server_error_too_many_requests": "For mange forespørsler. Vent litt og prøv igjen.",
     "club_wizard_no_classes": "Cupen har ingen klasser ennå: lag klassene først (oppsett av cup eller Klasser).",
-    "club_wizard_no_teams_in_cup": "Det er ingen lag i cupen ennå: lag klubbens lag over.",
+    "club_wizard_no_teams_in_cup": "Det er ingen lag i cupen ennå: opprett klubbens lag over.",
     "club_no_overlap_label": "Lagene i klubben skal ikke spille samtidig",
     "club_no_overlap_description": "For eksempel når lagene har felles trenere eller spillere. Kampoppsettet holder dem fra hverandre.",
     "category_kind_label": "Type",

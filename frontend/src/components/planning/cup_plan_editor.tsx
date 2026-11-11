@@ -403,7 +403,14 @@ export function ClassesEditor({
       <Group>
         <Button
           variant="light"
-          onClick={() => onChange([...value, newClass(`K${value.length + 1}`, 12)])}
+          onClick={() => {
+            // A name that follows the age ("G12" → "J13" when the age changes), not yet used
+            const taken = new Set(value.map((item) => item.name));
+            const name =
+              ['G12', 'J12', 'G11', 'J11', 'G13', 'J13'].find((n) => !taken.has(n)) ??
+              `K${value.length + 1}`;
+            onChange([...value, newClass(name, Number(name.slice(1)) || 12)]);
+          }}
         >
           {t('add_category_title')}
         </Button>
