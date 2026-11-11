@@ -5,14 +5,12 @@ class is full) and the organiser's overview with contact details, payment and ex
 Contact details live in `team_registrations`, which is only read by the organiser's endpoints.
 """
 
-import csv
-import io
-
 from fastapi import HTTPException
 from heliclockter import datetime_utc
 from starlette import status
 
 from bracket.database import database
+from bracket.logic.subscriptions import check_requirement
 from bracket.models.db.category import Category
 from bracket.models.db.registration import (
     EntryFeeBody,
@@ -24,12 +22,16 @@ from bracket.models.db.registration import (
     RegistrationUpdateBody,
 )
 from bracket.models.db.team import PARTICIPATING_STATUSES, RegistrationStatus
+from bracket.models.db.tournament import TournamentStatus
 from bracket.sql.categories import get_all_categories_in_tournament
 from bracket.sql.stages import get_full_tournament_details
+from bracket.sql.tournaments import sql_get_tournament
+from bracket.sql.users import get_tournament_owner
+from bracket.utils.csv_export import to_csv
 from bracket.utils.id_types import CategoryId, TeamId, TournamentId
 
-# Sign-ups waiting for the organiser (registered or on the waitlist) per tournament
-MAX_PENDING_REGISTRATIONS = 500
+# Teams (any status, also rejected) per tournament: a cap on what the public form can create
+MAX_TEAMS_PER_TOURNAMENT = 500
 
 PARTICIPATING = tuple(sorted(status.value for status in PARTICIPATING_STATUSES))
 
@@ -58,6 +60,8 @@ async def participating_count(category_id: CategoryId) -> int:
 async def get_open_classes(
     tournament_id: TournamentId, now: datetime_utc
 ) -> list[PublicRegistrationClass]:
+    if (await sql_get_tournament(tournament_id)).status is TournamentStatus.ARCHIVED:
+        return []
     classes = []
     for category in await get_all_categories_in_tournament(tournament_id):
         if not is_open(category, now):
@@ -111,17 +115,25 @@ async def register_team(
         if not is_open(category, now):
             raise bad_request("Registration for this class is closed")
 
-        pending = await database.fetch_val(
-            """
-            SELECT count(*) FROM teams
-            JOIN team_registrations r ON r.team_id = teams.id
-            WHERE teams.tournament_id = :tournament_id
-            AND teams.registration_status IN ('REGISTERED', 'WAITLIST')
-            """,
-            values={"tournament_id": tournament_id},
+        tournament = await database.fetch_one(
+            "SELECT status FROM tournaments WHERE id = :id FOR SHARE", values={"id": tournament_id}
         )
-        if int(pending) >= MAX_PENDING_REGISTRATIONS:
-            raise bad_request("Too many registrations are waiting, please contact the organiser")
+        if tournament is None or tournament._mapping["status"] == TournamentStatus.ARCHIVED.value:
+            raise bad_request("Registration for this cup is closed")
+
+        team_count = int(
+            await database.fetch_val(
+                "SELECT count(*) FROM teams WHERE tournament_id = :tournament_id",
+                values={"tournament_id": tournament_id},
+            )
+        )
+        if team_count >= MAX_TEAMS_PER_TOURNAMENT:
+            raise bad_request("Too many teams are registered, please contact the organiser")
+        # The same limits as when the organiser adds teams: the subscription of the owner
+        owner = await get_tournament_owner(tournament_id)
+        if owner is None:
+            raise bad_request("Registration for this cup is closed")
+        check_requirement([None] * team_count, owner, "max_teams")
 
         duplicate = await database.fetch_val(
             """
@@ -338,13 +350,6 @@ CSV_HEADERS = {
     ],
 }  # fmt: skip
 YES_NO = {"en": ("Yes", "No"), "nb": ("Ja", "Nei")}
-# Spreadsheets run cells starting with these as formulas (CSV injection)
-FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
-
-
-def csv_cell(value: object) -> str:
-    text = "" if value is None else str(value)
-    return "'" + text if text.startswith(FORMULA_PREFIXES) else text
 
 
 def registrations_csv(
@@ -354,13 +359,10 @@ def registrations_csv(
     language = language if language in CSV_HEADERS else "en"
     yes, no = YES_NO[language]
     names = {category.id: category.name for category in categories}
-    output = io.StringIO()
-    writer = csv.writer(output, delimiter=";", lineterminator="\r\n")
-    writer.writerow(CSV_HEADERS[language])
-    for r in registrations:
-        writer.writerow(
-            csv_cell(value)
-            for value in (
+    return to_csv(
+        CSV_HEADERS[language],
+        (
+            (
                 names.get(r.category_id) if r.category_id is not None else "",
                 r.team_name,
                 r.club_name,
@@ -375,5 +377,6 @@ def registrations_csv(
                 yes if r.squad_reported else no,
                 yes if r.withdrawn else no,
             )
-        )
-    return "﻿" + output.getvalue()
+            for r in registrations
+        ),
+    )

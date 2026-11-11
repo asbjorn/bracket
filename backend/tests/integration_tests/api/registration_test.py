@@ -6,6 +6,7 @@ from heliclockter import datetime_utc
 
 from bracket.database import database
 from bracket.routes.registrations import public_sign_ups
+from bracket.schema import tournaments, users
 from bracket.utils.http import HTTPMethod
 from bracket.utils.types import JsonDict
 from tests.integration_tests.api.cup_setup_test import G10, delete_cup
@@ -249,10 +250,64 @@ async def test_registrations_csv(
         ):
             assert resp.headers["Content-Type"] == "text/csv; charset=utf-8"
             text = (await resp.read()).decode("utf-8")
-        assert text.startswith("﻿Klasse;Lag;Klubb;Status")
-        assert "G10;'=HYPERLINK(1);;REGISTERED;;Kari Nordmann;" + EMAIL in text
-        assert ";'@SUM(A1);" in text
-        assert text.endswith("Nei;Nei;Nei\r\n")
+        assert text.startswith('﻿"Klasse";"Lag";"Klubb";"Status"')
+        assert '"G10";"\'=HYPERLINK(1)";"";"REGISTERED";"";"Kari Nordmann";"' + EMAIL in text
+        assert ';"\'@SUM(A1)";' in text
+        assert text.endswith('"Nei";"Nei";"Nei"\r\n')
     finally:
+        public_sign_ups.hits.clear()
+        await delete_cup(auth_context)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_sign_up_respects_archive_and_subscription(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    tournament_id = auth_context.tournament.id
+    user_id = auth_context.user.id
+    public_sign_ups.hits.clear()
+    try:
+        category_id = await create_class(auth_context, {"registration_open": True})
+
+        # An archived cup takes no sign-ups and shows no open classes
+        await database.execute(
+            tournaments.update().where(tournaments.c.id == tournament_id),
+            values={"status": "ARCHIVED"},
+        )
+        classes = await send_request(
+            HTTPMethod.GET, f"tournaments/{tournament_id}/registration/classes"
+        )
+        assert classes == {"data": []}
+        archived = await public_post(tournament_id, sign_up(category_id, "Lyn"))
+        assert archived == {"detail": "Can't update archived tournament"}
+        await database.execute(
+            tournaments.update().where(tournaments.c.id == tournament_id),
+            values={"status": "OPEN"},
+        )
+
+        # The owner's subscription limits the teams, also those that sign up themselves
+        await database.execute(
+            users.update().where(users.c.id == user_id), values={"account_type": "DEMO"}
+        )
+        existing = int(
+            await database.fetch_val(
+                "SELECT count(*) FROM teams WHERE tournament_id = :id", values={"id": tournament_id}
+            )
+        )
+        allowed = 8 - existing
+        results = [
+            await public_post(tournament_id, sign_up(category_id, f"Lag {number}"))
+            for number in range(allowed + 1)
+        ]
+        assert [("data" in result) for result in results] == [True] * allowed + [False]
+        assert results[-1] == {"detail": "Your `DEMO` subscription allows a maximum of 8 teams."}
+    finally:
+        await database.execute(
+            users.update().where(users.c.id == user_id), values={"account_type": "REGULAR"}
+        )
+        await database.execute(
+            tournaments.update().where(tournaments.c.id == tournament_id),
+            values={"status": "OPEN"},
+        )
         public_sign_ups.hits.clear()
         await delete_cup(auth_context)

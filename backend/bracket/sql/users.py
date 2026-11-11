@@ -57,6 +57,21 @@ async def get_user_is_tournament_owner(tournament_id: TournamentId, user_id: Use
     return await database.fetch_one(query, values=values) is not None
 
 
+async def get_tournament_owner(tournament_id: TournamentId) -> UserPublic | None:
+    """The (first) owner of the club of the tournament: their subscription sets its limits."""
+    query = """
+        SELECT users.*
+        FROM users
+        JOIN users_x_clubs ON users_x_clubs.user_id = users.id
+        JOIN tournaments t ON t.club_id = users_x_clubs.club_id
+        WHERE t.id = :tournament_id AND users_x_clubs.relation = 'OWNER'
+        ORDER BY users.id
+        LIMIT 1
+        """
+    result = await database.fetch_one(query, values={"tournament_id": tournament_id})
+    return UserPublic.model_validate(dict(result._mapping)) if result is not None else None
+
+
 async def update_user(user_id: UserId, user: UserToUpdate) -> None:
     query = """
         UPDATE users

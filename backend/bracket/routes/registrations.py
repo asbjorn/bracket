@@ -65,6 +65,7 @@ async def register_team_publicly(
     body: PublicRegistrationBody,
     request: Request,
     _: UserPublic | None = Depends(user_authenticated_or_public_dashboard),
+    __: Tournament = Depends(disallow_archived_tournament),
 ) -> PublicRegistrationResponse:
     """
     Public sign-up of a team (only for a public cup, an open class and before the deadline).
