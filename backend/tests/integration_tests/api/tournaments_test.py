@@ -269,3 +269,26 @@ async def test_non_public_tournament_endpoints_blocked_for_unauthenticated_users
                 f"Expected 401 for unauthenticated access to non-public endpoint {endpoint!r}, "
                 f"got: {response}"
             )
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_delete_tournament_with_participating_clubs(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    """Clubs (made by the wizard or by public sign-up) go together with the tournament."""
+    async with inserted_tournament(
+        DUMMY_TOURNAMENT.model_copy(
+            update={"club_id": auth_context.club.id, "dashboard_endpoint": None}
+        )
+    ) as tournament_inserted:
+        context = auth_context.model_copy(update={"tournament": tournament_inserted})
+        response = await send_tournament_request(
+            HTTPMethod.POST,
+            "participating_clubs",
+            context,
+            json={"name": "Brann", "new_teams": [], "team_ids": []},
+        )
+        assert "data" in response or response == SUCCESS_RESPONSE, response
+        assert await send_tournament_request(HTTPMethod.DELETE, "", context) == SUCCESS_RESPONSE
+
+    await sql_delete_tournament(tournament_inserted.id)

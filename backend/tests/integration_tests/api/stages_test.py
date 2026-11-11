@@ -1,5 +1,7 @@
 import pytest
 
+from bracket.database import database
+from bracket.models.db.stage_item_inputs import StageItemInputInsertable
 from bracket.schema import rounds, stage_items, stages
 from bracket.sql.stages import get_full_tournament_details
 from bracket.utils.dummy_records import (
@@ -22,6 +24,7 @@ from tests.integration_tests.sql import (
     inserted_round,
     inserted_stage,
     inserted_stage_item,
+    inserted_stage_item_input,
     inserted_team,
 )
 
@@ -202,3 +205,42 @@ async def test_get_next_stage_rankings(
         )
 
     assert response == {"data": {}}
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_delete_stage_used_for_best_placed_teams(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    """A clear 400 instead of a server error when a later stage still refers to the stage."""
+    tournament_id = auth_context.tournament.id
+    async with (
+        inserted_stage(DUMMY_STAGE1.model_copy(update={"tournament_id": tournament_id})) as first,
+        inserted_stage(DUMMY_STAGE2.model_copy(update={"tournament_id": tournament_id})) as later,
+        inserted_stage_item(
+            DUMMY_STAGE_ITEM1.model_copy(
+                update={"stage_id": later.id, "ranking_id": auth_context.ranking.id}
+            )
+        ) as playoff,
+        inserted_stage_item_input(
+            StageItemInputInsertable(
+                slot=0, team_id=None, tournament_id=tournament_id, stage_item_id=playoff.id
+            )
+        ) as best_input,
+    ):
+        await database.execute(
+            "UPDATE stage_item_inputs SET best_from_stage_id = :stage_id, winner_position = 2, "
+            "best_rank = 1 WHERE id = :id",
+            values={"stage_id": first.id, "id": best_input.id},
+        )
+        response = await send_tournament_request(
+            HTTPMethod.DELETE, f"stages/{first.id}", auth_context
+        )
+        assert response == {
+            "detail": "A later stage takes its best placed teams from this stage, "
+            "delete that one first"
+        }
+        await database.execute(
+            "UPDATE stage_item_inputs SET best_from_stage_id = NULL, best_rank = NULL, "
+            "winner_position = NULL WHERE id = :id",
+            values={"id": best_input.id},
+        )

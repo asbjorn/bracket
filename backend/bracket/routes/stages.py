@@ -38,6 +38,7 @@ from bracket.sql.stages import (
 )
 from bracket.sql.teams import get_teams_with_members
 from bracket.sql.validation import check_foreign_keys_belong_to_tournament
+from bracket.utils.errors import ForeignKey, check_foreign_key_violation
 from bracket.utils.id_types import CategoryId, StageId, TournamentId
 
 router = APIRouter(prefix=config.api_prefix)
@@ -84,7 +85,8 @@ async def delete_stage(
             detail="Stage is active, please activate another stage first",
         )
 
-    await sql_delete_stage(tournament_id, stage_id)
+    with check_foreign_key_violation({ForeignKey.stage_item_inputs_best_from_stage_id_fkey}):
+        await sql_delete_stage(tournament_id, stage_id)
 
     return SuccessResponse()
 

@@ -6,6 +6,7 @@ import asyncpg  # type: ignore[import-untyped]
 from fastapi import HTTPException
 from starlette import status
 
+from bracket.utils.logging import logger
 from bracket.utils.types import EnumAutoStr
 
 
@@ -34,6 +35,7 @@ class ForeignKey(EnumAutoStr):
     teams_tournament_id_fkey = auto()
     tournaments_club_id_fkey = auto()
     rankings_tournament_id_fkey = auto()
+    stage_item_inputs_best_from_stage_id_fkey = auto()
 
 
 unique_index_violation_error_lookup = {
@@ -76,7 +78,13 @@ foreign_key_violation_error_lookup = {
     ForeignKey.rankings_tournament_id_fkey: (
         "This tournament still has rankings, delete those first"
     ),
+    ForeignKey.stage_item_inputs_best_from_stage_id_fkey: (
+        "A later stage takes its best placed teams from this stage, delete that one first"
+    ),
 }
+
+# For a reference the endpoint didn't expect: still a clear answer instead of a server error
+GENERIC_FOREIGN_KEY_VIOLATION = "This is still in use elsewhere, so it can't be changed or deleted"
 
 
 @contextmanager
@@ -106,18 +114,17 @@ def check_foreign_key_violation(expected_violations: set[ForeignKey]) -> Iterato
     try:
         yield
     except asyncpg.exceptions.ForeignKeyViolationError as exc:
-        constraint_name = exc.as_dict()["constraint_name"]
-        assert constraint_name, "ForeignKeyViolationError occurred but no constraint_name defined"
-        assert constraint_name in ForeignKey.values(), (
-            f"Unknown ForeignKeyViolationError occurred: {constraint_name}"
-        )
-        constraint = ForeignKey(constraint_name)
-
+        constraint_name = exc.as_dict().get("constraint_name")
+        constraint = ForeignKey(constraint_name) if constraint_name in ForeignKey.values() else None
         if (
-            constraint not in foreign_key_violation_error_lookup
+            constraint is None
+            or constraint not in foreign_key_violation_error_lookup
             or constraint not in expected_violations
         ):
-            raise exc
+            logger.warning(f"Unexpected foreign key violation: {constraint_name}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=GENERIC_FOREIGN_KEY_VIOLATION
+            ) from exc
 
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

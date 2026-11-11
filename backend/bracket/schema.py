@@ -260,7 +260,13 @@ participating_clubs = Table(
     "participating_clubs",
     metadata,
     Column("id", BigInteger, primary_key=True, index=True),
-    Column("tournament_id", BigInteger, ForeignKey("tournaments.id"), index=True, nullable=False),
+    Column(
+        "tournament_id",
+        BigInteger,
+        ForeignKey("tournaments.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    ),
     Column("name", Text, nullable=False),
     Column("created", DateTimeTZ, nullable=False, server_default=func.now()),
     Index(
