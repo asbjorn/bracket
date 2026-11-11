@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 from bracket.logic.category_warnings import CategoryWarning
+from bracket.logic.planning.propose import ScheduleProposal
 from bracket.logic.scheduling.handle_stage_activation import StageItemInputUpdate
 from bracket.models.db.category import Category
 from bracket.models.db.club import Club
@@ -100,6 +101,10 @@ class CategoriesResponse(DataResponse[list[Category]]):
 
 
 class TimeWindowsResponse(DataResponse[list[TimeWindow]]):
+    pass
+
+
+class ScheduleProposalResponse(DataResponse[ScheduleProposal]):
     pass
 
 

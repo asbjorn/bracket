@@ -585,6 +585,30 @@
         "title": "DemoUserToRegister",
         "type": "object"
       },
+      "ExtraCourts": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "game_format": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GameFormat"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "game_format",
+          "count"
+        ],
+        "title": "ExtraCourts",
+        "type": "object"
+      },
       "FullTeamWithPlayers": {
         "properties": {
           "active": {
@@ -1979,6 +2003,30 @@
         "title": "PlayoffsCreateBody",
         "type": "object"
       },
+      "ProposedMatch": {
+        "properties": {
+          "court_id": {
+            "title": "Court Id",
+            "type": "integer"
+          },
+          "match_id": {
+            "title": "Match Id",
+            "type": "integer"
+          },
+          "start_time": {
+            "format": "date-time",
+            "title": "Start Time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "match_id",
+          "court_id",
+          "start_time"
+        ],
+        "title": "ProposedMatch",
+        "type": "object"
+      },
       "Ranking": {
         "properties": {
           "add_score_points": {
@@ -2284,6 +2332,115 @@
           "matches"
         ],
         "title": "RoundWithMatches",
+        "type": "object"
+      },
+      "ScheduleProposal": {
+        "properties": {
+          "available_court_minutes": {
+            "title": "Available Court Minutes",
+            "type": "integer"
+          },
+          "extra_courts": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ExtraCourts"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Courts"
+          },
+          "extra_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Minutes"
+          },
+          "first_start": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Start"
+          },
+          "last_end": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last End"
+          },
+          "matches": {
+            "items": {
+              "$ref": "#/components/schemas/ProposedMatch"
+            },
+            "title": "Matches",
+            "type": "array"
+          },
+          "matches_total": {
+            "title": "Matches Total",
+            "type": "integer"
+          },
+          "required_court_minutes": {
+            "title": "Required Court Minutes",
+            "type": "integer"
+          },
+          "unscheduled_match_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Unscheduled Match Ids",
+            "type": "array"
+          },
+          "uses_default_window": {
+            "title": "Uses Default Window",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "matches_total",
+          "unscheduled_match_ids",
+          "first_start",
+          "last_end",
+          "required_court_minutes",
+          "available_court_minutes",
+          "uses_default_window",
+          "extra_courts",
+          "extra_minutes",
+          "matches"
+        ],
+        "title": "ScheduleProposal",
+        "type": "object"
+      },
+      "ScheduleProposalResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ScheduleProposal"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ScheduleProposalResponse",
         "type": "object"
       },
       "SingleCategoryResponse": {
@@ -6507,6 +6664,102 @@
         "summary": "Update Round By Id",
         "tags": [
           "Rounds"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/schedule/apply": {
+      "post": {
+        "description": "Plans all matches like `schedule/propose` and saves the result. Matches that don't fit are\nleft without a court and time.",
+        "operationId": "apply_match_schedule_tournaments__tournament_id__schedule_apply_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleProposalResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Apply Match Schedule",
+        "tags": [
+          "Matches"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/schedule/propose": {
+      "post": {
+        "description": "Plans all matches on courts and times within the time windows, without saving. Played\nmatches keep their place. Reports what's missing (courts or time) if not everything fits.",
+        "operationId": "propose_match_schedule_tournaments__tournament_id__schedule_propose_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleProposalResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Propose Match Schedule",
+        "tags": [
+          "Matches"
         ]
       }
     },

@@ -5,10 +5,12 @@ from bracket.config import config
 from bracket.logic.planning.conflicts import handle_conflicts
 from bracket.logic.planning.matches import (
     get_scheduled_matches,
+    get_windows,
     handle_match_reschedule,
     reorder_matches_for_court,
     schedule_all_unscheduled_matches,
 )
+from bracket.logic.planning.propose import apply_schedule, propose_schedule
 from bracket.logic.ranking.calculation import (
     recalculate_ranking_for_stage_item,
 )
@@ -29,7 +31,12 @@ from bracket.models.db.stage_item import StageType
 from bracket.models.db.tournament import Tournament
 from bracket.models.db.user import UserPublic
 from bracket.routes.auth import user_authenticated_for_tournament
-from bracket.routes.models import SingleMatchResponse, SuccessResponse, UpcomingMatchesResponse
+from bracket.routes.models import (
+    ScheduleProposalResponse,
+    SingleMatchResponse,
+    SuccessResponse,
+    UpcomingMatchesResponse,
+)
 from bracket.routes.util import disallow_archived_tournament, match_dependency
 from bracket.sql.courts import get_all_courts_in_tournament
 from bracket.sql.matches import (
@@ -131,6 +138,33 @@ async def create_match(
     return SingleMatchResponse(data=await sql_create_match(body_with_durations))
 
 
+@router.post(
+    "/tournaments/{tournament_id}/schedule/propose", response_model=ScheduleProposalResponse
+)
+async def propose_match_schedule(
+    tournament_id: TournamentId,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+) -> ScheduleProposalResponse:
+    """
+    Plans all matches on courts and times within the time windows, without saving. Played
+    matches keep their place. Reports what's missing (courts or time) if not everything fits.
+    """
+    return ScheduleProposalResponse(data=await propose_schedule(tournament_id))
+
+
+@router.post("/tournaments/{tournament_id}/schedule/apply", response_model=ScheduleProposalResponse)
+async def apply_match_schedule(
+    tournament_id: TournamentId,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+    __: Tournament = Depends(disallow_archived_tournament),
+) -> ScheduleProposalResponse:
+    """
+    Plans all matches like `schedule/propose` and saves the result. Matches that don't fit are
+    left without a court and time.
+    """
+    return ScheduleProposalResponse(data=await apply_schedule(tournament_id))
+
+
 @router.post("/tournaments/{tournament_id}/schedule_matches", response_model=SuccessResponse)
 async def schedule_matches(
     tournament_id: TournamentId,
@@ -185,7 +219,12 @@ async def update_match_by_id(
     ):
         tournament = await sql_get_tournament(tournament_id)
         scheduled_matches = get_scheduled_matches(await get_full_tournament_details(tournament_id))
-        await reorder_matches_for_court(tournament, scheduled_matches, assert_some(match.court_id))
+        await reorder_matches_for_court(
+            tournament,
+            scheduled_matches,
+            assert_some(match.court_id),
+            await get_windows(tournament_id),
+        )
 
     if stage_item.type == StageType.SINGLE_ELIMINATION:
         await update_inputs_in_subsequent_elimination_rounds(round_.id, stage_item, {match_id})

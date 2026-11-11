@@ -193,6 +193,35 @@ async def sql_reschedule_match(
     )
 
 
+async def sql_set_match_slot(
+    match_id: MatchId,
+    court_id: CourtId | None,
+    start_time: datetime_utc | None,
+    position_in_schedule: int | None,
+) -> None:
+    """
+    Places a match on a court at a time, or (all `None`) removes it from the schedule.
+    """
+    query = """
+        UPDATE matches
+        SET court_id = :court_id,
+            start_time = :start_time,
+            position_in_schedule = :position_in_schedule
+        WHERE matches.id = :match_id
+        """
+    await database.execute(
+        query=query,
+        values={
+            "match_id": match_id,
+            "court_id": court_id,
+            "start_time": (
+                datetime.fromisoformat(start_time.isoformat()) if start_time is not None else None
+            ),
+            "position_in_schedule": position_in_schedule,
+        },
+    )
+
+
 async def sql_apply_default_timing(tournament_id: TournamentId) -> None:
     """
     Sets the duration and margin of every match of the tournament: the custom values of the
