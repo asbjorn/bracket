@@ -440,5 +440,19 @@
     "setup_group_stage_name": "Gruppespill",
     "setup_group_name": "Gruppe",
     "setup_playoff_stage_name": "Sluttspill",
-    "setup_playoff_name": "{}-sluttspill"
+    "setup_playoff_name": "{}-sluttspill",
+    "club_name_input_label": "Klubb",
+    "club_name_input_description": "Brukes for å holde lag fra samme klubb i ulike grupper i trekningen. Tom: navnet uten tall på slutten («Brann 2» er Brann).",
+    "draw_title": "Gruppetrekning",
+    "draw_description": "Trekker lagene i en klasse inn på de ledige plassene i gruppene. Med seedingsgrupper (potter) får hver gruppe ett lag fra hver pott; lag fra samme klubb havner i ulike grupper så langt det går.",
+    "draw_stage_label": "Klasse og spill",
+    "draw_pot_count_label": "Potter",
+    "draw_pot_count_description": "1: alle i samme pott",
+    "draw_teams_and_places": "{{teams}} lag å trekke, {{places}} ledige plasser",
+    "draw_too_many_teams_alert": "Det er flere lag enn ledige plasser. Legg til grupper eller større grupper først.",
+    "draw_button": "Trekk",
+    "draw_no_teams_left": "Alle lagene i denne klassen er trukket.",
+    "draw_show_all_button": "Vis alle",
+    "draw_full_screen_button": "Fullskjerm",
+    "draw_adjust_note": "For å flytte et lag etterpå, endre det i gruppen på siden for spill."
 }

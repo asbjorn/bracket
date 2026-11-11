@@ -17,6 +17,7 @@ import {
   StageItemInputOptionsResponse,
   StageRankingResponse,
   StagesWithStageItemsResponse,
+  FullTeamWithPlayers,
   TeamsWithPlayersResponse,
   TimeWindowsResponse,
   PlanIssuesResponse,
@@ -173,6 +174,24 @@ export function getTeamsPaginated(
   return useSWR(
     `tournaments/${tournament_id}/teams?limit=${pagination.limit}&offset=${pagination.offset}&sort_by=${pagination.sort_by}&sort_direction=${pagination.sort_direction}${categoryFilter}`,
     fetcher,
+  );
+}
+
+/** All teams of a class, page by page (a page has at most 100 teams). */
+export function getAllTeamsOfCategory(
+  tournament_id: number,
+  category_id: number | null,
+): SWRResponse<FullTeamWithPlayers[]> {
+  return useSWR(
+    category_id == null ? null : `tournaments/${tournament_id}/teams?category_id=${category_id}`,
+    async (url: string) => {
+      const teams: FullTeamWithPlayers[] = [];
+      for (let offset = 0; ; offset += 100) {
+        const page: TeamsWithPlayersResponse = await fetcher(`${url}&limit=100&offset=${offset}`);
+        teams.push(...page.data.teams);
+        if (offset + 100 >= page.data.count) return teams;
+      }
+    },
   );
 }
 

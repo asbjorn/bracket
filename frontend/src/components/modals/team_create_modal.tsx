@@ -87,6 +87,7 @@ function SingleTeamTab({
       active: true,
       player_ids: [],
       category: categoryIdToValue(defaultCategoryId),
+      club_name: '',
     },
     validate: {
       name: (value) => (value.length > 0 ? null : t('too_short_name_validation')),
@@ -101,6 +102,7 @@ function SingleTeamTab({
           values.active,
           values.player_ids,
           valueToCategoryId(values.category),
+          values.club_name.trim() === '' ? null : values.club_name.trim(),
         );
         await swrTeamsResponse.mutate();
         setOpened(false);
@@ -114,6 +116,13 @@ function SingleTeamTab({
       />
 
       <CategoryInput categories={categories} inputProps={form.getInputProps('category')} />
+
+      <TextInput
+        mt="md"
+        label={t('club_name_input_label')}
+        description={t('club_name_input_description')}
+        {...form.getInputProps('club_name')}
+      />
 
       <Checkbox
         mt="md"

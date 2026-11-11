@@ -567,6 +567,51 @@ export type DemoUserToRegister = {
 };
 
 /**
+ * DrawBody
+ *
+ * `pots`: the teams to draw, pot by pot (best teams first). One pot is a plain random draw.
+ * `seed`: the same seed gives the same draw.
+ */
+export type DrawBody = {
+  /**
+   * Pots
+   */
+  pots: Array<Array<number>>;
+  /**
+   * Seed
+   */
+  seed: number | null;
+};
+
+/**
+ * DrawPlacement
+ */
+export type DrawPlacement = {
+  /**
+   * Stage Item Id
+   */
+  stage_item_id: number;
+  /**
+   * Stage Item Input Id
+   */
+  stage_item_input_id: number;
+  /**
+   * Team Id
+   */
+  team_id: number;
+};
+
+/**
+ * DrawResponse
+ */
+export type DrawResponse = {
+  /**
+   * Data
+   */
+  data: Array<DrawPlacement>;
+};
+
+/**
  * ExtraCourts
  */
 export type ExtraCourts = {
@@ -589,6 +634,10 @@ export type FullTeamWithPlayers = {
    * Category Id
    */
   category_id: number | null;
+  /**
+   * Club Name
+   */
+  club_name: string | null;
   /**
    * Created
    */
@@ -2216,6 +2265,10 @@ export type Team = {
    */
   category_id: number | null;
   /**
+   * Club Name
+   */
+  club_name: string | null;
+  /**
    * Created
    */
   created: string;
@@ -2269,6 +2322,10 @@ export type TeamBody = {
    * Category Id
    */
   category_id: number | null;
+  /**
+   * Club Name
+   */
+  club_name: string | null;
   /**
    * Name
    */
@@ -4765,6 +4822,42 @@ export type UpdateStageTournamentsTournamentIdStagesStageIdPutResponses = {
 
 export type UpdateStageTournamentsTournamentIdStagesStageIdPutResponse =
   UpdateStageTournamentsTournamentIdStagesStageIdPutResponses[keyof UpdateStageTournamentsTournamentIdStagesStageIdPutResponses];
+
+export type DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostData = {
+  body: DrawBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+    /**
+     * Stage Id
+     */
+    stage_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/stages/{stage_id}/draw';
+};
+
+export type DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostError =
+  DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostErrors[keyof DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostErrors];
+
+export type DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: DrawResponse;
+};
+
+export type DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostResponse =
+  DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostResponses[keyof DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostResponses];
 
 export type GetTeamsTournamentsTournamentIdTeamsGetData = {
   body?: never;

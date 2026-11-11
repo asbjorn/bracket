@@ -4,6 +4,7 @@ from bracket.logic.category_warnings import CategoryWarning
 from bracket.logic.planning.capacity import CapacityResult
 from bracket.logic.planning.propose import PlanIssueOut, ScheduleProposal
 from bracket.logic.scheduling.handle_stage_activation import StageItemInputUpdate
+from bracket.logic.scheduling.stage_draw import DrawPlacement
 from bracket.models.db.category import Category
 from bracket.models.db.club import Club
 from bracket.models.db.court import Court
@@ -110,6 +111,10 @@ class ScheduleProposalResponse(DataResponse[ScheduleProposal]):
 
 
 class PlanIssuesResponse(DataResponse[list[PlanIssueOut]]):
+    pass
+
+
+class DrawResponse(DataResponse[list[DrawPlacement]]):
     pass
 
 

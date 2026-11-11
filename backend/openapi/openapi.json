@@ -1115,6 +1115,79 @@
         "title": "DemoUserToRegister",
         "type": "object"
       },
+      "DrawBody": {
+        "description": "`pots`: the teams to draw, pot by pot (best teams first). One pot is a plain random draw.\n`seed`: the same seed gives the same draw.",
+        "properties": {
+          "pots": {
+            "items": {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "title": "Pots",
+            "type": "array"
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seed"
+          }
+        },
+        "required": [
+          "pots",
+          "seed"
+        ],
+        "title": "DrawBody",
+        "type": "object"
+      },
+      "DrawPlacement": {
+        "properties": {
+          "stage_item_id": {
+            "title": "Stage Item Id",
+            "type": "integer"
+          },
+          "stage_item_input_id": {
+            "title": "Stage Item Input Id",
+            "type": "integer"
+          },
+          "team_id": {
+            "title": "Team Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "team_id",
+          "stage_item_id",
+          "stage_item_input_id"
+        ],
+        "title": "DrawPlacement",
+        "type": "object"
+      },
+      "DrawResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/DrawPlacement"
+            },
+            "title": "Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "DrawResponse",
+        "type": "object"
+      },
       "ExtraCourts": {
         "properties": {
           "count": {
@@ -1155,6 +1228,17 @@
               }
             ],
             "title": "Category Id"
+          },
+          "club_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Club Name"
           },
           "created": {
             "format": "date-time",
@@ -1231,6 +1315,7 @@
           "losses",
           "logo_path",
           "category_id",
+          "club_name",
           "id",
           "players"
         ],
@@ -4161,6 +4246,17 @@
             ],
             "title": "Category Id"
           },
+          "club_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Club Name"
+          },
           "created": {
             "format": "date-time",
             "title": "Created",
@@ -4229,6 +4325,7 @@
           "losses",
           "logo_path",
           "category_id",
+          "club_name",
           "id"
         ],
         "title": "Team",
@@ -4251,6 +4348,19 @@
             ],
             "title": "Category Id"
           },
+          "club_name": {
+            "anyOf": [
+              {
+                "maxLength": 50,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Club Name"
+          },
           "name": {
             "maxLength": 30,
             "minLength": 1,
@@ -4270,7 +4380,8 @@
           "name",
           "active",
           "player_ids",
-          "category_id"
+          "category_id",
+          "club_name"
         ],
         "title": "TeamBody",
         "type": "object"
@@ -4933,7 +5044,7 @@
     }
   },
   "info": {
-    "description": "\n### Description\nThis API allows you to do everything the frontend of [Bracket](https://github.com/evroon/bracket)\nallows you to do (the frontend uses this API as well).\n\nFore more information, see the [documentation](https://docs.bracketapp.nl).\n\n### Table of Contents\n*(links only work for [ReDoc](https://api.bracketapp.nl/redoc), not for Swagger UI)*\n\n- [Auth](#tag/Auth)\n\n- [Capacity](#tag/Capacity)\n\n- [Cup setup](#tag/Cup-setup)\n\n- [Categories](#tag/Categories)\n\n- [Clubs](#tag/Clubs)\n\n- [Courts](#tag/Courts)\n\n- [Internals](#tag/Internals)\n\n- [Matches](#tag/Matches)\n\n- [Players](#tag/Players)\n\n- [Rankings](#tag/Rankings)\n\n- [Rounds](#tag/Rounds)\n\n- [Stage Items](#tag/Stage-Items)\n\n- [Stage Item Inputs](#tag/Stage-Item-Inputs)\n\n- [Stages](#tag/Stages)\n\n- [Teams](#tag/Teams)\n\n- [Tournaments](#tag/Tournaments)\n\n- [Users](#tag/Users)\n\n### Links\nGitHub: <https://github.com/evroon/bracket>\n\nDocs: <https://docs.bracketapp.nl>\n\nDemo: <https://www.bracketapp.nl/demo>\n\nAPI docs (Redoc): <https://api.bracketapp.nl/redoc>\n\nAPI docs (Swagger UI): <https://api.bracketapp.nl/docs>\n",
+    "description": "\n### Description\nThis API allows you to do everything the frontend of [Bracket](https://github.com/evroon/bracket)\nallows you to do (the frontend uses this API as well).\n\nFore more information, see the [documentation](https://docs.bracketapp.nl).\n\n### Table of Contents\n*(links only work for [ReDoc](https://api.bracketapp.nl/redoc), not for Swagger UI)*\n\n- [Auth](#tag/Auth)\n\n- [Capacity](#tag/Capacity)\n\n- [Cup setup](#tag/Cup-setup)\n\n- [Draw](#tag/Draw)\n\n- [Categories](#tag/Categories)\n\n- [Clubs](#tag/Clubs)\n\n- [Courts](#tag/Courts)\n\n- [Internals](#tag/Internals)\n\n- [Matches](#tag/Matches)\n\n- [Players](#tag/Players)\n\n- [Rankings](#tag/Rankings)\n\n- [Rounds](#tag/Rounds)\n\n- [Stage Items](#tag/Stage-Items)\n\n- [Stage Item Inputs](#tag/Stage-Item-Inputs)\n\n- [Stages](#tag/Stages)\n\n- [Teams](#tag/Teams)\n\n- [Tournaments](#tag/Tournaments)\n\n- [Users](#tag/Users)\n\n### Links\nGitHub: <https://github.com/evroon/bracket>\n\nDocs: <https://docs.bracketapp.nl>\n\nDemo: <https://www.bracketapp.nl/demo>\n\nAPI docs (Redoc): <https://api.bracketapp.nl/redoc>\n\nAPI docs (Swagger UI): <https://api.bracketapp.nl/docs>\n",
     "license": {
       "name": "AGPL-3.0",
       "url": "https://www.gnu.org/licenses/agpl-3.0.en.html"
@@ -8362,6 +8473,73 @@
         "summary": "Update Stage",
         "tags": [
           "Stages"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/stages/{stage_id}/draw": {
+      "post": {
+        "description": "Group draw: places the teams of the pots in the empty slots of the groups of the stage.\nOne team per pot per group, and teams of the same club apart where possible. Returns the\nplacements in the order they were drawn, so the draw can be shown team by team.",
+        "operationId": "draw_teams_into_groups_tournaments__tournament_id__stages__stage_id__draw_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "stage_id",
+            "required": true,
+            "schema": {
+              "title": "Stage Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DrawBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DrawResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Draw Teams Into Groups",
+        "tags": [
+          "Draw"
         ]
       }
     },

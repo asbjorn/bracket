@@ -25,6 +25,7 @@ class TeamInsertable(BaseModelORM):
     losses: int = 0
     logo_path: str | None = None
     category_id: CategoryId | None = None
+    club_name: str | None = None
 
 
 class Team(TeamInsertable):
@@ -42,6 +43,7 @@ class TeamWithPlayers(BaseModel):
     name: str
     logo_path: str | None = None
     category_id: CategoryId | None = None
+    club_name: str | None = None
 
     @property
     def player_ids(self) -> list[PlayerId]:
@@ -63,11 +65,16 @@ class FullTeamWithPlayers(TeamWithPlayers, Team):
     pass
 
 
+ClubName = Annotated[str, StringConstraints(min_length=1, max_length=50, strip_whitespace=True)]
+
+
 class TeamBody(BaseModelORM):
     name: Annotated[str, StringConstraints(min_length=1, max_length=30)]
     active: bool
     player_ids: set[PlayerId]
     category_id: CategoryId | None = None
+    # Empty: the club is taken from the name without a trailing number ("Brann 2" -> "Brann")
+    club_name: ClubName | None = None
 
 
 class TeamMultiBody(BaseModelORM):

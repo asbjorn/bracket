@@ -1,6 +1,7 @@
 import { Center, Divider, Group, Tooltip, UnstyledButton } from '@mantine/core';
 import {
   Icon,
+  IconArrowsShuffle,
   IconBook,
   IconBrackets,
   IconBrandGithub,
@@ -141,6 +142,11 @@ export function TournamentLinks({ tournament_id }: any) {
       icon: IconUsers,
       label: capitalize(t('teams_title')),
       link: `${tm_prefix}/teams`,
+    },
+    {
+      icon: IconArrowsShuffle,
+      label: t('draw_title'),
+      link: `${tm_prefix}/draw`,
     },
     {
       icon: IconCalendar,

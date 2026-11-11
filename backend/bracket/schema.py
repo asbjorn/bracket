@@ -233,6 +233,8 @@ teams = Table(
     Column("losses", Integer, nullable=False, server_default="0"),
     Column("logo_path", String, nullable=True),
     Column("category_id", BigInteger, ForeignKey("categories.id"), index=True, nullable=True),
+    # The club the team plays for, e.g. "Brann" for "Brann 2"; used in the group draw
+    Column("club_name", String, nullable=True),
 )
 
 players = Table(

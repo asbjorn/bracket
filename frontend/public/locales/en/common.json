@@ -440,5 +440,19 @@
     "setup_group_stage_name": "Group stage",
     "setup_group_name": "Group",
     "setup_playoff_stage_name": "Playoffs",
-    "setup_playoff_name": "{} playoff"
+    "setup_playoff_name": "{} playoff",
+    "club_name_input_label": "Club",
+    "club_name_input_description": "Used to keep teams of the same club apart in the group draw. Empty: the name without a trailing number (\"Brann 2\" is Brann).",
+    "draw_title": "Group draw",
+    "draw_description": "Draws the teams of a class into the empty places of its groups. With pots, every group gets one team from each pot; teams of the same club end up in different groups where possible.",
+    "draw_stage_label": "Class and stage",
+    "draw_pot_count_label": "Pots",
+    "draw_pot_count_description": "1: everyone in the same pot",
+    "draw_teams_and_places": "{{teams}} teams to draw, {{places}} free places",
+    "draw_too_many_teams_alert": "There are more teams than free places. Add groups or larger groups first.",
+    "draw_button": "Draw",
+    "draw_no_teams_left": "All teams of this class have been drawn.",
+    "draw_show_all_button": "Show all",
+    "draw_full_screen_button": "Full screen",
+    "draw_adjust_note": "To move a team afterwards, change it in its group on the stages page."
 }

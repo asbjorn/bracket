@@ -58,6 +58,7 @@ export default function TeamUpdateModal({
       active: team.active,
       player_ids: team.players.map((player) => `${player.id}`),
       category: categoryIdToValue(team.category_id),
+      club_name: team.club_name ?? '',
     },
 
     validate: {
@@ -77,6 +78,7 @@ export default function TeamUpdateModal({
               values.active,
               values.player_ids,
               valueToCategoryId(values.category),
+              values.club_name.trim() === '' ? null : values.club_name.trim(),
             );
             if (requestSucceeded(result)) {
               await swrTeamsResponse.mutate();
@@ -92,6 +94,13 @@ export default function TeamUpdateModal({
           />
 
           <CategoryInput categories={categories} inputProps={form.getInputProps('category')} />
+
+          <TextInput
+            mt="md"
+            label={t('club_name_input_label')}
+            description={t('club_name_input_description')}
+            {...form.getInputProps('club_name')}
+          />
 
           <Checkbox
             mt="md"

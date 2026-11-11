@@ -107,6 +107,9 @@ import type {
   DeleteTournamentTournamentsTournamentIdDeleteData,
   DeleteTournamentTournamentsTournamentIdDeleteErrors,
   DeleteTournamentTournamentsTournamentIdDeleteResponses,
+  DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostData,
+  DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostErrors,
+  DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostResponses,
   GetAvailableInputsTournamentsTournamentIdAvailableInputsGetData,
   GetAvailableInputsTournamentsTournamentIdAvailableInputsGetErrors,
   GetAvailableInputsTournamentsTournamentIdAvailableInputsGetResponses,
@@ -1759,6 +1762,40 @@ export const updateStageTournamentsTournamentIdStagesStageIdPut = <
     responseType: 'json',
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/tournaments/{tournament_id}/stages/{stage_id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Draw Teams Into Groups
+ *
+ * Group draw: places the teams of the pots in the empty slots of the groups of the stage.
+ * One team per pot per group, and teams of the same club apart where possible. Returns the
+ * placements in the order they were drawn, so the draw can be shown team by team.
+ */
+export const drawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostData,
+    ThrowOnError
+  >,
+): RequestResult<
+  DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostResponses,
+  DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostResponses,
+    DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/stages/{stage_id}/draw',
     ...options,
     headers: {
       'Content-Type': 'application/json',
