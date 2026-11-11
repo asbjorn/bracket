@@ -9,8 +9,6 @@ import {
   TextInput,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { BiEditAlt } from '@react-icons/all-files/bi/BiEditAlt';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SWRResponse } from 'swr';
 
@@ -37,20 +35,25 @@ function TeamLogo({ team }: { team: FullTeamWithPlayers | null }) {
   );
 }
 
+/**
+ * Edits a team. Mount it only while it's open (for the team being edited), so the form always
+ * starts from the team's current data.
+ */
 export default function TeamUpdateModal({
   tournament_id,
   team,
   swrTeamsResponse,
+  onClose,
 }: {
   tournament_id: number;
   team: FullTeamWithPlayers;
   swrTeamsResponse: SWRResponse<TeamsWithPlayersResponse>;
+  onClose: () => void;
 }) {
   const { t } = useTranslation();
   const { data } = getPlayers(tournament_id, false);
   const players: Player[] = data != null ? data.data.players : [];
   const categories = getCategories(tournament_id).data?.data ?? [];
-  const [opened, setOpened] = useState(false);
 
   const form = useForm({
     initialValues: {
@@ -66,22 +69,9 @@ export default function TeamUpdateModal({
     },
   });
 
-  // The modal stays mounted: start every time from fresh values, not from what was typed last
-  function openModal() {
-    form.setInitialValues({
-      name: team.name,
-      active: team.active,
-      player_ids: team.players.map((player) => `${player.id}`),
-      category: categoryIdToValue(team.category_id),
-      club_name: team.club_name ?? '',
-    });
-    form.reset();
-    setOpened(true);
-  }
-
   return (
     <>
-      <Modal opened={opened} onClose={() => setOpened(false)} title={t('edit_team_title')}>
+      <Modal opened onClose={onClose} title={t('edit_team_title')}>
         <form
           onSubmit={form.onSubmit(async (values) => {
             const result = await updateTeam(
@@ -95,7 +85,7 @@ export default function TeamUpdateModal({
             );
             if (requestSucceeded(result)) {
               await swrTeamsResponse.mutate();
-              setOpened(false);
+              onClose();
             }
           })}
         >
@@ -162,16 +152,6 @@ export default function TeamUpdateModal({
           </Button>
         </form>
       </Modal>
-
-      <Button
-        color="green"
-        size="xs"
-        style={{ marginRight: 10 }}
-        onClick={openModal}
-        leftSection={<BiEditAlt size={20} />}
-      >
-        {t('edit_team_title')}
-      </Button>
     </>
   );
 }

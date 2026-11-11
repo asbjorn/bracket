@@ -1,4 +1,6 @@
-import { Badge, Center, Group, Pagination, Switch, Table } from '@mantine/core';
+import { Badge, Button, Center, Group, Pagination, Switch, Table } from '@mantine/core';
+import { BiEditAlt } from '@react-icons/all-files/bi/BiEditAlt';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SWRResponse } from 'swr';
 
@@ -14,6 +16,15 @@ import { Category, FullTeamWithPlayers, TeamsWithPlayersResponse } from '@openap
 import { deleteTeam, setTeamCheckedIn } from '@services/team';
 import WithdrawButton from '@components/buttons/withdraw_team';
 import TableLayout, { TableState, ThNotSortable, ThSortable, sortTableEntries } from './table';
+
+/** Whether a click was on a button, switch, link or input inside the row (or in a modal). */
+function isInsideControl(event: React.MouseEvent) {
+  const target = event.target as HTMLElement;
+  return (
+    target.closest('button, a, input, label, [role="switch"], [role="dialog"]') != null ||
+    !event.currentTarget.contains(target)
+  );
+}
 
 export default function TeamsTable({
   tournamentData,
@@ -31,6 +42,7 @@ export default function TeamsTable({
   teamCount: number;
 }) {
   const { t } = useTranslation();
+  const [editedTeamId, setEditedTeamId] = useState<number | null>(null);
   if (swrTeamsResponse.error) return <RequestErrorAlert error={swrTeamsResponse.error} />;
 
   if (swrTeamsResponse.isLoading) {
@@ -45,7 +57,21 @@ export default function TeamsTable({
       sortTableEntries(p1, p2, tableState),
     )
     .map((team) => (
-      <Table.Tr key={team.id}>
+      <Table.Tr
+        key={team.id}
+        style={{ cursor: 'pointer' }}
+        tabIndex={0}
+        aria-label={t('edit_team_title')}
+        onClick={(event) => {
+          // The switch and the buttons in the row do their own thing
+          if (!isInsideControl(event)) setEditedTeamId(team.id);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' && event.target === event.currentTarget) {
+            setEditedTeamId(team.id);
+          }
+        }}
+      >
         <Table.Td>
           {team.active ? (
             <Badge color="green">{t('active')}</Badge>
@@ -92,11 +118,15 @@ export default function TeamsTable({
           <DateTime datetime={team.created} />
         </Table.Td>
         <Table.Td>
-          <TeamUpdateModal
-            tournament_id={tournamentData.id}
-            team={team}
-            swrTeamsResponse={swrTeamsResponse}
-          />
+          <Button
+            color="green"
+            size="xs"
+            style={{ marginRight: 10 }}
+            onClick={() => setEditedTeamId(team.id)}
+            leftSection={<BiEditAlt size={20} />}
+          >
+            {t('edit_team_title')}
+          </Button>
           <WithdrawButton
             tournamentId={tournamentData.id}
             team={team}
@@ -117,8 +147,18 @@ export default function TeamsTable({
 
   if (rows.length < 1) return <NoContent title={t('no_teams_title')} />;
 
+  const editedTeam = teams.find((team) => team.id === editedTeamId) ?? null;
   return (
     <>
+      {editedTeam != null ? (
+        <TeamUpdateModal
+          key={editedTeam.id}
+          tournament_id={tournamentData.id}
+          team={editedTeam}
+          swrTeamsResponse={swrTeamsResponse}
+          onClose={() => setEditedTeamId(null)}
+        />
+      ) : null}
       <TableLayout miw={850}>
         <Table.Thead>
           <Table.Tr>
