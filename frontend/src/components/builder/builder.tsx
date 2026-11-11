@@ -17,7 +17,7 @@ import { useColorScheme } from '@mantine/hooks';
 import { AiFillWarning } from '@react-icons/all-files/ai/AiFillWarning';
 import { BiCheck } from '@react-icons/all-files/bi/BiCheck';
 import { IconArrowsShuffle, IconDots, IconPencil, IconTrash } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BiSolidWrench } from 'react-icons/bi';
 import { SWRResponse } from 'swr';
@@ -72,6 +72,15 @@ function StageItemInputComboBox({
   const [selectedInput, setSelectedInput] = useState<StageItemInputChoice | null>(
     availableInputs.find((o) => o.value === current_key) || null,
   );
+  // The choices load after the first render, and the slot can change elsewhere
+  useEffect(() => {
+    setSelectedInput(availableInputs.find((o) => o.value === current_key) || null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current_key, availableInputs.length]);
+  // A team placed directly (e.g. a level-split round) need not be among the choices
+  const placedTeamName =
+    'team' in stageItemInput && stageItemInput.team != null ? stageItemInput.team.name : null;
+  const shownLabel = selectedInput?.label || placedTeamName;
   const [successIcon, setSuccessIcon] = useState<boolean>(false);
   const [search, setSearch] = useState('');
   const combobox = useCombobox({
@@ -139,8 +148,8 @@ function StageItemInputComboBox({
           rightSectionPointerEvents="none"
           onClick={() => combobox.toggleDropdown()}
         >
-          {selectedInput?.label ? (
-            selectedInput?.label
+          {shownLabel ? (
+            shownLabel
           ) : (
             <Group gap="xs">
               <AiFillWarning size={18} color={theme.colors.orange[4]} />

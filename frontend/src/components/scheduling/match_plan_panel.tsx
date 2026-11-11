@@ -20,6 +20,8 @@ export const GAME_FORMATS: GameFormat[] = ['3v3', '5v5', '7v7', '9v9', '11v11'];
 
 function formatDuration(t: any, minutes: number) {
   const hours = Math.floor(minutes / 60);
+  // "15 min" rather than "0 t 15 min"
+  if (hours < 1) return t('duration_minutes_only', { minutes });
   return t('duration_hours_minutes', { hours, minutes: minutes % 60 });
 }
 

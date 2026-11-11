@@ -904,7 +904,7 @@
     "score_link_valid_until": "Til…",
     "score_start_match_button": "Start kampen",
     "score_started_at": "Startet",
-    "score_undo_start_button": "Angre",
+    "score_undo_start_button": "Angre start",
     "setup_courts_suggested": "Foreslått ut fra klassene (én rad per spilleform). Endre som du vil; oversikten viser om alt får plass.",
     "active_next_stage_modal_description_no_updates": "Dette starter neste del. Ingen lag flyttes automatisk; plasser dem selv om nødvendig.",
     "server_error_registration_cup_closed": "Påmeldingen til denne cupen er stengt.",
@@ -1019,5 +1019,6 @@
     "dashboard_link_auto_description": "Tom: lages ut fra navnet. Foreldre bruker denne adressen og QR-kodene.",
     "registration_no_address_alert": "Cupen har ennå ingen adresse til den offentlige cupsiden, så lag kan ikke melde seg på. Sett adressen i innstillingene.",
     "registration_done_title_one": "Laget er påmeldt!",
-    "registration_done_title_other": "Lagene er påmeldt!"
+    "registration_done_title_other": "Lagene er påmeldt!",
+    "duration_minutes_only": "{{minutes}} min"
 }
