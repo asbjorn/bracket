@@ -29,3 +29,12 @@ def get_category_per_match(
         for round_ in stage_item.rounds
         for match in round_.matches
     }
+
+
+def get_effective_minutes(custom: int | None, of_class: int | None, of_tournament: int) -> int:
+    """Like `sql_apply_default_timing`: the match's own value, else its class's, else the cup's."""
+    if custom is not None:
+        return custom
+    if of_class is not None:
+        return of_class
+    return of_tournament

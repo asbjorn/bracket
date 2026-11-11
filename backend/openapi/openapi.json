@@ -1480,7 +1480,7 @@
           },
           "minutes": {
             "maximum": 600.0,
-            "minimum": -240.0,
+            "minimum": 1.0,
             "title": "Minutes",
             "type": "integer"
           }

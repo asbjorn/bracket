@@ -9,6 +9,7 @@ from bracket.sql.stages import get_full_tournament_details
 from bracket.utils.dummy_records import DUMMY_MOCK_TIME, DUMMY_STAGE1
 from bracket.utils.http import HTTPMethod
 from bracket.utils.types import assert_some
+from tests.integration_tests.api.cup_setup_test import delete_cup
 from tests.integration_tests.api.shared import (
     SUCCESS_RESPONSE,
     send_auth_request,
@@ -330,6 +331,16 @@ async def test_delay_and_plan_issues(
             )
             assert response == {"data": 5}
 
+            # Only a real delay: no 0 or negative minutes (that could stack matches on others)
+            for minutes in (0, -10, 601):
+                response = await send_tournament_request(
+                    HTTPMethod.POST,
+                    "schedule/delay",
+                    auth_context,
+                    json={"minutes": minutes, "from_time": "2026-06-13T08:00:00Z"},
+                )
+                assert "detail" in response, minutes
+
             # Now everything except the played match is after the time window
             issues = await send_tournament_request(HTTPMethod.GET, "schedule/issues", auth_context)
             outside = {i["match_id"] for i in issues["data"] if i["kind"] == "OUTSIDE_TIME_WINDOWS"}
@@ -369,3 +380,48 @@ async def test_capacity_endpoint(
 
     unauthorized = await send_request(HTTPMethod.POST, "capacity", json=body)
     assert unauthorized == {"detail": "Not authenticated"}
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_propose_and_issues_dont_write(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    """
+    Proposing a plan and checking it change nothing; they still use the right match length
+    (custom, else class, else tournament), also when the stored one is out of date.
+    """
+    tournament_id = auth_context.tournament.id
+    g10 = {"name": "G10", "age": 10, "team_count": 4, "group_size": 4, "duration_minutes": 10}
+    try:
+        response = await send_tournament_request(
+            HTTPMethod.POST, "cup_setup", auth_context, json={"classes": [g10], "time_windows": []}
+        )
+        assert response == SUCCESS_RESPONSE
+        await database.execute(
+            "UPDATE matches SET duration_minutes = 99 WHERE id IN (SELECT m.id FROM matches m "
+            "JOIN rounds r ON r.id = m.round_id JOIN stage_items si ON si.id = r.stage_item_id "
+            "JOIN stages s ON s.id = si.stage_id WHERE s.tournament_id = :id)",
+            values={"id": tournament_id},
+        )
+        proposal = await send_tournament_request(HTTPMethod.POST, "schedule/propose", auth_context)
+        # 6 matches of 10 minutes (the class length; the class has no break), not 99
+        assert proposal["data"]["required_court_minutes"] == 6 * 10
+        await send_tournament_request(HTTPMethod.GET, "schedule/issues", auth_context)
+        stored = await database.fetch_all(
+            "SELECT DISTINCT m.duration_minutes FROM matches m "
+            "JOIN rounds r ON r.id = m.round_id JOIN stage_items si ON si.id = r.stage_item_id "
+            "JOIN stages s ON s.id = si.stage_id WHERE s.tournament_id = :id",
+            values={"id": tournament_id},
+        )
+        assert [row[0] for row in stored] == [99]
+        # Applying the plan does save the right length
+        await send_tournament_request(HTTPMethod.POST, "schedule/apply", auth_context)
+        stored = await database.fetch_all(
+            "SELECT DISTINCT m.duration_minutes FROM matches m "
+            "JOIN rounds r ON r.id = m.round_id JOIN stage_items si ON si.id = r.stage_item_id "
+            "JOIN stages s ON s.id = si.stage_id WHERE s.tournament_id = :id",
+            values={"id": tournament_id},
+        )
+        assert [row[0] for row in stored] == [10]
+    finally:
+        await delete_cup(auth_context)

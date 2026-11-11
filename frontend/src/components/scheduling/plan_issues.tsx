@@ -89,7 +89,7 @@ export function DelayForm({
       <Group align="end">
         <NumberInput
           label={t('delay_minutes_label')}
-          min={-240}
+          min={1}
           max={600}
           value={minutes}
           onChange={setMinutes}

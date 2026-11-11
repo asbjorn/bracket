@@ -22,7 +22,11 @@ from bracket.logic.planning.scheduler import (
     find_plan_issues,
     schedule_matches,
 )
-from bracket.logic.planning.timing import get_category_per_match, get_min_rest_minutes
+from bracket.logic.planning.timing import (
+    get_category_per_match,
+    get_effective_minutes,
+    get_min_rest_minutes,
+)
 from bracket.models.db.category import Category
 from bracket.models.db.game_format import GameFormat
 from bracket.models.db.match import MatchWithDetails, MatchWithDetailsDefinitive
@@ -135,8 +139,16 @@ def get_matches_to_plan(
                     result.append(
                         MatchToPlan(
                             id=match.id,
-                            duration_minutes=match.duration_minutes,
-                            margin_minutes=match.margin_minutes,
+                            duration_minutes=get_effective_minutes(
+                                match.custom_duration_minutes,
+                                category.duration_minutes if category else None,
+                                tournament.duration_minutes,
+                            ),
+                            margin_minutes=get_effective_minutes(
+                                match.custom_margin_minutes,
+                                category.margin_minutes if category else None,
+                                tournament.margin_minutes,
+                            ),
                             teams=frozenset(
                                 f"input:{input_id}"
                                 for input_id in (
@@ -166,7 +178,7 @@ def get_matches_to_plan(
 async def get_planning_input(
     tournament_id: TournamentId,
 ) -> tuple[list[MatchToPlan], list[CourtToPlan], list[Window], bool]:
-    await sql_apply_default_timing(tournament_id)
+    """Read only: proposing and checking a plan change nothing."""
     tournament = await sql_get_tournament(tournament_id)
     stages = await get_full_tournament_details(tournament_id)
     categories = await get_all_categories_in_tournament(tournament_id)
@@ -235,6 +247,8 @@ async def apply_schedule(tournament_id: TournamentId) -> ScheduleProposal:
     matches, courts, windows, uses_default_window = await get_planning_input(tournament_id)
     result = schedule_matches(matches, courts, windows)
 
+    # Save the match lengths the plan was made with
+    await sql_apply_default_timing(tournament_id)
     per_court: dict[CourtId, list[MatchId]] = defaultdict(list)
     for assignment in sorted(result.assignments.values(), key=lambda a: a.start):
         per_court[assignment.court_id].append(assignment.match_id)
@@ -281,7 +295,8 @@ async def get_current_plan_issues(tournament_id: TournamentId) -> list[PlanIssue
 class DelayBody(BaseModel):
     """Moves all matches that haven't been played yet and start at or after `from_time`."""
 
-    minutes: int = Field(ge=-240, le=600)
+    # Only later: moving matches earlier could stack them on matches that are already played
+    minutes: int = Field(ge=1, le=600)
     from_time: datetime_utc
     court_id: CourtId | None = None
 
