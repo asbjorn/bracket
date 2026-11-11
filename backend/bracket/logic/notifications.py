@@ -20,7 +20,6 @@ from starlette.concurrency import run_in_threadpool
 
 from bracket.database import database
 from bracket.logic.district_application import get_details
-from bracket.logic.officials import CUP_TIMEZONE
 from bracket.logic.walkovers import team_of
 from bracket.models.db.district_application import TournamentDetails
 from bracket.models.db.team import PARTICIPATING_STATUSES, RegistrationStatus
@@ -28,6 +27,7 @@ from bracket.sql.categories import get_all_categories_in_tournament
 from bracket.sql.courts import get_all_courts_in_tournament
 from bracket.sql.stages import get_full_tournament_details
 from bracket.sql.tournaments import sql_get_tournament
+from bracket.utils.cup_time import CUP_TIMEZONE
 from bracket.utils.email import EmailSender, get_email_sender, sender_address
 from bracket.utils.id_types import TeamId, TournamentId
 from bracket.utils.logging import logger

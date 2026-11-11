@@ -14,6 +14,7 @@ from bracket.utils.http import HTTPMethod
 from bracket.utils.types import JsonDict, assert_some
 from tests.integration_tests.api.shared import SUCCESS_RESPONSE, send_tournament_request
 from tests.integration_tests.models import AuthContext
+from tests.integration_tests.sql import reset_start_time
 
 G10 = {"name": "G10", "age": 10, "team_count": 6, "group_size": 3, "duration_minutes": 10}
 G10 |= {"game_format": "7v7"}
@@ -58,6 +59,7 @@ async def delete_cup(auth_context: AuthContext) -> None:
     await database.execute(
         time_windows.delete().where(time_windows.c.tournament_id == tournament_id)
     )
+    await reset_start_time()
 
 
 def test_group_letters() -> None:

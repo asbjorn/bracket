@@ -9,7 +9,13 @@ that satisfies all constraints:
 - the court is free (matches on a court don't overlap, including the margin after a match),
 - the court has the right game format (courts without a format fit any class),
 - every team has had its rest since its previous match (and its margin),
-- the matches it depends on are finished (e.g. both semifinals before the final), plus a delay.
+- the matches it depends on are finished (e.g. both semifinals before the final), plus a delay,
+- a split pitch: a match on the full pitch blocks its parts, a match on a part blocks the full
+  pitch (the parts don't block each other),
+- a pitch with its own opening hours is only used then; a class with its own days or hours is
+  only planned then,
+- a team plays at most the class's number of matches a day (days in Norwegian time),
+- when re-planning during the cup: not before a given time, and optionally on the same pitch.
 
 Teams are identified by their slot in a group (stage item input), so constraints also hold for
 slots whose team is not known yet. Matches whose teams are not known (later knockout rounds)
@@ -19,13 +25,14 @@ depend on the matches they get their teams from.
 from bisect import bisect_left, bisect_right
 from collections.abc import Callable
 from dataclasses import dataclass, field, replace
-from datetime import timedelta
+from datetime import date, timedelta
 from enum import StrEnum
 from zoneinfo import ZoneInfo
 
 from heliclockter import datetime_utc
 
 from bracket.models.db.game_format import GameFormat
+from bracket.utils.cup_time import cup_day, next_cup_midnight
 from bracket.utils.id_types import CourtId, MatchId
 
 MINUTE = timedelta(minutes=1)
@@ -41,6 +48,10 @@ class Window:
 class CourtToPlan:
     id: CourtId
     game_format: GameFormat | None = None
+    # A part of a split pitch: the full pitch it belongs to (one level only)
+    parent_id: CourtId | None = None
+    # Its own opening hours; `None`: the time windows of the cup
+    windows: tuple[Window, ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -66,6 +77,14 @@ class MatchToPlan:  # pylint: disable=too-many-instance-attributes  # plain data
     # Matches that are already played or being played keep their place
     fixed_court_id: CourtId | None = None
     fixed_start: datetime_utc | None = None
+    # The days/hours of the match's class; `None`: any time the court is open
+    windows: tuple[Window, ...] | None = None
+    # At most this many matches a day for each of its teams (days in Norwegian time)
+    max_per_day: int | None = None
+    # Not before this moment (re-planning during the cup never plans in the past)
+    earliest: datetime_utc | None = None
+    # Only on this court (a delay keeps matches on their pitch)
+    only_court_id: CourtId | None = None
 
 
 @dataclass(frozen=True)
@@ -90,7 +109,44 @@ class ScheduleResult:
 
 
 def court_fits(court: CourtToPlan, match: MatchToPlan) -> bool:
+    if match.only_court_id is not None and court.id != match.only_court_id:
+        return False
     return court.game_format is None or court.game_format == match.game_format
+
+
+def courts_share_ground(court1: CourtToPlan, court2: CourtToPlan) -> bool:
+    """A full pitch and one of its parts can't be used at the same time (two parts can)."""
+    return court1.parent_id == court2.id or court2.parent_id == court1.id
+
+
+def intersect_windows(first: list[Window], second: list[Window]) -> list[Window]:
+    """The times in both lists of sorted, disjoint windows."""
+    result: list[Window] = []
+    i = j = 0
+    while i < len(first) and j < len(second):
+        start = max(first[i].start, second[j].start)
+        end = min(first[i].end, second[j].end)
+        if start < end:
+            result.append(Window(start, end))
+        if first[i].end < second[j].end:
+            i += 1
+        else:
+            j += 1
+    return result
+
+
+def effective_windows(
+    court: CourtToPlan | None, match: MatchToPlan, cup_windows: list[Window]
+) -> list[Window]:
+    """When a match may be played on a court: the court's hours (or the cup's) and its class's."""
+    court_windows = (
+        merge_overlapping(list(court.windows))
+        if court is not None and court.windows is not None
+        else cup_windows
+    )
+    if match.windows is None:
+        return court_windows
+    return intersect_windows(court_windows, merge_overlapping(list(match.windows)))
 
 
 EPOCH = datetime_utc(1970, 1, 1, tzinfo=ZoneInfo("UTC"))
@@ -204,7 +260,7 @@ def best_assignment(
     ready: datetime_utc,
     courts: list[CourtToPlan],
     booked: dict[CourtId, CourtBookings],
-    windows: list[tuple[int, int]],
+    spans_for: Callable[[CourtToPlan, MatchToPlan], list[tuple[int, int]]],
 ) -> Assignment | None:
     """The earliest start over all courts of the right format (first court on a tie)."""
     ready_us = to_micros(ready)
@@ -214,7 +270,7 @@ def best_assignment(
             continue
         # Only a strictly earlier start beats the best court so far
         start = booked[court.id].earliest_start(
-            ready_us, match, windows, None if best is None else best[0]
+            ready_us, match, spans_for(court, match), None if best is None else best[0]
         )
         if start is not None:
             best = (start, court.id)
@@ -234,21 +290,52 @@ def merge_overlapping(windows: list[Window]) -> list[Window]:
     return merged
 
 
+class DayCounts:
+    """How many matches each team (slot) plays per day, for the per-day limit of a class."""
+
+    def __init__(self) -> None:
+        self.counts: dict[tuple[str, date], int] = {}
+
+    def add(self, match: MatchToPlan, start: datetime_utc) -> None:
+        day = cup_day(start)
+        for team in match.teams:
+            self.counts[(team, day)] = self.counts.get((team, day), 0) + 1
+
+    def is_full(self, match: MatchToPlan, start: datetime_utc) -> bool:
+        if match.max_per_day is None:
+            return False
+        day = cup_day(start)
+        return any(self.counts.get((team, day), 0) >= match.max_per_day for team in match.teams)
+
+
 def schedule_matches(
     matches: list[MatchToPlan], courts: list[CourtToPlan], windows: list[Window]
 ) -> ScheduleResult:
     windows = merge_overlapping(windows)
     result = ScheduleResult()
     booked = {court.id: CourtBookings() for court in courts}
+    court_by_id = {court.id: court for court in courts}
+    parts: dict[CourtId, list[CourtId]] = {}
+    for court in courts:
+        if court.parent_id is not None:
+            parts.setdefault(court.parent_id, []).append(court.id)
     team_ready: dict[str, datetime_utc] = {}
+    day_counts = DayCounts()
     match_by_id = {match.id: match for match in matches}
 
     def book(match: MatchToPlan, assignment: Assignment) -> None:
         result.assignments[match.id] = assignment
         end = assignment.end(match)
-        booked.setdefault(assignment.court_id, CourtBookings()).add(assignment.start, end)
+        court = court_by_id.get(assignment.court_id)
+        # The full pitch and its parts share the ground (the parts don't block each other)
+        blocked = [assignment.court_id, *parts.get(assignment.court_id, [])]
+        if court is not None and court.parent_id is not None:
+            blocked.append(court.parent_id)
+        for court_id in blocked:
+            booked.setdefault(court_id, CourtBookings()).add(assignment.start, end)
         for team in match.teams:
             team_ready[team] = max(team_ready.get(team, end), end + match.rest_minutes * MINUTE)
+        day_counts.add(match, assignment.start)
 
     # Matches that can't move are booked first
     movable = []
@@ -258,14 +345,34 @@ def schedule_matches(
         else:
             movable.append(match)
 
-    if len(windows) < 1:
+    if len(windows) < 1 and not any(court.windows for court in courts):
         result.unscheduled = [match.id for match in movable]
         return result
-    spans = [(to_micros(window.start), to_micros(window.end)) for window in windows]
 
+    spans_cache: dict[tuple[CourtId, tuple[Window, ...] | None], list[tuple[int, int]]] = {}
+
+    def spans_for(court: CourtToPlan, match: MatchToPlan) -> list[tuple[int, int]]:
+        key = (court.id, match.windows)
+        if key not in spans_cache:
+            spans_cache[key] = [
+                (to_micros(w.start), to_micros(w.end))
+                for w in effective_windows(court, match, windows)
+            ]
+        return spans_cache[key]
+
+    first_start = min(
+        [w.start for w in windows] + [w.start for c in courts for w in c.windows or ()]
+    )
     for match in in_dependency_order(movable):
-        ready = ready_time(match, windows[0].start, result.assignments, match_by_id, team_ready)
-        best = None if ready is None else best_assignment(match, ready, courts, booked, spans)
+        earliest = first_start if match.earliest is None else max(first_start, match.earliest)
+        ready = ready_time(match, earliest, result.assignments, match_by_id, team_ready)
+        best = None
+        while ready is not None:
+            best = best_assignment(match, ready, courts, booked, spans_for)
+            if best is None or not day_counts.is_full(match, best.start):
+                break
+            # This day is full for one of its teams: try from the next day
+            ready, best = next_cup_midnight(best.start), None
         if best is None:
             result.unscheduled.append(match.id)
         else:
@@ -375,6 +482,12 @@ class IssueKind(StrEnum):
     WRONG_GAME_FORMAT = "WRONG_GAME_FORMAT"
     OUTSIDE_TIME_WINDOWS = "OUTSIDE_TIME_WINDOWS"
     BEFORE_DEPENDENCY = "BEFORE_DEPENDENCY"
+    # A full pitch and one of its parts used at the same time
+    SPLIT_PITCH_OVERLAP = "SPLIT_PITCH_OVERLAP"
+    # Outside the days/hours of the match's class
+    OUTSIDE_CLASS_HOURS = "OUTSIDE_CLASS_HOURS"
+    # A team plays more matches that day than its class allows
+    TOO_MANY_MATCHES_PER_DAY = "TOO_MANY_MATCHES_PER_DAY"
 
 
 @dataclass(frozen=True)
@@ -392,15 +505,26 @@ def single_match_issues(
     windows: list[Window],
     match_by_id: dict[MatchId, MatchToPlan],
 ) -> list[PlanIssue]:
-    """Game format, time windows and dependencies of one planned match."""
+    """Game format, opening hours, class hours and dependencies of one planned match."""
     issues: list[PlanIssue] = []
     assignment = assignments[match.id]
     court = court_by_id.get(assignment.court_id)
-    if court is not None and not court_fits(court, match):
+    if court is not None and not (
+        court.game_format is None or court.game_format == match.game_format
+    ):
         issues.append(PlanIssue(match.id, IssueKind.WRONG_GAME_FORMAT))
     playing_end = assignment.start + match.duration_minutes * MINUTE
-    if windows and not any(w.start <= assignment.start and playing_end <= w.end for w in windows):
+
+    def inside(candidates: list[Window]) -> bool:
+        return any(w.start <= assignment.start and playing_end <= w.end for w in candidates)
+
+    court_windows = (
+        list(court.windows) if court is not None and court.windows is not None else windows
+    )
+    if court_windows and not inside(merge_overlapping(court_windows)):
         issues.append(PlanIssue(match.id, IssueKind.OUTSIDE_TIME_WINDOWS))
+    if match.windows is not None and not inside(merge_overlapping(list(match.windows))):
+        issues.append(PlanIssue(match.id, IssueKind.OUTSIDE_CLASS_HOURS))
     for dependency in match.dependencies:
         dependency_match = match_by_id.get(dependency.match_id)
         if dependency_match is not None and dependency.match_id in assignments:
@@ -411,15 +535,26 @@ def single_match_issues(
 
 
 def pair_issues(
-    earlier: MatchToPlan, later: MatchToPlan, assignments: dict[MatchId, Assignment]
+    earlier: MatchToPlan,
+    later: MatchToPlan,
+    assignments: dict[MatchId, Assignment],
+    court_by_id: dict[CourtId, CourtToPlan],
 ) -> list[PlanIssue]:
-    """Overlaps on a court and of teams, and rest of teams, for two matches by start time."""
+    """Overlaps on a (split) pitch and of teams, and rest of teams, for two matches by start."""
     issues: list[PlanIssue] = []
     earlier_end = assignments[earlier.id].end(earlier)
     later_start = assignments[later.id].start
-    same_court = assignments[earlier.id].court_id == assignments[later.id].court_id
-    if same_court and later_start < earlier_end:
-        issues.append(PlanIssue(later.id, IssueKind.COURT_OVERLAP, earlier.id))
+    earlier_court = assignments[earlier.id].court_id
+    later_court = assignments[later.id].court_id
+    if later_start < earlier_end:
+        if earlier_court == later_court:
+            issues.append(PlanIssue(later.id, IssueKind.COURT_OVERLAP, earlier.id))
+        elif (
+            earlier_court in court_by_id
+            and later_court in court_by_id
+            and courts_share_ground(court_by_id[earlier_court], court_by_id[later_court])
+        ):
+            issues.append(PlanIssue(later.id, IssueKind.SPLIT_PITCH_OVERLAP, earlier.id))
     if earlier.teams & later.teams:
         # Like the scheduler: a team rests after a match for the rest of that match
         if later_start < earlier_end:
@@ -452,5 +587,11 @@ def find_plan_issues(
     ]
     for index, earlier in enumerate(planned):
         for later in planned[index + 1 :]:
-            issues += pair_issues(earlier, later, assignments)
+            issues += pair_issues(earlier, later, assignments, court_by_id)
+    day_counts = DayCounts()
+    for match in planned:
+        start = assignments[match.id].start
+        if day_counts.is_full(match, start):
+            issues.append(PlanIssue(match.id, IssueKind.TOO_MANY_MATCHES_PER_DAY))
+        day_counts.add(match, start)
     return issues

@@ -4,7 +4,7 @@ from heliclockter import datetime_utc
 from pydantic import Field, model_validator
 
 from bracket.models.db.shared import BaseModelORM
-from bracket.utils.id_types import TimeWindowId, TournamentId
+from bracket.utils.id_types import CategoryId, CourtId, TimeWindowId, TournamentId
 
 MAX_TIME_WINDOWS = 60
 
@@ -23,6 +23,9 @@ class TimeWindowBody(BaseModelORM):
 class TimeWindow(TimeWindowBody):
     id: TimeWindowId
     tournament_id: TournamentId
+    # Opening hours of one pitch, or the days/hours of one class; both `None`: the cup's
+    court_id: CourtId | None = None
+    category_id: CategoryId | None = None
 
 
 class TimeWindowsBody(BaseModelORM):
@@ -40,3 +43,10 @@ class TimeWindowsBody(BaseModelORM):
             if current.start_time < previous.end_time:
                 raise ValueError("Time windows can't overlap")
         return self
+
+
+class PlanningHours(BaseModelORM):
+    """The opening hours of pitches and the days/hours of classes that have their own."""
+
+    courts: dict[CourtId, list[TimeWindow]]
+    categories: dict[CategoryId, list[TimeWindow]]

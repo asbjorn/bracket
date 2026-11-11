@@ -166,7 +166,7 @@ async def test_cards_at_the_pitch(
             HTTPMethod.POST,
             "score_links",
             auth_context,
-            json={"name": "Hele cupen", "court_id": None, "valid_hours": 24},
+            json={"name": "Hele cupen", "court_id": None},
         )
         token = created["data"]["token"]
 
@@ -253,7 +253,7 @@ async def test_no_changes_through_links_when_archived(
             HTTPMethod.POST,
             "score_links",
             auth_context,
-            json={"name": "Hele cupen", "court_id": None, "valid_hours": 24},
+            json={"name": "Hele cupen", "court_id": None},
         )
         token = created["data"]["token"]
         card = await send_request(

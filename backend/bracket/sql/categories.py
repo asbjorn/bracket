@@ -9,6 +9,7 @@ def timing_values(body: CategoryBody) -> dict[str, object]:
         "margin_minutes": body.margin_minutes,
         "min_rest_minutes": body.min_rest_minutes,
         "game_format": body.game_format.value if body.game_format is not None else None,
+        "max_matches_per_day": body.max_matches_per_day,
     }
 
 
@@ -42,11 +43,12 @@ async def sql_create_category(tournament_id: TournamentId, body: CategoryBody) -
     query = """
         INSERT INTO categories (
             created, tournament_id, name, age, results_public,
-            duration_minutes, margin_minutes, min_rest_minutes, game_format
+            duration_minutes, margin_minutes, min_rest_minutes, game_format, max_matches_per_day
         )
         VALUES (
             NOW(), :tournament_id, :name, :age, :results_public,
-            :duration_minutes, :margin_minutes, :min_rest_minutes, :game_format
+            :duration_minutes, :margin_minutes, :min_rest_minutes, :game_format,
+            :max_matches_per_day
         )
         RETURNING *
         """
@@ -71,7 +73,8 @@ async def sql_update_category(
         UPDATE categories
         SET name = :name, age = :age, results_public = :results_public,
             duration_minutes = :duration_minutes, margin_minutes = :margin_minutes,
-            min_rest_minutes = :min_rest_minutes, game_format = :game_format
+            min_rest_minutes = :min_rest_minutes, game_format = :game_format,
+            max_matches_per_day = :max_matches_per_day
         WHERE categories.tournament_id = :tournament_id
         AND categories.id = :category_id
         RETURNING *

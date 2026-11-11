@@ -17,7 +17,7 @@ from tests.integration_tests.api.shared import (
     send_tournament_request,
 )
 from tests.integration_tests.models import AuthContext
-from tests.integration_tests.sql import inserted_category, inserted_stage
+from tests.integration_tests.sql import inserted_category, inserted_stage, reset_start_time
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -116,6 +116,7 @@ async def test_time_windows(
     assert "must end after it starts" in str(response["detail"])
 
     await database.execute(time_windows.delete())
+    await reset_start_time()
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -275,10 +276,12 @@ async def test_propose_and_apply_schedule(
                     await sql_delete_stage_item_with_foreign_keys(item.id)
             await database.execute(courts.delete())
             await database.execute(time_windows.delete())
+            await reset_start_time()
+    await reset_start_time()
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_delay_and_plan_issues(
+async def test_delay_and_new_schedule_from_now(
     startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
 ) -> None:
     tournament_id = auth_context.tournament.id
@@ -322,33 +325,73 @@ async def test_delay_and_plan_issues(
             await database.execute(
                 "UPDATE matches SET played = true WHERE id = :id", values={"id": first.id}
             )
-
-            response = await send_tournament_request(
-                HTTPMethod.POST,
-                "schedule/delay",
-                auth_context,
-                json={"minutes": 180, "from_time": "2026-06-13T08:00:00Z"},
+            # The second has kicked off (0-0): it stays as well
+            second = matches[1]
+            started = await send_tournament_request(
+                HTTPMethod.PUT, f"matches/{second.id}/started", auth_context, json={"started": True}
             )
-            assert response == {"data": 5}
+            assert started == SUCCESS_RESPONSE
 
-            # Only a real delay: no 0 or negative minutes (that could stack matches on others)
-            for minutes in (0, -10, 601):
+            # A delay of 30 minutes on the pitch of the third match, from the first kick-off
+            third = matches[2]
+            body = {
+                "from_time": "2026-06-13T09:00:00Z",
+                "delay_minutes": 30,
+                "court_id": third.court_id,
+                "keep_courts": True,
+            }
+            preview = await send_tournament_request(
+                HTTPMethod.POST, "schedule/replan/preview", auth_context, json=body
+            )
+            changes = {c["match_id"]: c for c in preview["data"]["changes"]}
+            assert first.id not in changes and second.id not in changes
+            assert third.id in changes
+            # Same pitch, at least 30 minutes later
+            moved = changes[third.id]
+            assert moved["new_court_id"] == third.court_id
+            assert moved["new_start"] >= "2026-06-13T09:30:00Z"
+            # The preview changes nothing
+            [unchanged] = await get_full_tournament_details(tournament_id)
+            assert {
+                m.id: m.start_time for r in unchanged.stage_items[0].rounds for m in r.matches
+            } == {m.id: m.start_time for m in matches}
+
+            applied = await send_tournament_request(
+                HTTPMethod.POST, "schedule/replan/apply", auth_context, json=body
+            )
+            assert applied["data"]["moved"] == preview["data"]["moved"]
+            issues = await send_tournament_request(HTTPMethod.GET, "schedule/issues", auth_context)
+            assert issues == {"data": []}
+
+            # A new schedule from 10:00: nothing that isn't played or started starts earlier
+            body = {"from_time": "2026-06-13T10:00:00Z"}
+            applied = await send_tournament_request(
+                HTTPMethod.POST, "schedule/replan/apply", auth_context, json=body
+            )
+            [replanned] = await get_full_tournament_details(tournament_id)
+            for match in (m for r in replanned.stage_items[0].rounds for m in r.matches):
+                if match.id in (first.id, second.id):
+                    assert match.start_time == next(
+                        m.start_time for m in matches if m.id == match.id
+                    )
+                elif match.start_time is not None:
+                    assert assert_some(match.start_time).isoformat() >= "2026-06-13T10:00:00"
+
+            # Only a real delay
+            for minutes in (-10, 601):
                 response = await send_tournament_request(
                     HTTPMethod.POST,
-                    "schedule/delay",
+                    "schedule/replan/preview",
                     auth_context,
-                    json={"minutes": minutes, "from_time": "2026-06-13T08:00:00Z"},
+                    json={"from_time": "2026-06-13T08:00:00Z", "delay_minutes": minutes},
                 )
                 assert "detail" in response, minutes
-
-            # Now everything except the played match is after the time window
-            issues = await send_tournament_request(HTTPMethod.GET, "schedule/issues", auth_context)
-            outside = {i["match_id"] for i in issues["data"] if i["kind"] == "OUTSIDE_TIME_WINDOWS"}
-            assert outside == {m.id for m in matches[1:]}
         finally:
             await sql_delete_stage_item_with_foreign_keys(group.id)
             await database.execute(courts.delete())
             await database.execute(time_windows.delete())
+            await reset_start_time()
+    await reset_start_time()
 
 
 @pytest.mark.asyncio(loop_scope="session")

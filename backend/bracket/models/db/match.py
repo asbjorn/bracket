@@ -38,6 +38,8 @@ class MatchBaseInsertable(BaseModelORM):
     stage_item_input2_conflict: bool
     # Whether the match has been played. Only played matches count in rankings.
     played: bool = False
+    # Kick-off; a started match stays where it is when the schedule changes
+    started_at: datetime_utc | None = None
     result_type: MatchResultType = MatchResultType.NORMAL
     stage_item_input1_penalties: int | None = None
     stage_item_input2_penalties: int | None = None

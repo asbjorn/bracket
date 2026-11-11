@@ -6,6 +6,8 @@ playoffs, timing); the matches that would result are planned with the real sched
 game formats and the order of stages are taken into account.
 """
 
+from collections import Counter
+from datetime import date
 from enum import StrEnum
 from typing import Annotated, Self
 
@@ -16,6 +18,7 @@ from bracket.logic.planning.scheduler import (
     CourtToPlan,
     Dependency,
     MatchToPlan,
+    ScheduleResult,
     Window,
     schedule_matches,
 )
@@ -32,9 +35,14 @@ from bracket.logic.scheduling.elimination import (
     plan_single_elimination,
 )
 from bracket.logic.scheduling.round_robin import get_round_robin_combinations
-from bracket.models.db.category import YOUTH_FOOTBALL_MIN_AGE
+from bracket.models.db.category import (
+    MAX_MATCHES_PER_DAY_LIMIT,
+    YOUTH_FOOTBALL_MIN_AGE,
+    max_matches_per_day_for_age,
+)
 from bracket.models.db.game_format import GameFormat
-from bracket.models.db.time_window import TimeWindowBody
+from bracket.models.db.time_window import MAX_TIME_WINDOWS, TimeWindowBody
+from bracket.utils.cup_time import cup_day
 from bracket.utils.id_types import CourtId, MatchId
 from bracket.utils.text import SingleLine
 
@@ -71,6 +79,11 @@ class CapacityClass(BaseModel):
 
     @model_validator(mode="after")
     def check_playoffs(self) -> Self:
+        if self.group_size > self.team_count:
+            raise ValueError(
+                f"{self.name}: a group can't have more teams ({self.group_size}) "
+                f"than the class ({self.team_count})"
+            )
         if self.playoff_placings is not None:
             placings = [placing for playoff in self.playoff_placings for placing in playoff]
             if len(self.playoff_placings) > len(PLAYOFF_NAMES):
@@ -98,11 +111,29 @@ class CapacityClass(BaseModel):
     margin_minutes: int = Field(default=0, ge=0, le=120)
     min_rest_minutes: int = Field(default=0, ge=0, le=600)
     game_format: GameFormat | None = None
+    # At most this many matches per team per day; `None`: the default for the age
+    max_matches_per_day: int | None = Field(default=None, ge=1, le=MAX_MATCHES_PER_DAY_LIMIT)
+    # The days/hours the class plays; empty: whenever the cup plays
+    time_windows: list[TimeWindowBody] = Field(default=[], max_length=MAX_TIME_WINDOWS)
+
+    def get_max_matches_per_day(self) -> int | None:
+        if self.max_matches_per_day is not None:
+            return self.max_matches_per_day
+        return max_matches_per_day_for_age(self.age)
+
+    def get_windows(self) -> tuple[Window, ...] | None:
+        if len(self.time_windows) < 1:
+            return None
+        return tuple(Window(w.start_time, w.end_time) for w in self.time_windows)
 
 
 class CapacityCourts(BaseModel):
+    """`count` pitches; with `split_into`, each is a full pitch split into parts."""
+
     count: int = Field(ge=1, le=MAX_COURTS)
     game_format: GameFormat | None = None
+    split_into: int | None = Field(default=None, ge=2, le=4)
+    part_format: GameFormat | None = None
 
 
 class CapacityBody(BaseModel):
@@ -115,7 +146,7 @@ class CapacityBody(BaseModel):
     def check_size(self) -> Self:
         if sum(c.team_count for c in self.classes) > MAX_TEAMS_TOTAL:
             raise ValueError(f"The calculator handles at most {MAX_TEAMS_TOTAL} teams")
-        if sum(c.count for c in self.courts) > MAX_COURTS:
+        if sum(c.count * (1 + (c.split_into or 0)) for c in self.courts) > MAX_COURTS:
             raise ValueError(f"The calculator handles at most {MAX_COURTS} courts")
         return self
 
@@ -134,12 +165,21 @@ class CapacityClassResult(BaseModel):
     playoff_matches: int
     min_matches_per_team: int
     max_matches_per_team: int
+    # The most group matches a team plays on one day in the calculated plan
+    max_matches_per_team_per_day: int
     warnings: list[CapacityWarning]
+
+
+class MatchesOnDay(BaseModel):
+    day: date
+    matches: int
 
 
 class CapacityResult(BaseModel):
     classes: list[CapacityClassResult]
     schedule: ScheduleProposal
+    # How the planned matches are spread over the days (in Norwegian time)
+    matches_per_day: list[MatchesOnDay]
 
 
 class MatchFactory:
@@ -162,6 +202,8 @@ class MatchFactory:
             game_format=self.cup_class.game_format,
             dependencies=dependencies,
             priority=priority,
+            windows=self.cup_class.get_windows(),
+            max_per_day=self.cup_class.get_max_matches_per_day(),
         )
 
 
@@ -226,8 +268,9 @@ def playoff_matches(
 
 
 def class_warnings(
-    cup_class: CapacityClass, min_matches: int, max_matches: int
+    cup_class: CapacityClass, min_matches: int, max_per_day: int
 ) -> list[CapacityWarning]:
+    """`max_per_day`: the most matches a team plays on one day in the calculated plan."""
     if cup_class.age is None:
         return []
     warnings: list[CapacityWarning] = []
@@ -236,9 +279,24 @@ def class_warnings(
     if cup_class.age < YOUTH_FOOTBALL_MIN_AGE and cup_class.has_playoffs:
         warnings.append(CapacityWarning.PLAYOFFS_IN_CHILDRENS_FOOTBALL)
     low, high = MAX_MATCHES_PER_DAY_AGES
-    if low <= cup_class.age <= high and max_matches > MAX_MATCHES_PER_DAY:
+    if low <= cup_class.age <= high and max_per_day > MAX_MATCHES_PER_DAY:
         warnings.append(CapacityWarning.TOO_MANY_MATCHES_PER_DAY)
     return warnings
+
+
+def max_matches_per_team_per_day(
+    class_index: int, matches: list[MatchToPlan], result: ScheduleResult
+) -> int:
+    """Group matches only: the teams of the playoffs aren't known before the cup."""
+    counts: Counter[tuple[str, date]] = Counter()
+    for match in matches:
+        assignment = result.assignments.get(match.id)
+        if assignment is None:
+            continue
+        for team in match.teams:
+            if team.startswith(f"{class_index}:") and ":p" not in team:
+                counts[(team, cup_day(assignment.start))] += 1
+    return max(counts.values(), default=0)
 
 
 def class_matches(
@@ -277,29 +335,57 @@ def class_matches(
         playoff_matches=sum(len(playoff) for playoff in playoffs),
         min_matches_per_team=min_matches,
         max_matches_per_team=max_matches,
-        warnings=class_warnings(cup_class, min_matches, max_matches),
+        # Known once the matches are planned (see calculate_capacity)
+        max_matches_per_team_per_day=0,
+        warnings=[],
     )
 
 
 def calculate_capacity(body: CapacityBody) -> CapacityResult:
     next_id = [0]
     matches: list[MatchToPlan] = []
-    class_results: list[CapacityClassResult] = []
+    plans: list[tuple[CapacityClass, list[MatchToPlan], CapacityClassResult]] = []
     for class_index, cup_class in enumerate(body.classes):
         class_plan, class_result = class_matches(
             cup_class, class_index, body.stage_buffer_minutes, next_id
         )
         matches += class_plan
-        class_results.append(class_result)
+        plans.append((cup_class, class_plan, class_result))
 
-    courts = [
-        CourtToPlan(CourtId(index * 100 + number), group.game_format)
-        for index, group in enumerate(body.courts, start=1)
-        for number in range(group.count)
-    ]
+    courts = capacity_courts(body.courts)
     windows = [Window(w.start_time, w.end_time) for w in body.time_windows]
     result = schedule_matches(matches, courts, windows)
     proposal = to_proposal(matches, courts, windows, result, uses_default_window=False)
+    class_results = []
+    for class_index, (cup_class, class_plan, class_result) in enumerate(plans):
+        per_day = max_matches_per_team_per_day(class_index, class_plan, result)
+        class_results.append(
+            class_result.model_copy(
+                update={
+                    "max_matches_per_team_per_day": per_day,
+                    "warnings": class_warnings(
+                        cup_class, class_result.min_matches_per_team, per_day
+                    ),
+                }
+            )
+        )
+    days = Counter(cup_day(assignment.start) for assignment in result.assignments.values())
     return CapacityResult(
-        classes=class_results, schedule=proposal.model_copy(update={"matches": []})
+        classes=class_results,
+        schedule=proposal.model_copy(update={"matches": []}),
+        matches_per_day=[MatchesOnDay(day=day, matches=days[day]) for day in sorted(days)],
     )
+
+
+def capacity_courts(groups: list[CapacityCourts]) -> list[CourtToPlan]:
+    """The courts of the calculation; a split pitch is the full pitch plus its parts."""
+    courts: list[CourtToPlan] = []
+    for index, group in enumerate(groups, start=1):
+        for number in range(group.count):
+            full = CourtToPlan(CourtId(index * 1000 + number * 10), group.game_format)
+            courts.append(full)
+            courts += [
+                CourtToPlan(CourtId(full.id + part), group.part_format, parent_id=full.id)
+                for part in range(1, (group.split_into or 0) + 1)
+            ]
+    return courts

@@ -319,3 +319,15 @@ async def clear_scores_for_matches_in_stage_item(
             "tournament_id": tournament_id,
         },
     )
+
+
+async def sql_set_match_started(match_id: MatchId, started: bool) -> None:
+    """Kick-off: the time it started (kept when set again); `False` clears it."""
+    await database.execute(
+        """
+        UPDATE matches
+        SET started_at = CASE WHEN :started THEN COALESCE(started_at, NOW()) ELSE NULL END
+        WHERE id = :match_id
+        """,
+        values={"match_id": match_id, "started": started},
+    )

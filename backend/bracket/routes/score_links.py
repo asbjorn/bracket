@@ -12,15 +12,18 @@ from bracket.logic.score_entry import (
     enter_walkover,
     get_score_entry_view,
     score_link_dependency,
+    set_started,
 )
 from bracket.models.db.discipline import MatchCardBody
 from bracket.models.db.score_link import (
     CheckInBody,
     MatchDayNoticeBody,
+    MatchStartedBody,
     ScoreEntryBody,
     ScoreLink,
     ScoreLinkBody,
     ScoreLinkCreated,
+    ScoreLinkValidityBody,
     WalkoverBody,
 )
 from bracket.models.db.tournament import Tournament
@@ -32,17 +35,20 @@ from bracket.routes.models import (
     MatchDayNoticesResponse,
     ScoreEntryViewResponse,
     ScoreLinkCreatedResponse,
+    ScoreLinkResponse,
     ScoreLinksResponse,
     SuccessResponse,
 )
 from bracket.routes.util import disallow_archived_tournament
 from bracket.sql.score_links import (
+    get_link_expiry,
     get_notices,
     get_score_links,
     sql_create_notice,
     sql_create_score_link,
     sql_resolve_notice,
     sql_revoke_score_link,
+    sql_set_score_link_expiry,
 )
 from bracket.sql.validation import check_foreign_keys_belong_to_tournament
 from bracket.utils.id_types import (
@@ -85,6 +91,25 @@ async def create_score_link(
     token = secrets.token_urlsafe(32)
     link = await sql_create_score_link(tournament_id, body, token)
     return ScoreLinkCreatedResponse(data=ScoreLinkCreated(link=link, token=token))
+
+
+@router.put(
+    "/tournaments/{tournament_id}/score_links/{score_link_id}/validity",
+    response_model=ScoreLinkResponse,
+)
+async def set_score_link_validity(
+    tournament_id: TournamentId,
+    score_link_id: ScoreLinkId,
+    body: ScoreLinkValidityBody,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+    __: Tournament = Depends(disallow_archived_tournament),
+) -> ScoreLinkResponse:
+    """Until a moment, or (empty) until the cup is over. The link itself stays the same."""
+    expires_at = await get_link_expiry(tournament_id, body.valid_until)
+    link = await sql_set_score_link_expiry(tournament_id, score_link_id, expires_at)
+    if link is None:
+        raise not_found("link")
+    return ScoreLinkResponse(data=link)
 
 
 @router.post(
@@ -135,6 +160,15 @@ async def enter_match_result(
     match_id: MatchId, body: ScoreEntryBody, link: ScoreLink = Depends(score_link_dependency)
 ) -> SuccessResponse:
     await enter_result(link, match_id, body)
+    return SuccessResponse()
+
+
+@router.put("/score/{token}/matches/{match_id}/started", response_model=SuccessResponse)
+async def mark_match_started(
+    match_id: MatchId, body: MatchStartedBody, link: ScoreLink = Depends(score_link_dependency)
+) -> SuccessResponse:
+    """Kick-off at the pitch: the match keeps its place when the schedule is changed."""
+    await set_started(link, match_id, body.started)
     return SuccessResponse()
 
 

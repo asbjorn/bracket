@@ -28,6 +28,7 @@ async def test_courts_endpoint(
                         "id": court_inserted.id,
                         "name": "Court 1",
                         "game_format": None,
+                        "parent_court_id": None,
                         "tournament_id": auth_context.tournament.id,
                     }
                 ],

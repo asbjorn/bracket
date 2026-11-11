@@ -126,6 +126,7 @@ async def test_update_category(
         "registration_deadline": None,
         "max_teams": None,
         "entry_fee": None,
+        "max_matches_per_day": None,
         "created": None,
     }
 

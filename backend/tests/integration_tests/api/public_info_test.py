@@ -32,7 +32,7 @@ async def test_team_calendar_hides_results_of_hidden_classes(
     try:
         team_ids = await set_up_playable_cup(auth_context)
         link = await send_tournament_request(
-            HTTPMethod.POST, "score_links", auth_context, json={"name": "Alle", "valid_hours": 8}
+            HTTPMethod.POST, "score_links", auth_context, json={"name": "Alle"}
         )
         token = link["data"]["token"]
         view = (await send_request(HTTPMethod.GET, f"score/{token}"))["data"]
@@ -106,7 +106,7 @@ async def test_announcement_rules_and_public_delays(
         # Delays from a pitch: only court and minutes, never the message
         await set_up_playable_cup(auth_context)
         link = await send_tournament_request(
-            HTTPMethod.POST, "score_links", auth_context, json={"name": "Alle", "valid_hours": 8}
+            HTTPMethod.POST, "score_links", auth_context, json={"name": "Alle"}
         )
         token = link["data"]["token"]
         notice = {"delay_minutes": 10, "message": "Dommeren er syk"}

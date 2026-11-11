@@ -68,7 +68,7 @@ async def sql_create_courts(tournament_id: TournamentId, body: CourtsMultiBody) 
     first = next_court_number([court.name for court in existing_courts], body.name_prefix)
     async with database.transaction():
         for number in range(first, first + body.count):
-            await database.execute(
+            full_id = await database.execute(
                 query=courts.insert(),
                 values=CourtToInsert(
                     name=f"{body.name_prefix} {number}",
@@ -77,3 +77,15 @@ async def sql_create_courts(tournament_id: TournamentId, body: CourtsMultiBody) 
                     tournament_id=tournament_id,
                 ).model_dump(),
             )
+            # A split pitch: its parts "Bane 1A", "Bane 1B", ...
+            for letter in "ABCD"[: body.split_into or 0]:
+                await database.execute(
+                    query=courts.insert(),
+                    values=CourtToInsert(
+                        name=f"{body.name_prefix} {number}{letter}",
+                        game_format=body.part_format,
+                        created=datetime_utc.now(),
+                        tournament_id=tournament_id,
+                    ).model_dump()
+                    | {"parent_court_id": full_id},
+                )

@@ -398,6 +398,19 @@
             "title": "Margin Minutes",
             "type": "integer"
           },
+          "max_matches_per_day": {
+            "anyOf": [
+              {
+                "maximum": 20.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Matches Per Day"
+          },
           "min_rest_minutes": {
             "default": 0,
             "maximum": 600.0,
@@ -442,6 +455,15 @@
             "default": false,
             "title": "Third Place Match",
             "type": "boolean"
+          },
+          "time_windows": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/TimeWindowBody"
+            },
+            "maxItems": 60,
+            "title": "Time Windows",
+            "type": "array"
           }
         },
         "required": [
@@ -455,7 +477,9 @@
           "duration_minutes",
           "margin_minutes",
           "min_rest_minutes",
-          "game_format"
+          "game_format",
+          "max_matches_per_day",
+          "time_windows"
         ],
         "title": "CapacityClass",
         "type": "object"
@@ -475,6 +499,10 @@
           },
           "max_matches_per_team": {
             "title": "Max Matches Per Team",
+            "type": "integer"
+          },
+          "max_matches_per_team_per_day": {
+            "title": "Max Matches Per Team Per Day",
             "type": "integer"
           },
           "min_matches_per_team": {
@@ -512,12 +540,14 @@
           "playoff_matches",
           "min_matches_per_team",
           "max_matches_per_team",
+          "max_matches_per_team_per_day",
           "warnings"
         ],
         "title": "CapacityClassResult",
         "type": "object"
       },
       "CapacityCourts": {
+        "description": "`count` pitches; with `split_into`, each is a full pitch split into parts.",
         "properties": {
           "count": {
             "maximum": 100.0,
@@ -534,11 +564,36 @@
                 "type": "null"
               }
             ]
+          },
+          "part_format": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GameFormat"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "split_into": {
+            "anyOf": [
+              {
+                "maximum": 4.0,
+                "minimum": 2.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Split Into"
           }
         },
         "required": [
           "count",
-          "game_format"
+          "game_format",
+          "split_into",
+          "part_format"
         ],
         "title": "CapacityCourts",
         "type": "object"
@@ -564,13 +619,21 @@
             "title": "Classes",
             "type": "array"
           },
+          "matches_per_day": {
+            "items": {
+              "$ref": "#/components/schemas/MatchesOnDay"
+            },
+            "title": "Matches Per Day",
+            "type": "array"
+          },
           "schedule": {
             "$ref": "#/components/schemas/ScheduleProposal"
           }
         },
         "required": [
           "classes",
-          "schedule"
+          "schedule",
+          "matches_per_day"
         ],
         "title": "CapacityResult",
         "type": "object"
@@ -674,6 +737,17 @@
             ],
             "title": "Margin Minutes"
           },
+          "max_matches_per_day": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Matches Per Day"
+          },
           "max_teams": {
             "anyOf": [
               {
@@ -741,6 +815,7 @@
           "registration_deadline",
           "max_teams",
           "entry_fee",
+          "max_matches_per_day",
           "id"
         ],
         "title": "Category",
@@ -798,6 +873,19 @@
             ],
             "title": "Margin Minutes"
           },
+          "max_matches_per_day": {
+            "anyOf": [
+              {
+                "maximum": 20.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Matches Per Day"
+          },
           "min_rest_minutes": {
             "anyOf": [
               {
@@ -836,7 +924,8 @@
           "duration_minutes",
           "margin_minutes",
           "min_rest_minutes",
-          "game_format"
+          "game_format",
+          "max_matches_per_day"
         ],
         "title": "CategoryBody",
         "type": "object"
@@ -1068,6 +1157,17 @@
             "title": "Name",
             "type": "string"
           },
+          "parent_court_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Court Id"
+          },
           "tournament_id": {
             "title": "Tournament Id",
             "type": "integer"
@@ -1078,6 +1178,7 @@
           "created",
           "tournament_id",
           "game_format",
+          "parent_court_id",
           "id"
         ],
         "title": "Court",
@@ -1201,6 +1302,33 @@
         "title": "CourtHostBody",
         "type": "object"
       },
+      "CourtSplitBody": {
+        "description": "Splits a full pitch into parts, e.g. an 11v11 pitch into two 7v7 halves \"Bane 1A/1B\".",
+        "properties": {
+          "game_format": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GameFormat"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "parts": {
+            "maximum": 4.0,
+            "minimum": 2.0,
+            "title": "Parts",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "parts",
+          "game_format"
+        ],
+        "title": "CourtSplitBody",
+        "type": "object"
+      },
       "CourtsMultiBody": {
         "description": "Creates courts \"<name_prefix> 1\", \"<name_prefix> 2\", ... continuing the numbering.",
         "properties": {
@@ -1226,12 +1354,37 @@
             "minLength": 1,
             "title": "Name Prefix",
             "type": "string"
+          },
+          "part_format": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GameFormat"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "split_into": {
+            "anyOf": [
+              {
+                "maximum": 4.0,
+                "minimum": 2.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Split Into"
           }
         },
         "required": [
           "count",
           "name_prefix",
-          "game_format"
+          "game_format",
+          "split_into",
+          "part_format"
         ],
         "title": "CourtsMultiBody",
         "type": "object"
@@ -1344,6 +1497,19 @@
             "title": "Margin Minutes",
             "type": "integer"
           },
+          "max_matches_per_day": {
+            "anyOf": [
+              {
+                "maximum": 20.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Matches Per Day"
+          },
           "min_rest_minutes": {
             "default": 0,
             "maximum": 600.0,
@@ -1399,6 +1565,15 @@
             "default": false,
             "title": "Third Place Match",
             "type": "boolean"
+          },
+          "time_windows": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/TimeWindowBody"
+            },
+            "maxItems": 60,
+            "title": "Time Windows",
+            "type": "array"
           }
         },
         "required": [
@@ -1413,6 +1588,8 @@
           "margin_minutes",
           "min_rest_minutes",
           "game_format",
+          "max_matches_per_day",
+          "time_windows",
           "results_public"
         ],
         "title": "CupSetupClass",
@@ -1457,40 +1634,6 @@
           "playoff"
         ],
         "title": "CupSetupNames",
-        "type": "object"
-      },
-      "DelayBody": {
-        "description": "Moves all matches that haven't been played yet and start at or after `from_time`.",
-        "properties": {
-          "court_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Court Id"
-          },
-          "from_time": {
-            "format": "date-time",
-            "title": "From Time",
-            "type": "string"
-          },
-          "minutes": {
-            "maximum": 600.0,
-            "minimum": 1.0,
-            "title": "Minutes",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "minutes",
-          "from_time",
-          "court_id"
-        ],
-        "title": "DelayBody",
         "type": "object"
       },
       "DemoUserToRegister": {
@@ -1956,7 +2099,10 @@
           "COURT_OVERLAP",
           "WRONG_GAME_FORMAT",
           "OUTSIDE_TIME_WINDOWS",
-          "BEFORE_DEPENDENCY"
+          "BEFORE_DEPENDENCY",
+          "SPLIT_PITCH_OVERLAP",
+          "OUTSIDE_CLASS_HOURS",
+          "TOO_MANY_MATCHES_PER_DAY"
         ],
         "title": "IssueKind",
         "type": "string"
@@ -2338,6 +2484,18 @@
               }
             ],
             "title": "Start Time"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
           }
         },
         "required": [
@@ -2355,6 +2513,7 @@
           "stage_item_input1_conflict",
           "stage_item_input2_conflict",
           "played",
+          "started_at",
           "result_type",
           "stage_item_input1_penalties",
           "stage_item_input2_penalties",
@@ -2634,6 +2793,69 @@
           "data"
         ],
         "title": "MatchCardResponse",
+        "type": "object"
+      },
+      "MatchChange": {
+        "properties": {
+          "match_id": {
+            "title": "Match Id",
+            "type": "integer"
+          },
+          "new_court_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Court Id"
+          },
+          "new_start": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Start"
+          },
+          "old_court_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Old Court Id"
+          },
+          "old_start": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Old Start"
+          }
+        },
+        "required": [
+          "match_id",
+          "old_start",
+          "new_start",
+          "old_court_id",
+          "new_court_id"
+        ],
+        "title": "MatchChange",
         "type": "object"
       },
       "MatchCreateBodyFrontend": {
@@ -2935,6 +3157,20 @@
         "title": "MatchResultType",
         "type": "string"
       },
+      "MatchStartedBody": {
+        "description": "A started match keeps its pitch and time when the schedule is changed.",
+        "properties": {
+          "started": {
+            "title": "Started",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "started"
+        ],
+        "title": "MatchStartedBody",
+        "type": "object"
+      },
       "MatchWithDetails": {
         "description": "MatchWithDetails has zero or one defined stage item inputs, but not both.",
         "properties": {
@@ -3177,6 +3413,18 @@
               }
             ],
             "title": "Start Time"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
           }
         },
         "required": [
@@ -3194,6 +3442,7 @@
           "stage_item_input1_conflict",
           "stage_item_input2_conflict",
           "played",
+          "started_at",
           "result_type",
           "stage_item_input1_penalties",
           "stage_item_input2_penalties",
@@ -3446,6 +3695,18 @@
               }
             ],
             "title": "Start Time"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
           }
         },
         "required": [
@@ -3463,6 +3724,7 @@
           "stage_item_input1_conflict",
           "stage_item_input2_conflict",
           "played",
+          "started_at",
           "result_type",
           "stage_item_input1_penalties",
           "stage_item_input2_penalties",
@@ -3478,6 +3740,25 @@
           "court"
         ],
         "title": "MatchWithDetailsDefinitive",
+        "type": "object"
+      },
+      "MatchesOnDay": {
+        "properties": {
+          "day": {
+            "format": "date",
+            "title": "Day",
+            "type": "string"
+          },
+          "matches": {
+            "title": "Matches",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "day",
+          "matches"
+        ],
+        "title": "MatchesOnDay",
         "type": "object"
       },
       "NewClubTeam": {
@@ -4285,6 +4566,49 @@
           "data"
         ],
         "title": "PlanIssuesResponse",
+        "type": "object"
+      },
+      "PlanningHours": {
+        "description": "The opening hours of pitches and the days/hours of classes that have their own.",
+        "properties": {
+          "categories": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/TimeWindow"
+              },
+              "type": "array"
+            },
+            "title": "Categories",
+            "type": "object"
+          },
+          "courts": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/TimeWindow"
+              },
+              "type": "array"
+            },
+            "title": "Courts",
+            "type": "object"
+          }
+        },
+        "required": [
+          "courts",
+          "categories"
+        ],
+        "title": "PlanningHours",
+        "type": "object"
+      },
+      "PlanningHoursResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PlanningHours"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "PlanningHoursResponse",
         "type": "object"
       },
       "Player": {
@@ -5383,6 +5707,111 @@
         "title": "RegistrationsResponse",
         "type": "object"
       },
+      "ReplanBody": {
+        "description": "Changing the schedule during the cup. Played and started matches stay where they are.\n\n- Without `keep_courts` (\"a new schedule from now\"): all other matches are planned again,\n  not before `from_time`.\n- With `keep_courts` (a delay): matches keep their pitch and order. The selected matches (all,\n  one court or one class) start no earlier than `from_time + delay_minutes`; the others\n  keep their time unless a delayed match pushes them (same pitch, rest, knockout order).\n  Gaps such as the lunch break absorb the delay.",
+        "properties": {
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "court_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Court Id"
+          },
+          "delay_minutes": {
+            "default": 0,
+            "maximum": 600.0,
+            "minimum": 0.0,
+            "title": "Delay Minutes",
+            "type": "integer"
+          },
+          "from_time": {
+            "format": "date-time",
+            "title": "From Time",
+            "type": "string"
+          },
+          "keep_courts": {
+            "default": false,
+            "title": "Keep Courts",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "from_time",
+          "delay_minutes",
+          "court_id",
+          "category_id",
+          "keep_courts"
+        ],
+        "title": "ReplanBody",
+        "type": "object"
+      },
+      "ReplanPreview": {
+        "properties": {
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/MatchChange"
+            },
+            "title": "Changes",
+            "type": "array"
+          },
+          "max_shift_minutes": {
+            "title": "Max Shift Minutes",
+            "type": "integer"
+          },
+          "moved": {
+            "title": "Moved",
+            "type": "integer"
+          },
+          "proposal": {
+            "$ref": "#/components/schemas/ScheduleProposal"
+          },
+          "teams_affected": {
+            "title": "Teams Affected",
+            "type": "integer"
+          },
+          "unchanged": {
+            "title": "Unchanged",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "proposal",
+          "moved",
+          "unchanged",
+          "max_shift_minutes",
+          "teams_affected",
+          "changes"
+        ],
+        "title": "ReplanPreview",
+        "type": "object"
+      },
+      "ReplanPreviewResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ReplanPreview"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ReplanPreviewResponse",
+        "type": "object"
+      },
       "RoundCreateBody": {
         "properties": {
           "name": {
@@ -5834,6 +6263,18 @@
             ],
             "title": "Start Time"
           },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
           "suspended_players": {
             "default": [],
             "items": {
@@ -5915,6 +6356,7 @@
           "penalties1",
           "penalties2",
           "played",
+          "started_at",
           "result_type",
           "referee_name",
           "assistant_names",
@@ -6077,18 +6519,23 @@
             "title": "Name",
             "type": "string"
           },
-          "valid_hours": {
-            "default": 48,
-            "maximum": 336.0,
-            "minimum": 1.0,
-            "title": "Valid Hours",
-            "type": "integer"
+          "valid_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Until"
           }
         },
         "required": [
           "name",
           "court_id",
-          "valid_hours"
+          "valid_until"
         ],
         "title": "ScoreLinkBody",
         "type": "object"
@@ -6120,6 +6567,40 @@
           "data"
         ],
         "title": "ScoreLinkCreatedResponse",
+        "type": "object"
+      },
+      "ScoreLinkResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ScoreLink"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ScoreLinkResponse",
+        "type": "object"
+      },
+      "ScoreLinkValidityBody": {
+        "description": "Extends (or shortens) a link without changing it: the QR codes keep working.",
+        "properties": {
+          "valid_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Until"
+          }
+        },
+        "required": [
+          "valid_until"
+        ],
+        "title": "ScoreLinkValidityBody",
         "type": "object"
       },
       "ScoreLinksResponse": {
@@ -7535,6 +8016,28 @@
       },
       "TimeWindow": {
         "properties": {
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "court_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Court Id"
+          },
           "end_time": {
             "format": "date-time",
             "title": "End Time",
@@ -7558,7 +8061,9 @@
           "start_time",
           "end_time",
           "id",
-          "tournament_id"
+          "tournament_id",
+          "court_id",
+          "category_id"
         ],
         "title": "TimeWindow",
         "type": "object"
@@ -8794,6 +9299,68 @@
         ]
       }
     },
+    "/score/{token}/matches/{match_id}/started": {
+      "put": {
+        "description": "Kick-off at the pitch: the match keeps its place when the schedule is changed.",
+        "operationId": "mark_match_started_score__token__matches__match_id__started_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "match_id",
+            "required": true,
+            "schema": {
+              "title": "Match Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MatchStartedBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark Match Started",
+        "tags": [
+          "Score links"
+        ]
+      }
+    },
     "/score/{token}/matches/{match_id}/walkover": {
       "put": {
         "description": "The other team didn't show up: `winner_team_id` wins by the tournament's walkover score.",
@@ -9755,6 +10322,73 @@
         ]
       }
     },
+    "/tournaments/{tournament_id}/categories/{category_id}/time_windows": {
+      "put": {
+        "description": "The days and hours a class plays; empty: whenever the cup plays.",
+        "operationId": "replace_category_time_windows_tournaments__tournament_id__categories__category_id__time_windows_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "category_id",
+            "required": true,
+            "schema": {
+              "title": "Category Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TimeWindowsBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Replace Category Time Windows",
+        "tags": [
+          "Courts"
+        ]
+      }
+    },
     "/tournaments/{tournament_id}/categories/{category_id}/waitlist/promote": {
       "post": {
         "operationId": "promote_first_on_waitlist_tournaments__tournament_id__categories__category_id__waitlist_promote_post",
@@ -10243,6 +10877,140 @@
           }
         ],
         "summary": "Update Court By Id",
+        "tags": [
+          "Courts"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/courts/{court_id}/split": {
+      "post": {
+        "description": "Splits a full pitch into 2-4 parts named after it (\"Bane 1A\", \"Bane 1B\", ...). A match on\nthe full pitch blocks its parts and a match on a part blocks the full pitch.",
+        "operationId": "split_court_tournaments__tournament_id__courts__court_id__split_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "court_id",
+            "required": true,
+            "schema": {
+              "title": "Court Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CourtSplitBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourtsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Split Court",
+        "tags": [
+          "Courts"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/courts/{court_id}/time_windows": {
+      "put": {
+        "description": "The opening hours of one pitch; empty: the playing hours of the cup.",
+        "operationId": "replace_court_time_windows_tournaments__tournament_id__courts__court_id__time_windows_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "court_id",
+            "required": true,
+            "schema": {
+              "title": "Court Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TimeWindowsBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Replace Court Time Windows",
         "tags": [
           "Courts"
         ]
@@ -11215,6 +11983,73 @@
           }
         ],
         "summary": "Reschedule Match",
+        "tags": [
+          "Matches"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/matches/{match_id}/started": {
+      "put": {
+        "description": "Kick-off: a started match keeps its pitch and time when the schedule is changed.",
+        "operationId": "mark_started_tournaments__tournament_id__matches__match_id__started_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "match_id",
+            "required": true,
+            "schema": {
+              "title": "Match Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MatchStartedBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Mark Started",
         "tags": [
           "Matches"
         ]
@@ -12225,6 +13060,54 @@
         "summary": "Update Club Of Cup",
         "tags": [
           "Participating clubs"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/planning_hours": {
+      "get": {
+        "description": "The opening hours of pitches and the days/hours of classes that have their own.",
+        "operationId": "get_planning_hours_tournaments__tournament_id__planning_hours_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanningHoursResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Planning Hours",
+        "tags": [
+          "Courts"
         ]
       }
     },
@@ -13483,64 +14366,6 @@
         ]
       }
     },
-    "/tournaments/{tournament_id}/schedule/delay": {
-      "post": {
-        "description": "When the cup runs late: moves the remaining matches (of one court or all) by some minutes.\nReturns the number of matches that moved.",
-        "operationId": "delay_schedule_tournaments__tournament_id__schedule_delay_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "tournament_id",
-            "required": true,
-            "schema": {
-              "title": "Tournament Id",
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DelayBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CountResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "summary": "Delay Schedule",
-        "tags": [
-          "Matches"
-        ]
-      }
-    },
     "/tournaments/{tournament_id}/schedule/issues": {
       "get": {
         "description": "Problems in the current plan: overlapping matches, too little rest, matches outside the\ntime windows or on a court of the wrong format, knockout matches before their feeders.",
@@ -13632,6 +14457,122 @@
           }
         ],
         "summary": "Propose Match Schedule",
+        "tags": [
+          "Matches"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/schedule/replan/apply": {
+      "post": {
+        "description": "Like the preview, and saves the matches that change.",
+        "operationId": "apply_schedule_change_tournaments__tournament_id__schedule_replan_apply_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplanBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplanPreviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Apply Schedule Change",
+        "tags": [
+          "Matches"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/schedule/replan/preview": {
+      "post": {
+        "description": "What a new schedule from a moment, or a delay, would change, without saving. Played and\nstarted matches stay where they are; nothing is planned before `from_time`.",
+        "operationId": "preview_schedule_change_tournaments__tournament_id__schedule_replan_preview_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplanBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplanPreviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Preview Schedule Change",
         "tags": [
           "Matches"
         ]
@@ -13838,6 +14779,73 @@
           }
         ],
         "summary": "Revoke Score Link",
+        "tags": [
+          "Score links"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/score_links/{score_link_id}/validity": {
+      "put": {
+        "description": "Until a moment, or (empty) until the cup is over. The link itself stays the same.",
+        "operationId": "set_score_link_validity_tournaments__tournament_id__score_links__score_link_id__validity_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "score_link_id",
+            "required": true,
+            "schema": {
+              "title": "Score Link Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScoreLinkValidityBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoreLinkResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Set Score Link Validity",
         "tags": [
           "Score links"
         ]

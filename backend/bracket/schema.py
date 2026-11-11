@@ -94,6 +94,8 @@ categories = Table(
     Column("registration_deadline", DateTimeTZ, nullable=True),
     Column("max_teams", Integer, nullable=True),
     Column("entry_fee", Integer, nullable=True),  # NOK per team
+    # NULL: the default for the age (see max_matches_per_day_for_age)
+    Column("max_matches_per_day", Integer, nullable=True),
     UniqueConstraint("tournament_id", "name"),
 )
 
@@ -112,6 +114,25 @@ time_windows = Table(
     ),
     Column("start_time", DateTimeTZ, nullable=False),
     Column("end_time", DateTimeTZ, nullable=False),
+    # Both NULL: a window of the cup. Otherwise the opening hours of one pitch or the days and
+    # hours of one class.
+    Column(
+        "court_id",
+        BigInteger,
+        ForeignKey("courts.id", ondelete="CASCADE"),
+        index=True,
+        nullable=True,
+    ),
+    Column(
+        "category_id",
+        BigInteger,
+        ForeignKey("categories.id", ondelete="CASCADE"),
+        index=True,
+        nullable=True,
+    ),
+    CheckConstraint(
+        "court_id IS NULL OR category_id IS NULL", name="time_windows_court_or_category_check"
+    ),
 )
 
 stages = Table(
@@ -243,6 +264,8 @@ matches = Table(
     Column("stage_item_input1_score", Integer, nullable=False),
     Column("stage_item_input2_score", Integer, nullable=False),
     Column("position_in_schedule", Integer, nullable=True),
+    # Kick-off: a started match keeps its time and pitch when the schedule is changed
+    Column("started_at", DateTimeTZ, nullable=True),
     Column("played", Boolean, nullable=False, server_default="f"),
     Column(
         "result_type",
@@ -397,6 +420,14 @@ courts = Table(
     Column("game_format", Text, nullable=True),
     Column("created", DateTimeTZ, nullable=False, server_default=func.now()),
     Column("tournament_id", BigInteger, ForeignKey("tournaments.id"), nullable=False, index=True),
+    # A part of a split pitch (e.g. a 7v7 half of an 11v11 pitch): the full pitch
+    Column(
+        "parent_court_id",
+        BigInteger,
+        ForeignKey("courts.id", ondelete="CASCADE"),
+        index=True,
+        nullable=True,
+    ),
 )
 
 rankings = Table(

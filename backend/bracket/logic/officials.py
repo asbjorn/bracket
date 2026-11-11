@@ -14,7 +14,6 @@ An official that also plays in a team can't be detected: officials aren't linked
 from dataclasses import dataclass
 from datetime import date
 from itertools import combinations
-from zoneinfo import ZoneInfo
 
 from heliclockter import datetime_utc
 
@@ -28,10 +27,10 @@ from bracket.models.db.official import (
     OfficialFee,
 )
 from bracket.utils.csv_export import to_csv
+from bracket.utils.cup_time import cup_day
 from bracket.utils.id_types import CourtHostId, CourtId, MatchId, OfficialId
 
 # Days of a cup (for fees per day) are counted in Norwegian time
-CUP_TIMEZONE = ZoneInfo("Europe/Oslo")
 
 
 @dataclass(frozen=True)
@@ -123,7 +122,7 @@ def find_conflicts(
 
 
 def local_day(moment: datetime_utc) -> date:
-    return moment.astimezone(CUP_TIMEZONE).date()
+    return cup_day(moment)
 
 
 def fee_summary(

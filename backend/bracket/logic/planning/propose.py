@@ -3,7 +3,8 @@ Proposing and applying a complete match plan for a tournament, see `scheduler.py
 """
 
 from collections import defaultdict
-from datetime import datetime, timedelta
+from dataclasses import replace
+from datetime import timedelta
 
 from heliclockter import datetime_utc
 from pydantic import BaseModel, Field
@@ -30,15 +31,16 @@ from bracket.logic.planning.timing import (
 from bracket.models.db.category import Category
 from bracket.models.db.game_format import GameFormat
 from bracket.models.db.match import MatchWithDetails, MatchWithDetailsDefinitive
+from bracket.models.db.time_window import TimeWindow
 from bracket.models.db.tournament import Tournament
 from bracket.models.db.util import StageWithStageItems
 from bracket.sql.categories import get_all_categories_in_tournament
 from bracket.sql.courts import get_all_courts_in_tournament
 from bracket.sql.matches import sql_apply_default_timing, sql_set_match_slot
 from bracket.sql.stages import get_full_tournament_details
-from bracket.sql.time_windows import get_time_windows
+from bracket.sql.time_windows import get_own_time_windows, get_time_windows
 from bracket.sql.tournaments import sql_get_tournament
-from bracket.utils.id_types import CourtId, MatchId, TournamentId
+from bracket.utils.id_types import CategoryId, CourtId, MatchId, TournamentId
 
 # Without time windows, matches are planned from the start time of the tournament onward
 DEFAULT_WINDOW_HOURS = 12
@@ -74,11 +76,10 @@ class ScheduleProposal(BaseModel):
 
 
 def is_fixed(match: AnyMatch) -> bool:
-    """Played matches and matches with a live score stay where they are."""
+    """Played and started matches (also a live score) stay where they are."""
     has_score = match.stage_item_input1_score > 0 or match.stage_item_input2_score > 0
-    return (
-        (match.played or has_score) and match.start_time is not None and match.court_id is not None
-    )
+    in_progress = match.played or match.started_at is not None or has_score
+    return in_progress and match.start_time is not None and match.court_id is not None
 
 
 def get_stage_index_per_class(stages: list[StageWithStageItems]) -> dict[int, int]:
@@ -94,8 +95,17 @@ def get_stage_index_per_class(stages: list[StageWithStageItems]) -> dict[int, in
 
 
 def get_matches_to_plan(
-    tournament: Tournament, stages: list[StageWithStageItems], categories: list[Category]
+    tournament: Tournament,
+    stages: list[StageWithStageItems],
+    categories: list[Category],
+    category_windows: dict[CategoryId, list[TimeWindow]] | None = None,
 ) -> list[MatchToPlan]:
+    """`category_windows`: the days/hours of the classes that have their own."""
+    windows_per_class = {
+        category_id: tuple(Window(w.start_time, w.end_time) for w in windows)
+        for category_id, windows in (category_windows or {}).items()
+        if len(windows) > 0
+    }
     category_per_match = get_category_per_match(stages, categories)
     stage_index = get_stage_index_per_class(stages)
     class_order = {category.id: index for index, category in enumerate(categories, start=1)}
@@ -170,6 +180,8 @@ def get_matches_to_plan(
                             ),
                             fixed_court_id=match.court_id if fixed else None,
                             fixed_start=match.start_time if fixed else None,
+                            windows=windows_per_class.get(category.id) if category else None,
+                            max_per_day=category.get_max_matches_per_day() if category else None,
                         )
                     )
     return result
@@ -182,8 +194,18 @@ async def get_planning_input(
     tournament = await sql_get_tournament(tournament_id)
     stages = await get_full_tournament_details(tournament_id)
     categories = await get_all_categories_in_tournament(tournament_id)
+    court_windows, category_windows = await get_own_time_windows(tournament_id)
     courts = [
-        CourtToPlan(court.id, court.game_format)
+        CourtToPlan(
+            court.id,
+            court.game_format,
+            parent_id=court.parent_court_id,
+            windows=(
+                tuple(Window(w.start_time, w.end_time) for w in court_windows[court.id])
+                if court_windows.get(court.id)
+                else None
+            ),
+        )
         for court in await get_all_courts_in_tournament(tournament_id)
     ]
     windows = [Window(w.start_time, w.end_time) for w in await get_time_windows(tournament_id)]
@@ -195,7 +217,8 @@ async def get_planning_input(
                 tournament.start_time + timedelta(hours=DEFAULT_WINDOW_HOURS),
             )
         ]
-    return get_matches_to_plan(tournament, stages, categories), courts, windows, uses_default_window
+    matches = get_matches_to_plan(tournament, stages, categories, category_windows)
+    return matches, courts, windows, uses_default_window
 
 
 def to_proposal(
@@ -292,41 +315,180 @@ async def get_current_plan_issues(tournament_id: TournamentId) -> list[PlanIssue
     ]
 
 
-class DelayBody(BaseModel):
-    """Moves all matches that haven't been played yet and start at or after `from_time`."""
+class ReplanBody(BaseModel):
+    """
+    Changing the schedule during the cup. Played and started matches stay where they are.
 
-    # Only later: moving matches earlier could stack them on matches that are already played
-    minutes: int = Field(ge=1, le=600)
+    - Without `keep_courts` ("a new schedule from now"): all other matches are planned again,
+      not before `from_time`.
+    - With `keep_courts` (a delay): matches keep their pitch and order. The selected matches (all,
+      one court or one class) start no earlier than `from_time + delay_minutes`; the others
+      keep their time unless a delayed match pushes them (same pitch, rest, knockout order).
+      Gaps such as the lunch break absorb the delay.
+    """
+
     from_time: datetime_utc
+    delay_minutes: int = Field(default=0, ge=0, le=600)
     court_id: CourtId | None = None
+    category_id: CategoryId | None = None
+    keep_courts: bool = False
 
 
-async def delay_remaining_matches(tournament_id: TournamentId, body: DelayBody) -> int:
-    """
-    Returns the number of moved matches. Matches with a result or live score stay in place.
-    """
-    query = f"""
-        UPDATE matches
-        SET start_time = start_time + make_interval(mins => :minutes)
-        FROM rounds r
-        JOIN stage_items si ON si.id = r.stage_item_id
-        JOIN stages st ON st.id = si.stage_id
-        WHERE r.id = matches.round_id
-        AND st.tournament_id = :tournament_id
-        AND matches.start_time >= :from_time
-        AND matches.played IS FALSE
-        AND matches.stage_item_input1_score = 0
-        AND matches.stage_item_input2_score = 0
-        {"AND matches.court_id = :court_id" if body.court_id is not None else ""}
-        RETURNING matches.id
-        """
-    values: dict[str, object] = {
-        "tournament_id": tournament_id,
-        "minutes": body.minutes,
-        "from_time": datetime.fromisoformat(body.from_time.isoformat()),
+class MatchChange(BaseModel):
+    match_id: MatchId
+    old_start: datetime_utc | None
+    new_start: datetime_utc | None
+    old_court_id: CourtId | None
+    new_court_id: CourtId | None
+
+
+class ReplanPreview(BaseModel):
+    proposal: ScheduleProposal
+    moved: int
+    unchanged: int
+    # The largest change of a start time, in minutes (later or earlier)
+    max_shift_minutes: int
+    # Teams (or group places) with at least one match that moves
+    teams_affected: int
+    changes: list[MatchChange]
+
+
+Current = dict[MatchId, tuple[CourtId | None, datetime_utc | None]]
+
+
+def plan_from(
+    matches: list[MatchToPlan], current: Current, body: ReplanBody, selected: set[MatchId]
+) -> list[MatchToPlan]:
+    """The matches to plan again, with the rules of `ReplanBody`."""
+    from_time = body.from_time
+    delayed_from = from_time + timedelta(minutes=body.delay_minutes)
+    result: list[MatchToPlan] = []
+    for match in matches:
+        if match.fixed_start is not None:
+            result.append(match)
+            continue
+        court_id, start = current.get(match.id, (None, None))
+        if not body.keep_courts:
+            result.append(replace(match, earliest=from_time))
+            continue
+        if start is None or court_id is None:
+            # Not planned yet: after everything that is
+            result.append(replace(match, earliest=from_time, priority=(1, *match.priority)))
+            continue
+        earliest = max(start, delayed_from if match.id in selected else from_time)
+        result.append(
+            replace(
+                match,
+                earliest=earliest,
+                only_court_id=court_id,
+                # Keep the order: by the current start time
+                priority=(0, int(start.timestamp()), *match.priority),
+            )
+        )
+    return result
+
+
+async def get_current_slots(
+    tournament_id: TournamentId,
+) -> tuple[Current, dict[MatchId, int | None]]:
+    """The current pitch and time of every match, and the class of every match."""
+    stages = await get_full_tournament_details(tournament_id)
+    current: Current = {}
+    class_of: dict[MatchId, int | None] = {}
+    for stage in stages:
+        for stage_item in stage.stage_items:
+            for round_ in stage_item.rounds:
+                for match in round_.matches:
+                    current[match.id] = (match.court_id, match.start_time)
+                    class_of[match.id] = stage.category_id
+    return current, class_of
+
+
+async def make_replan(tournament_id: TournamentId, body: ReplanBody) -> ReplanPreview:
+    matches, courts, windows, uses_default_window = await get_planning_input(tournament_id)
+    current, class_of = await get_current_slots(tournament_id)
+    selected = {
+        match_id
+        for match_id, (court_id, _) in current.items()
+        if (body.court_id is None or court_id == body.court_id)
+        and (body.category_id is None or class_of.get(match_id) == body.category_id)
     }
-    if body.court_id is not None:
-        values["court_id"] = body.court_id
-    moved = await database.fetch_all(query=query, values=values)
+    to_plan = plan_from(matches, current, body, selected)
+    result = schedule_matches(to_plan, courts, windows)
+    proposal = to_proposal(
+        to_plan, courts, windows, result, uses_default_window=uses_default_window
+    )
+
+    changes: list[MatchChange] = []
+    shifts: list[int] = []
+    teams: set[str] = set()
+    for match in to_plan:
+        old_court, old_start = current.get(match.id, (None, None))
+        assignment = result.assignments.get(match.id)
+        new_court = assignment.court_id if assignment else None
+        new_start = assignment.start if assignment else None
+        if (old_court, old_start) == (new_court, new_start):
+            continue
+        changes.append(
+            MatchChange(
+                match_id=match.id,
+                old_start=old_start,
+                new_start=new_start,
+                old_court_id=old_court,
+                new_court_id=new_court,
+            )
+        )
+        teams |= match.teams
+        if old_start is not None and new_start is not None:
+            shifts.append(abs(int((new_start - old_start).total_seconds() // 60)))
+    preview = ReplanPreview(
+        proposal=proposal,
+        moved=len(changes),
+        unchanged=len(to_plan) - len(changes),
+        max_shift_minutes=max(shifts, default=0),
+        teams_affected=len(teams),
+        changes=sorted(changes, key=lambda c: (c.new_start is None, c.new_start or c.old_start)),
+    )
+    return preview
+
+
+async def preview_replan(tournament_id: TournamentId, body: ReplanBody) -> ReplanPreview:
+    return await make_replan(tournament_id, body)
+
+
+async def apply_replan(tournament_id: TournamentId, body: ReplanBody) -> ReplanPreview:
+    """Saves only the matches that change; matches that no longer fit lose their slot."""
+    preview = await make_replan(tournament_id, body)
+    await sql_apply_default_timing(tournament_id)
+    async with database.transaction():
+        for change in preview.changes:
+            if change.new_court_id is None or change.new_start is None:
+                await sql_set_match_slot(change.match_id, None, None, None)
+            else:
+                await sql_set_match_slot(
+                    change.match_id, change.new_court_id, change.new_start, None
+                )
+    await renumber_positions(tournament_id)
     await handle_conflicts(await get_full_tournament_details(tournament_id))
-    return len(moved)
+    return preview
+
+
+async def renumber_positions(tournament_id: TournamentId) -> None:
+    """The order of the matches on each pitch, by start time."""
+    await database.execute(
+        """
+        UPDATE matches SET position_in_schedule = numbered.position
+        FROM (
+            SELECT m.id, row_number() OVER (
+                PARTITION BY m.court_id ORDER BY m.start_time, m.id
+            ) - 1 AS position
+            FROM matches m
+            JOIN rounds r ON r.id = m.round_id
+            JOIN stage_items si ON si.id = r.stage_item_id
+            JOIN stages st ON st.id = si.stage_id
+            WHERE st.tournament_id = :tournament_id AND m.court_id IS NOT NULL
+        ) AS numbered
+        WHERE matches.id = numbered.id
+        """,
+        values={"tournament_id": tournament_id},
+    )

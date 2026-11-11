@@ -9,10 +9,11 @@ from bracket.logic.planning.matches import (
     schedule_all_unscheduled_matches,
 )
 from bracket.logic.planning.propose import (
-    DelayBody,
+    ReplanBody,
+    apply_replan,
     apply_schedule,
-    delay_remaining_matches,
     get_current_plan_issues,
+    preview_replan,
     propose_schedule,
 )
 from bracket.logic.ranking.calculation import (
@@ -31,14 +32,14 @@ from bracket.models.db.match import (
     MatchFilter,
     MatchRescheduleBody,
 )
-from bracket.models.db.score_link import WalkoverBody
+from bracket.models.db.score_link import MatchStartedBody, WalkoverBody
 from bracket.models.db.stage_item import StageType
 from bracket.models.db.tournament import Tournament
 from bracket.models.db.user import UserPublic
 from bracket.routes.auth import user_authenticated_for_tournament
 from bracket.routes.models import (
-    CountResponse,
     PlanIssuesResponse,
+    ReplanPreviewResponse,
     ScheduleProposalResponse,
     SingleMatchResponse,
     SuccessResponse,
@@ -49,6 +50,7 @@ from bracket.sql.courts import get_all_courts_in_tournament
 from bracket.sql.matches import (
     sql_create_match,
     sql_delete_match,
+    sql_set_match_started,
 )
 from bracket.sql.rounds import get_round_by_id
 from bracket.sql.stage_items import get_stage_item
@@ -181,19 +183,34 @@ async def get_schedule_issues(
     return PlanIssuesResponse(data=await get_current_plan_issues(tournament_id))
 
 
-@router.post("/tournaments/{tournament_id}/schedule/delay", response_model=CountResponse)
-async def delay_schedule(
+@router.post(
+    "/tournaments/{tournament_id}/schedule/replan/preview", response_model=ReplanPreviewResponse
+)
+async def preview_schedule_change(
     tournament_id: TournamentId,
-    body: DelayBody,
+    body: ReplanBody,
     _: UserPublic = Depends(user_authenticated_for_tournament),
-    __: Tournament = Depends(disallow_archived_tournament),
-) -> CountResponse:
+) -> ReplanPreviewResponse:
     """
-    When the cup runs late: moves the remaining matches (of one court or all) by some minutes.
-    Returns the number of matches that moved.
+    What a new schedule from a moment, or a delay, would change, without saving. Played and
+    started matches stay where they are; nothing is planned before `from_time`.
     """
     await check_foreign_keys_belong_to_tournament(body, tournament_id)
-    return CountResponse(data=await delay_remaining_matches(tournament_id, body))
+    return ReplanPreviewResponse(data=await preview_replan(tournament_id, body))
+
+
+@router.post(
+    "/tournaments/{tournament_id}/schedule/replan/apply", response_model=ReplanPreviewResponse
+)
+async def apply_schedule_change(
+    tournament_id: TournamentId,
+    body: ReplanBody,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+    __: Tournament = Depends(disallow_archived_tournament),
+) -> ReplanPreviewResponse:
+    """Like the preview, and saves the matches that change."""
+    await check_foreign_keys_belong_to_tournament(body, tournament_id)
+    return ReplanPreviewResponse(data=await apply_replan(tournament_id, body))
 
 
 @router.post("/tournaments/{tournament_id}/schedule_matches", response_model=SuccessResponse)
@@ -234,6 +251,20 @@ async def give_walkover(
 ) -> SuccessResponse:
     """The other team didn't show up: `winner_team_id` wins by the tournament's walkover score."""
     await record_walkover_by_id(tournament_id, match_id, body.winner_team_id)
+    return SuccessResponse()
+
+
+@router.put(
+    "/tournaments/{tournament_id}/matches/{match_id}/started", response_model=SuccessResponse
+)
+async def mark_started(
+    body: MatchStartedBody,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+    __: Tournament = Depends(disallow_archived_tournament),
+    match: Match = Depends(match_dependency),
+) -> SuccessResponse:
+    """Kick-off: a started match keeps its pitch and time when the schedule is changed."""
+    await sql_set_match_started(match.id, body.started)
     return SuccessResponse()
 
 

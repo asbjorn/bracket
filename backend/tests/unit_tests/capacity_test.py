@@ -13,6 +13,7 @@ from bracket.logic.planning.capacity import (
     calculate_capacity,
 )
 from bracket.logic.scheduling.cup_structure import PlayoffPreset, split_into_groups, split_placings
+from bracket.models.db.game_format import GameFormat
 from bracket.models.db.time_window import TimeWindowBody
 
 DAY = datetime_utc(2026, 6, 13, tzinfo=ZoneInfo("UTC"))
@@ -112,11 +113,65 @@ def test_warnings() -> None:
     assert warnings_for(age=10, playoffs=PlayoffPreset.AB) == [
         CapacityWarning.PLAYOFFS_IN_CHILDRENS_FOOTBALL
     ]
-    # 13: groups of 6 and one playoff of 12 teams: up to 5 + 4 = 9 matches in a day
-    assert warnings_for(age=13, team_count=12, group_size=6, playoffs=PlayoffPreset.A) == [
+    # 13: groups of 7 (6 matches each) on one day, when the class allows 6 a day: too many
+    # for 10-13-year-olds (the default limit for the age, 5, would have prevented it)
+    assert warnings_for(age=13, team_count=7, group_size=7, max_matches_per_day=6) == [
         CapacityWarning.TOO_MANY_MATCHES_PER_DAY
     ]
-    assert warnings_for(age=16, team_count=12, group_size=6, playoffs=PlayoffPreset.A) == []
+    assert warnings_for(age=16, team_count=7, group_size=7, max_matches_per_day=6) == []
+
+
+def test_matches_per_day_limit() -> None:
+    """Age 13: at most 5 a day by default, so 6 group matches need a second day."""
+    cup_class = CapacityClass(name="G13", age=13, team_count=7, group_size=7, duration_minutes=10)
+    one_day = CapacityBody(
+        classes=[cup_class], courts=[CapacityCourts(count=4)], time_windows=[window(8, 20)]
+    )
+    result = calculate_capacity(one_day)
+    assert len(result.schedule.unscheduled_match_ids) > 0
+    assert result.classes[0].max_matches_per_team_per_day == 5
+
+    two_days = one_day.model_copy(update={"time_windows": [window(8, 20), window(24 + 8, 24 + 20)]})
+    result = calculate_capacity(two_days)
+    assert result.schedule.unscheduled_match_ids == []
+    assert result.classes[0].max_matches_per_team_per_day == 5
+
+
+def test_split_pitches_and_class_hours() -> None:
+    """One 11v11 pitch split into two 7v7 halves; the 7v7 class only plays 10-12."""
+    seven = CapacityClass(
+        name="G11",
+        age=11,
+        team_count=4,
+        group_size=4,
+        duration_minutes=20,
+        game_format=GameFormat("7v7"),
+        time_windows=[window(10, 12)],
+    )
+    eleven = CapacityClass(
+        name="G15",
+        age=15,
+        team_count=3,
+        group_size=3,
+        duration_minutes=30,
+        game_format=GameFormat("11v11"),
+    )
+    body = CapacityBody(
+        classes=[seven, eleven],
+        courts=[
+            CapacityCourts(
+                count=1,
+                game_format=GameFormat("11v11"),
+                split_into=2,
+                part_format=GameFormat("7v7"),
+            )
+        ],
+        time_windows=[window(8, 20)],
+    )
+    schedule = calculate_capacity(body).schedule
+    assert schedule.unscheduled_match_ids == []
+    # 11v11 (3 x 30 min) before and after the 7v7 block 10-12 (6 matches, 2 at a time)
+    assert schedule.first_start == DAY + timedelta(hours=8)
 
 
 def test_matches_per_team_with_bronze_final() -> None:

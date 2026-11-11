@@ -76,7 +76,7 @@ async def test_score_link_for_one_court(
             HTTPMethod.POST,
             "score_links",
             auth_context,
-            json={"name": "Bane 1", "court_id": court1.id, "valid_hours": 24},
+            json={"name": "Bane 1", "court_id": court1.id},
         )
         token = created["data"]["token"]
         link_id = created["data"]["link"]["id"]
@@ -204,7 +204,7 @@ async def test_score_link_rate_limit(
         ]
 
         created = await send_tournament_request(
-            HTTPMethod.POST, "score_links", auth_context, json={"name": "Alle", "valid_hours": 8}
+            HTTPMethod.POST, "score_links", auth_context, json={"name": "Alle"}
         )
         token = created["data"]["token"]
         responses = [
@@ -228,3 +228,60 @@ async def test_score_link_rate_limit(
         await database.execute(
             score_links.delete().where(score_links.c.tournament_id == auth_context.tournament.id)
         )
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_score_link_valid_until_the_cup_is_over(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    """By default a link works until a day after the last playing hours, and can be extended."""
+    try:
+        await set_up_playable_cup(auth_context)
+        # The cup plays in ten days, 07:00-15:00 (UTC): valid until the day after, 15:00
+        cup_day = (datetime_utc.now() + timedelta(days=10)).date().isoformat()
+        hours = {
+            "time_windows": [
+                {"start_time": f"{cup_day}T07:00:00Z", "end_time": f"{cup_day}T15:00:00Z"}
+            ]
+        }
+        saved = await send_tournament_request(
+            HTTPMethod.PUT, "time_windows", auth_context, json=hours
+        )
+        assert len(saved["data"]) == 1
+        created = await send_tournament_request(
+            HTTPMethod.POST, "score_links", auth_context, json={"name": "Alle"}
+        )
+        link = created["data"]["link"]
+        day_after = (datetime_utc.now() + timedelta(days=11)).date().isoformat()
+        assert link["expires_at"] == f"{day_after}T15:00:00Z"
+
+        until = (datetime_utc.now() + timedelta(days=3)).replace(microsecond=0)
+        extended = await send_tournament_request(
+            HTTPMethod.PUT,
+            f"score_links/{link['id']}/validity",
+            auth_context,
+            json={"valid_until": until.isoformat()},
+        )
+        assert extended["data"]["expires_at"] == until.isoformat().replace("+00:00", "Z")
+        # Same link: the token (and the QR code) keeps working
+        assert extended["data"]["id"] == link["id"]
+
+        past = await send_tournament_request(
+            HTTPMethod.PUT,
+            f"score_links/{link['id']}/validity",
+            auth_context,
+            json={"valid_until": "2020-01-01T00:00:00Z"},
+        )
+        assert "future" in str(past)
+
+        revoke = await send_tournament_request(
+            HTTPMethod.POST, f"score_links/{link['id']}/revoke", auth_context
+        )
+        assert revoke == SUCCESS_RESPONSE
+        after_revoke = await send_tournament_request(
+            HTTPMethod.PUT, f"score_links/{link['id']}/validity", auth_context, json={}
+        )
+        assert after_revoke == {"detail": "Could not find the link"}
+    finally:
+        await delete_score_links(auth_context)
+        await delete_cup(auth_context)

@@ -24,6 +24,7 @@ from bracket.models.db.tournament import TournamentStatus
 from bracket.sql.categories import get_all_categories_in_tournament
 from bracket.sql.courts import get_all_courts_in_tournament
 from bracket.sql.discipline import get_cards, sql_create_card, sql_delete_card
+from bracket.sql.matches import sql_set_match_started
 from bracket.sql.officials import get_public_match_officials
 from bracket.sql.score_links import get_valid_score_link
 from bracket.sql.stages import get_full_tournament_details
@@ -107,6 +108,7 @@ async def get_link_matches(
                         penalties1=match.stage_item_input1_penalties,
                         penalties2=match.stage_item_input2_penalties,
                         played=match.played,
+                        started_at=match.started_at,
                         result_type=match.result_type,
                         referee_name=next(
                             (
@@ -164,6 +166,11 @@ async def enter_result(link: ScoreLink, match_id: MatchId, body: ScoreEntryBody)
         match.round_id, match.court_id, match.custom_duration_minutes, match.custom_margin_minutes
     )
     await save_match(link.tournament_id, match, match_body)
+
+
+async def set_started(link: ScoreLink, match_id: MatchId, started: bool) -> None:
+    _, match = await get_enterable_match(link, match_id)
+    await sql_set_match_started(match.id, started)
 
 
 async def enter_walkover(link: ScoreLink, match_id: MatchId, winner_team_id: TeamId) -> None:

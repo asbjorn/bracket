@@ -1,6 +1,6 @@
 from typing import Annotated, Self
 
-from heliclockter import datetime_utc
+from heliclockter import datetime_utc, timedelta
 from pydantic import BaseModel, Field, StringConstraints, ValidationError, model_validator
 
 from bracket.models.db.discipline import MatchCard, SuspendedPlayer
@@ -16,15 +16,41 @@ from bracket.utils.id_types import (
     TournamentId,
 )
 
-# Long enough for a cup weekend, short enough that old links stop working
-MAX_VALID_HOURS = 14 * 24
+# Old links must stop working: at most this long ahead
+MAX_VALID_DAYS = 60
+
+
+def check_valid_until(valid_until: datetime_utc | None) -> None:
+    if valid_until is None:
+        return
+    if valid_until <= datetime_utc.now():
+        raise ValueError("A link must be valid until a moment in the future")
+    if valid_until > datetime_utc.now() + timedelta(days=MAX_VALID_DAYS):
+        raise ValueError(f"A link can be valid for at most {MAX_VALID_DAYS} days")
 
 
 class ScoreLinkBody(BaseModelORM):
     name: Annotated[str, StringConstraints(min_length=1, max_length=50, strip_whitespace=True)]
     # Only results of matches on this court; None: the whole tournament
     court_id: CourtId | None = None
-    valid_hours: int = Field(48, ge=1, le=MAX_VALID_HOURS)
+    # `None`: until the cup is over (the end of its last playing hours, plus a day)
+    valid_until: datetime_utc | None = None
+
+    @model_validator(mode="after")
+    def check_validity(self) -> Self:
+        check_valid_until(self.valid_until)
+        return self
+
+
+class ScoreLinkValidityBody(BaseModel):
+    """Extends (or shortens) a link without changing it: the QR codes keep working."""
+
+    valid_until: datetime_utc | None = None
+
+    @model_validator(mode="after")
+    def check_validity(self) -> Self:
+        check_valid_until(self.valid_until)
+        return self
 
 
 class ScoreLink(BaseModelORM):
@@ -65,6 +91,7 @@ class ScoreEntryMatch(BaseModel):
     penalties1: int | None
     penalties2: int | None
     played: bool
+    started_at: datetime_utc | None = None
     result_type: MatchResultType
     # Names only, never contact details
     referee_name: str | None = None
@@ -152,3 +179,9 @@ class WalkoverBody(BaseModel):
 
 class CheckInBody(BaseModel):
     checked_in: bool
+
+
+class MatchStartedBody(BaseModel):
+    """A started match keeps its pitch and time when the schedule is changed."""
+
+    started: bool

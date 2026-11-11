@@ -207,3 +207,8 @@ async def inserted_auth_context() -> AsyncIterator[AuthContext]:
             user_x_club=user_x_club_inserted,
             ranking=ranking_inserted,
         )
+
+
+async def reset_start_time() -> None:
+    """Saving playing hours moves the start of a cup; tests compare the original one."""
+    await database.execute("UPDATE tournaments SET start_time = created")

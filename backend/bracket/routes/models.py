@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from bracket.logic.category_warnings import CategoryWarning
 from bracket.logic.notifications import NotificationStatus, ScheduleNoticeResult
 from bracket.logic.planning.capacity import CapacityResult
-from bracket.logic.planning.propose import PlanIssueOut, ScheduleProposal
+from bracket.logic.planning.propose import PlanIssueOut, ReplanPreview, ScheduleProposal
 from bracket.logic.scheduling.handle_stage_activation import StageItemInputUpdate
 from bracket.logic.scheduling.stage_draw import DrawPlacement
 from bracket.models.db.category import Category
@@ -33,7 +33,7 @@ from bracket.models.db.stage_item_inputs import (
     StageItemInputOptionTentative,
 )
 from bracket.models.db.team import FullTeamWithPlayers, Team
-from bracket.models.db.time_window import TimeWindow
+from bracket.models.db.time_window import PlanningHours, TimeWindow
 from bracket.models.db.tournament import Tournament
 from bracket.models.db.user import UserPublic
 from bracket.models.db.util import StageWithStageItems
@@ -119,7 +119,15 @@ class CategoriesResponse(DataResponse[list[Category]]):
     pass
 
 
+class PlanningHoursResponse(DataResponse[PlanningHours]):
+    pass
+
+
 class TimeWindowsResponse(DataResponse[list[TimeWindow]]):
+    pass
+
+
+class ReplanPreviewResponse(DataResponse[ReplanPreview]):
     pass
 
 
@@ -152,6 +160,10 @@ class PublicMatchOfficialsResponse(DataResponse[list[PublicMatchOfficial]]):
 
 
 class DrawResponse(DataResponse[list[DrawPlacement]]):
+    pass
+
+
+class ScoreLinkResponse(DataResponse[ScoreLink]):
     pass
 
 

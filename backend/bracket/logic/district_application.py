@@ -7,7 +7,6 @@ from collections import Counter
 from itertools import groupby
 
 from bracket.database import database
-from bracket.logic.officials import CUP_TIMEZONE
 from bracket.logic.public_info import get_rules
 from bracket.models.db.district_application import (
     ApplicationClass,
@@ -25,6 +24,7 @@ from bracket.sql.courts import get_all_courts_in_tournament
 from bracket.sql.stages import get_full_tournament_details
 from bracket.sql.time_windows import get_time_windows
 from bracket.sql.tournaments import sql_get_tournament
+from bracket.utils.cup_time import CUP_TIMEZONE
 from bracket.utils.id_types import TournamentId
 
 DETAIL_FIELDS = tuple(TournamentDetails.model_fields)

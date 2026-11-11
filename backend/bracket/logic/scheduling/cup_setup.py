@@ -117,7 +117,9 @@ async def check_cup_setup_allowed(
     check_requirement(stages, user, "max_stages", additions=stage_count)
     check_requirement([], user, "max_stage_items", additions=sum(group_counts + playoff_counts))
     courts = await get_all_courts_in_tournament(tournament_id)
-    check_requirement(courts, user, "max_courts", additions=sum(c.count for c in body.courts))
+    check_requirement(
+        courts, user, "max_courts", additions=sum(c.total_courts for c in body.courts)
+    )
 
 
 async def create_class(
@@ -133,8 +135,13 @@ async def create_class(
             margin_minutes=cup_class.margin_minutes,
             min_rest_minutes=cup_class.min_rest_minutes,
             game_format=cup_class.game_format,
+            max_matches_per_day=cup_class.max_matches_per_day,
         ),
     )
+    if len(cup_class.time_windows) > 0:
+        await sql_replace_time_windows(
+            tournament_id, cup_class.time_windows, category_id=category.id
+        )
     group_stage = await sql_create_stage(tournament_id, category.id, names.group_stage)
     group_sizes = split_into_groups(cup_class.team_count, cup_class.group_size)
     for index, size in enumerate(group_sizes):
