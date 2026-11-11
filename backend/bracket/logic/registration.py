@@ -10,6 +10,7 @@ from heliclockter import datetime_utc
 from starlette import status
 
 from bracket.database import database
+from bracket.logic.notifications import queue_promotion_email, queue_registration_email
 from bracket.logic.subscriptions import check_requirement
 from bracket.models.db.category import Category
 from bracket.models.db.registration import (
@@ -197,6 +198,7 @@ async def register_team(
         )
         place = await waitlist_place(category.id, team_id) if full else None
 
+    await queue_registration_email(tournament_id, TeamId(team_id), place)
     return PublicRegistrationResult(
         team_name=body.team_name, registration_status=registration_status, waitlist_place=place
     )
@@ -283,6 +285,8 @@ async def update_registration(
                 "squad_reported": body.squad_reported,
             },
         )
+    if current == RegistrationStatus.WAITLIST.value and body.registration_status.participates:
+        await queue_promotion_email(tournament_id, team_id)
 
 
 async def promote_from_waitlist(tournament_id: TournamentId, category_id: CategoryId) -> TeamId:
@@ -307,6 +311,7 @@ async def promote_from_waitlist(tournament_id: TournamentId, category_id: Catego
             "UPDATE teams SET registration_status = 'APPROVED' WHERE id = :id",
             values={"id": team_id},
         )
+    await queue_promotion_email(tournament_id, TeamId(team_id))
     return TeamId(team_id)
 
 

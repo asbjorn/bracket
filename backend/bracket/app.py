@@ -13,7 +13,7 @@ from starlette.responses import JSONResponse, Response
 from starlette.staticfiles import StaticFiles
 
 from bracket.config import Environment, config, environment, init_sentry
-from bracket.cronjobs.scheduling import start_cronjobs
+from bracket.cronjobs.scheduling import start_cronjobs, start_email_cronjob
 from bracket.database import database
 from bracket.models.metrics import RequestDefinition, get_request_metrics
 from bracket.routes import (
@@ -28,6 +28,7 @@ from bracket.routes import (
     draw,
     internals,
     matches,
+    notifications,
     officials,
     players,
     public_info,
@@ -60,6 +61,8 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
     if environment is Environment.PRODUCTION:
         start_cronjobs()
+    if environment is not Environment.CI and config.is_email_enabled():
+        start_email_cronjob()
 
     if environment is Environment.PRODUCTION and not config.is_cors_enabled():
         logger.warning("It's advised to set the `CORS_ORIGINS` environment variable in production")
@@ -76,6 +79,7 @@ routers = {
     "Auth": auth.router,
     "Capacity": capacity.router,
     "Cup setup": cup_setup.router,
+    "Notifications": notifications.router,
     "District application": district_application.router,
     "Draw": draw.router,
     "Officials": officials.router,

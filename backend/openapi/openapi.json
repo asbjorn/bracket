@@ -1702,6 +1702,14 @@
         "title": "DrawResponse",
         "type": "object"
       },
+      "EmailLanguage": {
+        "enum": [
+          "nb",
+          "en"
+        ],
+        "title": "EmailLanguage",
+        "type": "string"
+      },
       "EntryFeeBody": {
         "description": "Sets the entry fee (NOK per team) of several classes at once.",
         "properties": {
@@ -3442,6 +3450,153 @@
         "title": "MatchWithDetailsDefinitive",
         "type": "object"
       },
+      "NotificationKind": {
+        "enum": [
+          "ANNOUNCEMENT",
+          "SCHEDULE",
+          "REGISTRATION",
+          "PROMOTION"
+        ],
+        "title": "NotificationKind",
+        "type": "string"
+      },
+      "NotificationOut": {
+        "properties": {
+          "created": {
+            "format": "date-time",
+            "title": "Created",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/NotificationKind"
+          },
+          "recipient": {
+            "title": "Recipient",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "team_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team Name"
+          }
+        },
+        "required": [
+          "created",
+          "kind",
+          "team_name",
+          "recipient",
+          "status",
+          "error"
+        ],
+        "title": "NotificationOut",
+        "type": "object"
+      },
+      "NotificationSettingsBody": {
+        "properties": {
+          "language": {
+            "$ref": "#/components/schemas/EmailLanguage"
+          }
+        },
+        "required": [
+          "language"
+        ],
+        "title": "NotificationSettingsBody",
+        "type": "object"
+      },
+      "NotificationStatus": {
+        "properties": {
+          "contact_emails": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Contact Emails",
+            "type": "array"
+          },
+          "email_enabled": {
+            "title": "Email Enabled",
+            "type": "boolean"
+          },
+          "failed": {
+            "title": "Failed",
+            "type": "integer"
+          },
+          "language": {
+            "$ref": "#/components/schemas/EmailLanguage"
+          },
+          "pending": {
+            "title": "Pending",
+            "type": "integer"
+          },
+          "recent": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationOut"
+            },
+            "title": "Recent",
+            "type": "array"
+          },
+          "sent": {
+            "title": "Sent",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "email_enabled",
+          "language",
+          "pending",
+          "sent",
+          "failed",
+          "recent",
+          "contact_emails"
+        ],
+        "title": "NotificationStatus",
+        "type": "object"
+      },
+      "NotificationStatusResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/NotificationStatus"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "NotificationStatusResponse",
+        "type": "object"
+      },
+      "NotificationsQueuedResponse": {
+        "properties": {
+          "data": {
+            "title": "Data",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "NotificationsQueuedResponse",
+        "type": "object"
+      },
       "Official": {
         "description": "Only for the organiser: it has phone and email.",
         "properties": {
@@ -5159,6 +5314,36 @@
           "data"
         ],
         "title": "RulesResponse",
+        "type": "object"
+      },
+      "ScheduleNoticeResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ScheduleNoticeResult"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ScheduleNoticeResponse",
+        "type": "object"
+      },
+      "ScheduleNoticeResult": {
+        "properties": {
+          "teams_to_notify": {
+            "title": "Teams To Notify",
+            "type": "integer"
+          },
+          "teams_with_contact": {
+            "title": "Teams With Contact",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "teams_with_contact",
+          "teams_to_notify"
+        ],
+        "title": "ScheduleNoticeResult",
         "type": "object"
       },
       "ScheduleProposal": {
@@ -7932,7 +8117,7 @@
     }
   },
   "info": {
-    "description": "\n### Description\nThis API allows you to do everything the frontend of [Bracket](https://github.com/evroon/bracket)\nallows you to do (the frontend uses this API as well).\n\nFore more information, see the [documentation](https://docs.bracketapp.nl).\n\n### Table of Contents\n*(links only work for [ReDoc](https://api.bracketapp.nl/redoc), not for Swagger UI)*\n\n- [Auth](#tag/Auth)\n\n- [Capacity](#tag/Capacity)\n\n- [Cup setup](#tag/Cup-setup)\n\n- [District application](#tag/District-application)\n\n- [Draw](#tag/Draw)\n\n- [Officials](#tag/Officials)\n\n- [Discipline](#tag/Discipline)\n\n- [Public info](#tag/Public-info)\n\n- [Registrations](#tag/Registrations)\n\n- [Score links](#tag/Score-links)\n\n- [Categories](#tag/Categories)\n\n- [Clubs](#tag/Clubs)\n\n- [Courts](#tag/Courts)\n\n- [Internals](#tag/Internals)\n\n- [Matches](#tag/Matches)\n\n- [Players](#tag/Players)\n\n- [Rankings](#tag/Rankings)\n\n- [Rounds](#tag/Rounds)\n\n- [Stage Items](#tag/Stage-Items)\n\n- [Stage Item Inputs](#tag/Stage-Item-Inputs)\n\n- [Stages](#tag/Stages)\n\n- [Teams](#tag/Teams)\n\n- [Tournaments](#tag/Tournaments)\n\n- [Users](#tag/Users)\n\n### Links\nGitHub: <https://github.com/evroon/bracket>\n\nDocs: <https://docs.bracketapp.nl>\n\nDemo: <https://www.bracketapp.nl/demo>\n\nAPI docs (Redoc): <https://api.bracketapp.nl/redoc>\n\nAPI docs (Swagger UI): <https://api.bracketapp.nl/docs>\n",
+    "description": "\n### Description\nThis API allows you to do everything the frontend of [Bracket](https://github.com/evroon/bracket)\nallows you to do (the frontend uses this API as well).\n\nFore more information, see the [documentation](https://docs.bracketapp.nl).\n\n### Table of Contents\n*(links only work for [ReDoc](https://api.bracketapp.nl/redoc), not for Swagger UI)*\n\n- [Auth](#tag/Auth)\n\n- [Capacity](#tag/Capacity)\n\n- [Cup setup](#tag/Cup-setup)\n\n- [Notifications](#tag/Notifications)\n\n- [District application](#tag/District-application)\n\n- [Draw](#tag/Draw)\n\n- [Officials](#tag/Officials)\n\n- [Discipline](#tag/Discipline)\n\n- [Public info](#tag/Public-info)\n\n- [Registrations](#tag/Registrations)\n\n- [Score links](#tag/Score-links)\n\n- [Categories](#tag/Categories)\n\n- [Clubs](#tag/Clubs)\n\n- [Courts](#tag/Courts)\n\n- [Internals](#tag/Internals)\n\n- [Matches](#tag/Matches)\n\n- [Players](#tag/Players)\n\n- [Rankings](#tag/Rankings)\n\n- [Rounds](#tag/Rounds)\n\n- [Stage Items](#tag/Stage-Items)\n\n- [Stage Item Inputs](#tag/Stage-Item-Inputs)\n\n- [Stages](#tag/Stages)\n\n- [Teams](#tag/Teams)\n\n- [Tournaments](#tag/Tournaments)\n\n- [Users](#tag/Users)\n\n### Links\nGitHub: <https://github.com/evroon/bracket>\n\nDocs: <https://docs.bracketapp.nl>\n\nDemo: <https://www.bracketapp.nl/demo>\n\nAPI docs (Redoc): <https://api.bracketapp.nl/redoc>\n\nAPI docs (Swagger UI): <https://api.bracketapp.nl/docs>\n",
     "license": {
       "name": "AGPL-3.0",
       "url": "https://www.gnu.org/licenses/agpl-3.0.en.html"
@@ -11079,6 +11264,217 @@
         "summary": "Resolve Match Day Notice",
         "tags": [
           "Score links"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/notification_settings": {
+      "put": {
+        "operationId": "update_notification_settings_tournaments__tournament_id__notification_settings_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationSettingsBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Notification Settings",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/notifications": {
+      "get": {
+        "description": "Whether email is set up, the language, and the emails sent to team contacts.",
+        "operationId": "get_tournament_notifications_tournaments__tournament_id__notifications_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Tournament Notifications",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/notifications/announcement": {
+      "post": {
+        "description": "Emails the current announcement to the contacts of all teams (once per text and team).",
+        "operationId": "email_announcement_tournaments__tournament_id__notifications_announcement_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationsQueuedResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Email Announcement",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/notifications/schedule": {
+      "post": {
+        "description": "Emails each team its next matches, only to teams whose times changed since their last\nnotice. `dry_run` only counts them.",
+        "operationId": "email_schedule_changes_tournaments__tournament_id__notifications_schedule_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dry_run",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Dry Run",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleNoticeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Email Schedule Changes",
+        "tags": [
+          "Notifications"
         ]
       }
     },

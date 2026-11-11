@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 from bracket.logic.category_warnings import CategoryWarning
+from bracket.logic.notifications import NotificationStatus, ScheduleNoticeResult
 from bracket.logic.planning.capacity import CapacityResult
 from bracket.logic.planning.propose import PlanIssueOut, ScheduleProposal
 from bracket.logic.scheduling.handle_stage_activation import StageItemInputUpdate
@@ -186,6 +187,18 @@ class RulesResponse(DataResponse[Rules]):
 
 
 class DistrictApplicationResponse(DataResponse[DistrictApplication]):
+    pass
+
+
+class NotificationStatusResponse(DataResponse[NotificationStatus]):
+    pass
+
+
+class NotificationsQueuedResponse(DataResponse[int]):
+    pass
+
+
+class ScheduleNoticeResponse(DataResponse[ScheduleNoticeResult]):
     pass
 
 

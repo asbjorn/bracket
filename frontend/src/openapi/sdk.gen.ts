@@ -149,6 +149,12 @@ import type {
   DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostData,
   DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostErrors,
   DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostResponses,
+  EmailAnnouncementTournamentsTournamentIdNotificationsAnnouncementPostData,
+  EmailAnnouncementTournamentsTournamentIdNotificationsAnnouncementPostErrors,
+  EmailAnnouncementTournamentsTournamentIdNotificationsAnnouncementPostResponses,
+  EmailScheduleChangesTournamentsTournamentIdNotificationsSchedulePostData,
+  EmailScheduleChangesTournamentsTournamentIdNotificationsSchedulePostErrors,
+  EmailScheduleChangesTournamentsTournamentIdNotificationsSchedulePostResponses,
   EnterCardAtPitchScoreTokenMatchesMatchIdCardsPostData,
   EnterCardAtPitchScoreTokenMatchesMatchIdCardsPostErrors,
   EnterCardAtPitchScoreTokenMatchesMatchIdCardsPostResponses,
@@ -228,6 +234,9 @@ import type {
   GetTournamentDistrictApplicationTournamentsTournamentIdDistrictApplicationGetData,
   GetTournamentDistrictApplicationTournamentsTournamentIdDistrictApplicationGetErrors,
   GetTournamentDistrictApplicationTournamentsTournamentIdDistrictApplicationGetResponses,
+  GetTournamentNotificationsTournamentsTournamentIdNotificationsGetData,
+  GetTournamentNotificationsTournamentsTournamentIdNotificationsGetErrors,
+  GetTournamentNotificationsTournamentsTournamentIdNotificationsGetResponses,
   GetTournamentOfficialsTournamentsTournamentIdOfficialsGetData,
   GetTournamentOfficialsTournamentsTournamentIdOfficialsGetErrors,
   GetTournamentOfficialsTournamentsTournamentIdOfficialsGetResponses,
@@ -325,6 +334,9 @@ import type {
   UpdateMatchByIdTournamentsTournamentIdMatchesMatchIdPutData,
   UpdateMatchByIdTournamentsTournamentIdMatchesMatchIdPutErrors,
   UpdateMatchByIdTournamentsTournamentIdMatchesMatchIdPutResponses,
+  UpdateNotificationSettingsTournamentsTournamentIdNotificationSettingsPutData,
+  UpdateNotificationSettingsTournamentsTournamentIdNotificationSettingsPutErrors,
+  UpdateNotificationSettingsTournamentsTournamentIdNotificationSettingsPutResponses,
   UpdateOfficialTournamentsTournamentIdOfficialsOfficialIdPutData,
   UpdateOfficialTournamentsTournamentIdOfficialsOfficialIdPutErrors,
   UpdateOfficialTournamentsTournamentIdOfficialsOfficialIdPutResponses,
@@ -1874,6 +1886,121 @@ export const resolveMatchDayNoticeTournamentsTournamentIdNoticesNoticeIdResolveP
     responseType: 'json',
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/tournaments/{tournament_id}/notices/{notice_id}/resolve',
+    ...options,
+  });
+
+/**
+ * Update Notification Settings
+ */
+export const updateNotificationSettingsTournamentsTournamentIdNotificationSettingsPut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    UpdateNotificationSettingsTournamentsTournamentIdNotificationSettingsPutData,
+    ThrowOnError
+  >,
+): RequestResult<
+  UpdateNotificationSettingsTournamentsTournamentIdNotificationSettingsPutResponses,
+  UpdateNotificationSettingsTournamentsTournamentIdNotificationSettingsPutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    UpdateNotificationSettingsTournamentsTournamentIdNotificationSettingsPutResponses,
+    UpdateNotificationSettingsTournamentsTournamentIdNotificationSettingsPutErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/notification_settings',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get Tournament Notifications
+ *
+ * Whether email is set up, the language, and the emails sent to team contacts.
+ */
+export const getTournamentNotificationsTournamentsTournamentIdNotificationsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    GetTournamentNotificationsTournamentsTournamentIdNotificationsGetData,
+    ThrowOnError
+  >,
+): RequestResult<
+  GetTournamentNotificationsTournamentsTournamentIdNotificationsGetResponses,
+  GetTournamentNotificationsTournamentsTournamentIdNotificationsGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetTournamentNotificationsTournamentsTournamentIdNotificationsGetResponses,
+    GetTournamentNotificationsTournamentsTournamentIdNotificationsGetErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/notifications',
+    ...options,
+  });
+
+/**
+ * Email Announcement
+ *
+ * Emails the current announcement to the contacts of all teams (once per text and team).
+ */
+export const emailAnnouncementTournamentsTournamentIdNotificationsAnnouncementPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    EmailAnnouncementTournamentsTournamentIdNotificationsAnnouncementPostData,
+    ThrowOnError
+  >,
+): RequestResult<
+  EmailAnnouncementTournamentsTournamentIdNotificationsAnnouncementPostResponses,
+  EmailAnnouncementTournamentsTournamentIdNotificationsAnnouncementPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    EmailAnnouncementTournamentsTournamentIdNotificationsAnnouncementPostResponses,
+    EmailAnnouncementTournamentsTournamentIdNotificationsAnnouncementPostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/notifications/announcement',
+    ...options,
+  });
+
+/**
+ * Email Schedule Changes
+ *
+ * Emails each team its next matches, only to teams whose times changed since their last
+ * notice. `dry_run` only counts them.
+ */
+export const emailScheduleChangesTournamentsTournamentIdNotificationsSchedulePost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    EmailScheduleChangesTournamentsTournamentIdNotificationsSchedulePostData,
+    ThrowOnError
+  >,
+): RequestResult<
+  EmailScheduleChangesTournamentsTournamentIdNotificationsSchedulePostResponses,
+  EmailScheduleChangesTournamentsTournamentIdNotificationsSchedulePostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    EmailScheduleChangesTournamentsTournamentIdNotificationsSchedulePostResponses,
+    EmailScheduleChangesTournamentsTournamentIdNotificationsSchedulePostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/notifications/schedule',
     ...options,
   });
 

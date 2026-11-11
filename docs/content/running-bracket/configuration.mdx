@@ -34,6 +34,12 @@ Copy `ci.env` to `prod.env` and fill in the values:
   32 categories (age classes).
 - `LIMIT_MAX_CLUBS` and `LIMIT_MAX_TOURNAMENTS`: Maximum number of clubs per user (default 32)
   and tournaments per club (default 64) for regular accounts.
+- `SMTP_HOST`, `SMTP_PORT` (default 587), `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM`:
+  The mail server for emails to the team contacts (sign-up confirmations, announcements and
+  schedule changes). Email is disabled unless `SMTP_HOST` and `SMTP_FROM` are set; organisers
+  can then still copy the addresses into their own email program. `SMTP_STARTTLS` (default
+  true) upgrades a plain connection; set `SMTP_SSL=true` (and usually `SMTP_PORT=465`) for
+  implicit TLS. Queued emails are sent every 15 seconds, at most 20 at a time.
 
 ### Backend: Example configuration file
 

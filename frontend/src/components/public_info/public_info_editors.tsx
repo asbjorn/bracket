@@ -2,6 +2,7 @@ import {
   Anchor,
   Badge,
   Button,
+  Checkbox,
   Fieldset,
   Group,
   List,
@@ -18,9 +19,11 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
+import { NotificationsSettings } from '@components/notifications/notifications_panel';
 import { getBaseURL } from '@components/utils/util';
 import { AnnouncementLevel, Tournament } from '@openapi';
 import { requestSucceeded } from '@services/adapter';
+import { getNotificationStatus, sendAnnouncementEmail } from '@services/notifications';
 import { getAnnouncement, getRules, saveAnnouncement, saveRules } from '@services/public_info';
 
 function saved(t: (key: string) => string) {
@@ -35,6 +38,12 @@ export function AnnouncementEditor({ tournamentId }: { tournamentId: number }) {
   const [text, setText] = useState('');
   const [level, setLevel] = useState<AnnouncementLevel>('INFO');
   const [until, setUntil] = useState<string | null>(null);
+  const [alsoEmail, setAlsoEmail] = useState(false);
+  const notificationStatus = getNotificationStatus(tournamentId).data?.data;
+  const canEmail =
+    notificationStatus != null &&
+    notificationStatus.email_enabled &&
+    notificationStatus.contact_emails.length > 0;
 
   useEffect(() => {
     setText(current?.text ?? '');
@@ -83,6 +92,15 @@ export function AnnouncementEditor({ tournamentId }: { tournamentId: number }) {
           w="16rem"
         />
       </Group>
+      {canEmail ? (
+        <Checkbox
+          label={t('announcement_also_email_label', {
+            count: notificationStatus.contact_emails.length,
+          })}
+          checked={alsoEmail}
+          onChange={(event) => setAlsoEmail(event.currentTarget.checked)}
+        />
+      ) : null}
       <Group>
         <Button
           disabled={text.trim() === ''}
@@ -95,6 +113,17 @@ export function AnnouncementEditor({ tournamentId }: { tournamentId: number }) {
             if (requestSucceeded(response)) {
               await swrAnnouncement.mutate();
               saved(t);
+              if (canEmail && alsoEmail) {
+                const sent = await sendAnnouncementEmail(tournamentId);
+                if (requestSucceeded(sent) && 'data' in sent) {
+                  showNotification({
+                    color: 'green',
+                    title: t('announcement_emailed', { count: sent.data.data }),
+                    message: '',
+                  });
+                }
+                setAlsoEmail(false);
+              }
             }
           }}
         >
@@ -195,6 +224,9 @@ export function PublicInfoSettings({ tournament }: { tournament: Tournament }) {
       </Fieldset>
       <Fieldset legend={t('rules_title')} mt="lg" radius="md">
         <RulesEditor tournamentId={tournament.id} />
+      </Fieldset>
+      <Fieldset legend={t('notifications_title')} mt="lg" radius="md">
+        <NotificationsSettings tournamentId={tournament.id} />
       </Fieldset>
       <Fieldset legend={t('application_title')} mt="lg" radius="md">
         <Group justify="space-between">

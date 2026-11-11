@@ -578,4 +578,35 @@ tournament_details = Table(
     Column("venue", Text, nullable=True),
     Column("rules_summary", Text, nullable=True),
     Column("notes", Text, nullable=True),
+    # Language of the emails to team contacts: "nb" (default) or "en"
+    Column("email_language", Text, nullable=True),
+)
+
+# Emails to team contacts: a queue (PENDING, SENDING) and a log (SENT, FAILED). The same
+# `dedupe_key` is never sent twice, e.g. the same announcement to the same team.
+notifications_sent = Table(
+    "notifications_sent",
+    metadata,
+    Column("id", BigInteger, primary_key=True),
+    Column(
+        "tournament_id",
+        BigInteger,
+        ForeignKey("tournaments.id", ondelete="CASCADE"),
+        nullable=False,
+    ),
+    Column("team_id", BigInteger, ForeignKey("teams.id", ondelete="SET NULL"), nullable=True),
+    Column("kind", Text, nullable=False),
+    Column("dedupe_key", Text, nullable=False),
+    Column("recipient", Text, nullable=False),
+    Column("reply_to", Text, nullable=True),
+    Column("subject", Text, nullable=False),
+    Column("body", Text, nullable=False),
+    Column("status", Text, nullable=False, server_default="PENDING", index=True),
+    Column("attempts", Integer, nullable=False, server_default="0"),
+    Column("error", Text, nullable=True),
+    Column("created", DateTimeTZ, nullable=False, server_default=func.now()),
+    # When a process started sending it; after 10 minutes another process may retry
+    Column("claimed_at", DateTimeTZ, nullable=True),
+    Column("sent_at", DateTimeTZ, nullable=True),
+    UniqueConstraint("tournament_id", "dedupe_key"),
 )

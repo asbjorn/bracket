@@ -3,6 +3,7 @@ from collections.abc import Awaitable, Callable
 
 from heliclockter import timedelta
 
+from bracket.logic.notifications import send_pending_notifications
 from bracket.models.db.account import UserAccountType
 from bracket.sql.users import delete_user_and_owned_clubs, get_expired_demo_users
 from bracket.utils.asyncio import AsyncioTasksManager
@@ -41,3 +42,10 @@ CRONJOBS = ((timedelta(minutes=5), delete_demo_accounts),)
 def start_cronjobs() -> None:
     for delta_time, cronjob_entrypoint in CRONJOBS:
         AsyncioTasksManager.add_coroutine(run_cronjob(cronjob_entrypoint, delta_time))
+
+
+def start_email_cronjob() -> None:
+    """Sends queued emails to team contacts every 15 seconds (also outside production)."""
+    AsyncioTasksManager.add_coroutine(
+        run_cronjob(send_pending_notifications, timedelta(seconds=15))
+    )

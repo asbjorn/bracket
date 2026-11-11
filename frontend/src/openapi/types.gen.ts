@@ -897,6 +897,11 @@ export type DrawResponse = {
 };
 
 /**
+ * EmailLanguage
+ */
+export type EmailLanguage = 'nb' | 'en';
+
+/**
  * EntryFeeBody
  *
  * Sets the entry fee (NOK per team) of several classes at once.
@@ -1723,6 +1728,93 @@ export type MatchWithDetailsDefinitive = {
    * Start Time
    */
   start_time: string | null;
+};
+
+/**
+ * NotificationKind
+ */
+export type NotificationKind = 'ANNOUNCEMENT' | 'SCHEDULE' | 'REGISTRATION' | 'PROMOTION';
+
+/**
+ * NotificationOut
+ */
+export type NotificationOut = {
+  /**
+   * Created
+   */
+  created: string;
+  /**
+   * Error
+   */
+  error: string | null;
+  kind: NotificationKind;
+  /**
+   * Recipient
+   */
+  recipient: string;
+  /**
+   * Status
+   */
+  status: string;
+  /**
+   * Team Name
+   */
+  team_name: string | null;
+};
+
+/**
+ * NotificationSettingsBody
+ */
+export type NotificationSettingsBody = {
+  language: EmailLanguage;
+};
+
+/**
+ * NotificationStatus
+ */
+export type NotificationStatus = {
+  /**
+   * Contact Emails
+   */
+  contact_emails: Array<string>;
+  /**
+   * Email Enabled
+   */
+  email_enabled: boolean;
+  /**
+   * Failed
+   */
+  failed: number;
+  language: EmailLanguage;
+  /**
+   * Pending
+   */
+  pending: number;
+  /**
+   * Recent
+   */
+  recent: Array<NotificationOut>;
+  /**
+   * Sent
+   */
+  sent: number;
+};
+
+/**
+ * NotificationStatusResponse
+ */
+export type NotificationStatusResponse = {
+  data: NotificationStatus;
+};
+
+/**
+ * NotificationsQueuedResponse
+ */
+export type NotificationsQueuedResponse = {
+  /**
+   * Data
+   */
+  data: number;
 };
 
 /**
@@ -2647,6 +2739,27 @@ export type Rules = {
  */
 export type RulesResponse = {
   data: Rules;
+};
+
+/**
+ * ScheduleNoticeResponse
+ */
+export type ScheduleNoticeResponse = {
+  data: ScheduleNoticeResult;
+};
+
+/**
+ * ScheduleNoticeResult
+ */
+export type ScheduleNoticeResult = {
+  /**
+   * Teams To Notify
+   */
+  teams_to_notify: number;
+  /**
+   * Teams With Contact
+   */
+  teams_with_contact: number;
 };
 
 /**
@@ -6167,6 +6280,139 @@ export type ResolveMatchDayNoticeTournamentsTournamentIdNoticesNoticeIdResolvePo
 
 export type ResolveMatchDayNoticeTournamentsTournamentIdNoticesNoticeIdResolvePostResponse =
   ResolveMatchDayNoticeTournamentsTournamentIdNoticesNoticeIdResolvePostResponses[keyof ResolveMatchDayNoticeTournamentsTournamentIdNoticesNoticeIdResolvePostResponses];
+
+export type UpdateNotificationSettingsTournamentsTournamentIdNotificationSettingsPutData = {
+  body: NotificationSettingsBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/notification_settings';
+};
+
+export type UpdateNotificationSettingsTournamentsTournamentIdNotificationSettingsPutErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateNotificationSettingsTournamentsTournamentIdNotificationSettingsPutError =
+  UpdateNotificationSettingsTournamentsTournamentIdNotificationSettingsPutErrors[keyof UpdateNotificationSettingsTournamentsTournamentIdNotificationSettingsPutErrors];
+
+export type UpdateNotificationSettingsTournamentsTournamentIdNotificationSettingsPutResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type UpdateNotificationSettingsTournamentsTournamentIdNotificationSettingsPutResponse =
+  UpdateNotificationSettingsTournamentsTournamentIdNotificationSettingsPutResponses[keyof UpdateNotificationSettingsTournamentsTournamentIdNotificationSettingsPutResponses];
+
+export type GetTournamentNotificationsTournamentsTournamentIdNotificationsGetData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/notifications';
+};
+
+export type GetTournamentNotificationsTournamentsTournamentIdNotificationsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetTournamentNotificationsTournamentsTournamentIdNotificationsGetError =
+  GetTournamentNotificationsTournamentsTournamentIdNotificationsGetErrors[keyof GetTournamentNotificationsTournamentsTournamentIdNotificationsGetErrors];
+
+export type GetTournamentNotificationsTournamentsTournamentIdNotificationsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: NotificationStatusResponse;
+};
+
+export type GetTournamentNotificationsTournamentsTournamentIdNotificationsGetResponse =
+  GetTournamentNotificationsTournamentsTournamentIdNotificationsGetResponses[keyof GetTournamentNotificationsTournamentsTournamentIdNotificationsGetResponses];
+
+export type EmailAnnouncementTournamentsTournamentIdNotificationsAnnouncementPostData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/notifications/announcement';
+};
+
+export type EmailAnnouncementTournamentsTournamentIdNotificationsAnnouncementPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type EmailAnnouncementTournamentsTournamentIdNotificationsAnnouncementPostError =
+  EmailAnnouncementTournamentsTournamentIdNotificationsAnnouncementPostErrors[keyof EmailAnnouncementTournamentsTournamentIdNotificationsAnnouncementPostErrors];
+
+export type EmailAnnouncementTournamentsTournamentIdNotificationsAnnouncementPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: NotificationsQueuedResponse;
+};
+
+export type EmailAnnouncementTournamentsTournamentIdNotificationsAnnouncementPostResponse =
+  EmailAnnouncementTournamentsTournamentIdNotificationsAnnouncementPostResponses[keyof EmailAnnouncementTournamentsTournamentIdNotificationsAnnouncementPostResponses];
+
+export type EmailScheduleChangesTournamentsTournamentIdNotificationsSchedulePostData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: {
+    /**
+     * Dry Run
+     */
+    dry_run?: boolean;
+  };
+  url: '/tournaments/{tournament_id}/notifications/schedule';
+};
+
+export type EmailScheduleChangesTournamentsTournamentIdNotificationsSchedulePostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type EmailScheduleChangesTournamentsTournamentIdNotificationsSchedulePostError =
+  EmailScheduleChangesTournamentsTournamentIdNotificationsSchedulePostErrors[keyof EmailScheduleChangesTournamentsTournamentIdNotificationsSchedulePostErrors];
+
+export type EmailScheduleChangesTournamentsTournamentIdNotificationsSchedulePostResponses = {
+  /**
+   * Successful Response
+   */
+  200: ScheduleNoticeResponse;
+};
+
+export type EmailScheduleChangesTournamentsTournamentIdNotificationsSchedulePostResponse =
+  EmailScheduleChangesTournamentsTournamentIdNotificationsSchedulePostResponses[keyof EmailScheduleChangesTournamentsTournamentIdNotificationsSchedulePostResponses];
 
 export type GetTournamentOfficialsTournamentsTournamentIdOfficialsGetData = {
   body?: never;

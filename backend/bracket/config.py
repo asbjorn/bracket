@@ -43,6 +43,20 @@ class Config(BaseSettings):
     serve_frontend: bool = False
     api_prefix: str = ""
 
+    # Email to team contacts (announcements, schedule changes, registrations). Disabled unless
+    # `smtp_host` and `smtp_from` are set.
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_username: str | None = None
+    smtp_password: str | None = None
+    smtp_from: str | None = None
+    # STARTTLS on a plain connection (port 587); `smtp_ssl` for implicit TLS (port 465)
+    smtp_starttls: bool = True
+    smtp_ssl: bool = False
+
+    def is_email_enabled(self) -> bool:
+        return bool(self.smtp_host and self.smtp_from)
+
     # Limits for regular (non-demo) accounts, see `bracket.logic.subscriptions`.
     # Teams, players, courts, stages, stage items, rounds, rankings and categories (age classes)
     # are counted per tournament, clubs per user and tournaments per club.
