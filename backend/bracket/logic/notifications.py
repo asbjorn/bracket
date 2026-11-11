@@ -38,7 +38,7 @@ MAX_ATTEMPTS = 3
 # Sign-up confirmations (the public form can trigger them): per address a day, per cup an hour
 MAX_REGISTRATION_EMAILS_PER_ADDRESS = 3
 MAX_REGISTRATION_EMAILS_HOUR = 60
-# Any kind of email, over all tournaments: an address is never flooded
+# Any kind of email, per tournament: an address is never flooded
 MAX_EMAILS_PER_ADDRESS_DAY = 20
 # A plain address, nothing that could add headers or recipients
 PLAIN_ADDRESS = re.compile(r"^[^\s@<>,;:\"()\[\]\\]+@[^\s@<>,;:\"()\[\]\\]+$")
@@ -255,26 +255,44 @@ async def queue(  # pylint: disable=too-many-arguments
 ) -> bool:
     """
     Queues an email; `False` if this message (`dedupe_key`) was queued before, or the address
-    already got `MAX_EMAILS_PER_ADDRESS_DAY` emails in the last day (checked under a lock).
+    already got `MAX_EMAILS_PER_ADDRESS_DAY` emails from this tournament in the last day
+    (checked under a lock). The limit is per tournament, so other organisers can't use up the
+    emails of this one; an email over the limit is logged as failed for the organiser to see.
     """
     async with database.transaction():
         await database.execute(
             "SELECT pg_advisory_xact_lock(hashtext(:key))",
-            values={"key": f"email-address:{recipient.email.lower()}"},
+            values={"key": f"email-address:{tournament_id}:{recipient.email.lower()}"},
         )
         sent_today = await database.fetch_val(
             """
             SELECT count(*) FROM notifications_sent
-            WHERE lower(recipient) = lower(:email) AND created > now() - interval '1 day'
+            WHERE tournament_id = :tournament_id
+            AND lower(recipient) = lower(:email)
+            AND status <> 'FAILED'
+            AND created > now() - interval '1 day'
             """,
-            values={"email": recipient.email},
+            values={"tournament_id": tournament_id, "email": recipient.email},
         )
-        if int(sent_today) >= MAX_EMAILS_PER_ADDRESS_DAY:
-            logger.warning(f"Not emailing team {recipient.team_id}: too many emails to the address")
-            return False
-        return await insert_notification(
+        over_limit = int(sent_today) >= MAX_EMAILS_PER_ADDRESS_DAY
+        inserted = await insert_notification(
             tournament_id, recipient, kind, dedupe_key, subject, body, reply_to
         )
+        if inserted is not None and over_limit:
+            logger.warning(f"Not emailing team {recipient.team_id}: daily limit for the address")
+            await database.execute(
+                """
+                UPDATE notifications_sent
+                SET status = 'FAILED', attempts = :attempts, error = :error
+                WHERE id = :id
+                """,
+                values={
+                    "id": inserted,
+                    "attempts": MAX_ATTEMPTS,
+                    "error": "Daily email limit for this address reached",
+                },
+            )
+        return inserted is not None and not over_limit
 
 
 async def insert_notification(  # pylint: disable=too-many-arguments
@@ -285,7 +303,8 @@ async def insert_notification(  # pylint: disable=too-many-arguments
     subject: str,
     body: str,
     reply_to: str | None,
-) -> bool:
+) -> int | None:
+    """The id of the new row, or `None` if this message (`dedupe_key`) was queued before."""
     inserted = await database.fetch_val(
         """
         INSERT INTO notifications_sent (
@@ -308,7 +327,7 @@ async def insert_notification(  # pylint: disable=too-many-arguments
             "body": body,
         },
     )
-    return inserted is not None
+    return None if inserted is None else int(inserted)
 
 
 async def queue_announcement(tournament_id: TournamentId, text: str) -> int:

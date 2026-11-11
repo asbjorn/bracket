@@ -364,7 +364,7 @@ async def test_registration_email_limit_holds_under_concurrency(
 async def test_address_gets_limited_emails_per_day(
     startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
 ) -> None:
-    """Whatever the kind of email, one address gets at most MAX_EMAILS_PER_ADDRESS_DAY a day."""
+    """Whatever the kind, an address gets at most MAX_EMAILS_PER_ADDRESS_DAY a day per cup."""
     tournament_id = auth_context.tournament.id
     try:
         team_ids = await set_up_playable_cup(auth_context)
@@ -390,5 +390,14 @@ async def test_address_gets_limited_emails_per_day(
             )
         )
         assert sum(results) == MAX_EMAILS_PER_ADDRESS_DAY
+        # The rest is visible to the organiser as failed, and never sent
+        failed = await database.fetch_val(
+            """
+            SELECT count(*) FROM notifications_sent
+            WHERE tournament_id = :id AND status = 'FAILED'
+            """,
+            values={"id": tournament_id},
+        )
+        assert failed == 5
     finally:
         await clean_up(auth_context)
