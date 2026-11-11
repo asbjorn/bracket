@@ -18,6 +18,7 @@ import {
   StageRankingResponse,
   StagesWithStageItemsResponse,
   FullTeamWithPlayers,
+  ParticipatingClubsResponse,
   TeamsWithPlayersResponse,
   TimeWindowsResponse,
   PlanIssuesResponse,
@@ -177,21 +178,35 @@ export function getTeamsPaginated(
   );
 }
 
-/** All teams of a class, page by page (a page has at most 100 teams). */
+async function fetchAllTeams(url: string): Promise<FullTeamWithPlayers[]> {
+  // A page has at most 100 teams
+  const teams: FullTeamWithPlayers[] = [];
+  const separator = url.includes('?') ? '&' : '?';
+  for (let offset = 0; ; offset += 100) {
+    const page: TeamsWithPlayersResponse = await fetcher(
+      `${url}${separator}limit=100&offset=${offset}`,
+    );
+    teams.push(...page.data.teams);
+    if (offset + 100 >= page.data.count) return teams;
+  }
+}
+
+/** All teams of a class. */
 export function getAllTeamsOfCategory(
   tournament_id: number,
   category_id: number | null,
 ): SWRResponse<FullTeamWithPlayers[]> {
   return useSWR(
     category_id == null ? null : `tournaments/${tournament_id}/teams?category_id=${category_id}`,
-    async (url: string) => {
-      const teams: FullTeamWithPlayers[] = [];
-      for (let offset = 0; ; offset += 100) {
-        const page: TeamsWithPlayersResponse = await fetcher(`${url}&limit=100&offset=${offset}`);
-        teams.push(...page.data.teams);
-        if (offset + 100 >= page.data.count) return teams;
-      }
-    },
+    fetchAllTeams,
+  );
+}
+
+/** All teams of the tournament. */
+export function getAllTeams(tournament_id: number): SWRResponse<FullTeamWithPlayers[]> {
+  // Its own key: `tournaments/{id}/teams` is a single page (and another response type)
+  return useSWR(['all-teams', tournament_id], () =>
+    fetchAllTeams(`tournaments/${tournament_id}/teams`),
   );
 }
 
@@ -253,6 +268,15 @@ export function getTimeWindows(tournament_id: number): SWRResponse<TimeWindowsRe
 
 export function getCategoryWarnings(tournament_id: number): SWRResponse<CategoryWarningsResponse> {
   return useSWR(`tournaments/${tournament_id}/category_warnings`, fetcher);
+}
+
+export function getParticipatingClubs(
+  tournament_id: number | null,
+): SWRResponse<ParticipatingClubsResponse> {
+  return useSWR(
+    tournament_id == null ? null : `tournaments/${tournament_id}/participating_clubs`,
+    fetcher,
+  );
 }
 
 export function getCategories(tournament_id: number | null): SWRResponse<CategoriesResponse> {

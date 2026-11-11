@@ -8,6 +8,7 @@ import { SWRResponse } from 'swr';
 import SaveButton from '@components/buttons/save';
 import { MultiTeamsInput } from '@components/forms/player_create_csv_input';
 import { CategoryInput, categoryIdToValue, valueToCategoryId } from '@components/utils/category';
+import { ClubSelect } from '@components/utils/club_select';
 import { Category, Player, TeamsWithPlayersResponse } from '@openapi';
 import { getCategories, getPlayers } from '@services/adapter';
 import { createTeam, createTeams } from '@services/team';
@@ -87,7 +88,7 @@ function SingleTeamTab({
       active: true,
       player_ids: [],
       category: categoryIdToValue(defaultCategoryId),
-      club_name: '',
+      club: null as string | null,
     },
     validate: {
       name: (value) => (value.length > 0 ? null : t('too_short_name_validation')),
@@ -102,7 +103,7 @@ function SingleTeamTab({
           values.active,
           values.player_ids,
           valueToCategoryId(values.category),
-          values.club_name.trim() === '' ? null : values.club_name.trim(),
+          values.club != null ? Number(values.club) : null,
         );
         await swrTeamsResponse.mutate();
         setOpened(false);
@@ -117,11 +118,10 @@ function SingleTeamTab({
 
       <CategoryInput categories={categories} inputProps={form.getInputProps('category')} />
 
-      <TextInput
-        mt="md"
-        label={t('club_name_input_label')}
-        description={t('club_name_input_description')}
-        {...form.getInputProps('club_name')}
+      <ClubSelect
+        tournamentId={tournament_id}
+        value={form.values.club}
+        onChange={(club) => form.setFieldValue('club', club)}
       />
 
       <Checkbox

@@ -11,7 +11,13 @@ from pydantic import BaseModel, Field, StringConstraints, field_validator
 from bracket.logic.ranking.statistics import START_ELO
 from bracket.models.db.player import Player
 from bracket.models.db.shared import BaseModelORM
-from bracket.utils.id_types import CategoryId, PlayerId, TeamId, TournamentId
+from bracket.utils.id_types import (
+    CategoryId,
+    ParticipatingClubId,
+    PlayerId,
+    TeamId,
+    TournamentId,
+)
 from bracket.utils.text import SingleLine
 
 
@@ -46,7 +52,7 @@ class TeamInsertable(BaseModelORM):
     losses: int = 0
     logo_path: str | None = None
     category_id: CategoryId | None = None
-    club_name: str | None = None
+    club_id: ParticipatingClubId | None = None
     withdrawn: bool = False
     checked_in: bool = False
     registration_status: RegistrationStatus = RegistrationStatus.APPROVED
@@ -67,7 +73,7 @@ class TeamWithPlayers(BaseModel):
     name: str
     logo_path: str | None = None
     category_id: CategoryId | None = None
-    club_name: str | None = None
+    club_id: ParticipatingClubId | None = None
     withdrawn: bool = False
     checked_in: bool = False
     registration_status: RegistrationStatus = RegistrationStatus.APPROVED
@@ -102,8 +108,8 @@ class TeamBody(BaseModelORM):
     active: bool
     player_ids: set[PlayerId]
     category_id: CategoryId | None = None
-    # Empty: the club is taken from the name without a trailing number ("Brann 2" -> "Brann")
-    club_name: ClubName | None = None
+    # Empty: the draw takes the club from the name without a trailing number ("Brann 2" -> Brann)
+    club_id: ParticipatingClubId | None = None
 
 
 class TeamMultiBody(BaseModelORM):

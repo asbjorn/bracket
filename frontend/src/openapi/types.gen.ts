@@ -492,6 +492,24 @@ export type ClubResponse = {
 };
 
 /**
+ * ClubTeam
+ */
+export type ClubTeam = {
+  /**
+   * Category Id
+   */
+  category_id: number | null;
+  /**
+   * Id
+   */
+  id: number;
+  /**
+   * Name
+   */
+  name: string;
+};
+
+/**
  * ClubUpdateBody
  */
 export type ClubUpdateBody = {
@@ -945,9 +963,9 @@ export type FullTeamWithPlayers = {
    */
   checked_in: boolean;
   /**
-   * Club Name
+   * Club Id
    */
-  club_name: string | null;
+  club_id: number | null;
   /**
    * Created
    */
@@ -1731,6 +1749,20 @@ export type MatchWithDetailsDefinitive = {
 };
 
 /**
+ * NewClubTeam
+ */
+export type NewClubTeam = {
+  /**
+   * Category Id
+   */
+  category_id: number | null;
+  /**
+   * Name
+   */
+  name: string;
+};
+
+/**
  * NotificationKind
  */
 export type NotificationKind = 'ANNOUNCEMENT' | 'SCHEDULE' | 'REGISTRATION' | 'PROMOTION';
@@ -2046,6 +2078,88 @@ export type PaginatedTeams = {
    * Teams
    */
   teams: Array<FullTeamWithPlayers>;
+};
+
+/**
+ * ParticipatingClubCreateBody
+ *
+ * Creates a club with its teams at once: new teams, and/or existing teams without a club.
+ */
+export type ParticipatingClubCreateBody = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * New Teams
+   */
+  new_teams: Array<NewClubTeam>;
+  /**
+   * Team Ids
+   */
+  team_ids: Array<number>;
+};
+
+/**
+ * ParticipatingClubCreatedResponse
+ */
+export type ParticipatingClubCreatedResponse = {
+  /**
+   * Data
+   */
+  data: number;
+};
+
+/**
+ * ParticipatingClubUpdateBody
+ *
+ * Renames the club and sets exactly which teams belong to it.
+ */
+export type ParticipatingClubUpdateBody = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Team Ids
+   */
+  team_ids: Array<number>;
+};
+
+/**
+ * ParticipatingClubWithTeams
+ */
+export type ParticipatingClubWithTeams = {
+  /**
+   * Created
+   */
+  created: string;
+  /**
+   * Id
+   */
+  id: number;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Teams
+   */
+  teams: Array<ClubTeam>;
+  /**
+   * Tournament Id
+   */
+  tournament_id: number;
+};
+
+/**
+ * ParticipatingClubsResponse
+ */
+export type ParticipatingClubsResponse = {
+  /**
+   * Data
+   */
+  data: Array<ParticipatingClubWithTeams>;
 };
 
 /**
@@ -3792,9 +3906,9 @@ export type Team = {
    */
   checked_in: boolean;
   /**
-   * Club Name
+   * Club Id
    */
-  club_name: string | null;
+  club_id: number | null;
   /**
    * Created
    */
@@ -3855,9 +3969,9 @@ export type TeamBody = {
    */
   category_id: number | null;
   /**
-   * Club Name
+   * Club Id
    */
-  club_name: string | null;
+  club_id: number | null;
   /**
    * Name
    */
@@ -6615,6 +6729,142 @@ export type ExportOfficialFeesTournamentsTournamentIdOfficialsFeesCsvGetResponse
    */
   200: unknown;
 };
+
+export type GetClubsOfCupTournamentsTournamentIdParticipatingClubsGetData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/participating_clubs';
+};
+
+export type GetClubsOfCupTournamentsTournamentIdParticipatingClubsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetClubsOfCupTournamentsTournamentIdParticipatingClubsGetError =
+  GetClubsOfCupTournamentsTournamentIdParticipatingClubsGetErrors[keyof GetClubsOfCupTournamentsTournamentIdParticipatingClubsGetErrors];
+
+export type GetClubsOfCupTournamentsTournamentIdParticipatingClubsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: ParticipatingClubsResponse;
+};
+
+export type GetClubsOfCupTournamentsTournamentIdParticipatingClubsGetResponse =
+  GetClubsOfCupTournamentsTournamentIdParticipatingClubsGetResponses[keyof GetClubsOfCupTournamentsTournamentIdParticipatingClubsGetResponses];
+
+export type CreateClubOfCupTournamentsTournamentIdParticipatingClubsPostData = {
+  body: ParticipatingClubCreateBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/participating_clubs';
+};
+
+export type CreateClubOfCupTournamentsTournamentIdParticipatingClubsPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateClubOfCupTournamentsTournamentIdParticipatingClubsPostError =
+  CreateClubOfCupTournamentsTournamentIdParticipatingClubsPostErrors[keyof CreateClubOfCupTournamentsTournamentIdParticipatingClubsPostErrors];
+
+export type CreateClubOfCupTournamentsTournamentIdParticipatingClubsPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: ParticipatingClubCreatedResponse;
+};
+
+export type CreateClubOfCupTournamentsTournamentIdParticipatingClubsPostResponse =
+  CreateClubOfCupTournamentsTournamentIdParticipatingClubsPostResponses[keyof CreateClubOfCupTournamentsTournamentIdParticipatingClubsPostResponses];
+
+export type DeleteClubOfCupTournamentsTournamentIdParticipatingClubsClubIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+    /**
+     * Club Id
+     */
+    club_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/participating_clubs/{club_id}';
+};
+
+export type DeleteClubOfCupTournamentsTournamentIdParticipatingClubsClubIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteClubOfCupTournamentsTournamentIdParticipatingClubsClubIdDeleteError =
+  DeleteClubOfCupTournamentsTournamentIdParticipatingClubsClubIdDeleteErrors[keyof DeleteClubOfCupTournamentsTournamentIdParticipatingClubsClubIdDeleteErrors];
+
+export type DeleteClubOfCupTournamentsTournamentIdParticipatingClubsClubIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type DeleteClubOfCupTournamentsTournamentIdParticipatingClubsClubIdDeleteResponse =
+  DeleteClubOfCupTournamentsTournamentIdParticipatingClubsClubIdDeleteResponses[keyof DeleteClubOfCupTournamentsTournamentIdParticipatingClubsClubIdDeleteResponses];
+
+export type UpdateClubOfCupTournamentsTournamentIdParticipatingClubsClubIdPutData = {
+  body: ParticipatingClubUpdateBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+    /**
+     * Club Id
+     */
+    club_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/participating_clubs/{club_id}';
+};
+
+export type UpdateClubOfCupTournamentsTournamentIdParticipatingClubsClubIdPutErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateClubOfCupTournamentsTournamentIdParticipatingClubsClubIdPutError =
+  UpdateClubOfCupTournamentsTournamentIdParticipatingClubsClubIdPutErrors[keyof UpdateClubOfCupTournamentsTournamentIdParticipatingClubsClubIdPutErrors];
+
+export type UpdateClubOfCupTournamentsTournamentIdParticipatingClubsClubIdPutResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type UpdateClubOfCupTournamentsTournamentIdParticipatingClubsClubIdPutResponse =
+  UpdateClubOfCupTournamentsTournamentIdParticipatingClubsClubIdPutResponses[keyof UpdateClubOfCupTournamentsTournamentIdParticipatingClubsClubIdPutResponses];
 
 export type GetPlayersTournamentsTournamentIdPlayersGetData = {
   body?: never;

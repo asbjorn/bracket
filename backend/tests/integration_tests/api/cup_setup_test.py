@@ -47,6 +47,12 @@ async def delete_cup(auth_context: AuthContext) -> None:
         )
     )
     await database.execute(categories.delete().where(categories.c.tournament_id == tournament_id))
+    await database.execute(
+        "UPDATE teams SET club_id = NULL WHERE tournament_id = :id", values={"id": tournament_id}
+    )
+    await database.execute(
+        "DELETE FROM participating_clubs WHERE tournament_id = :id", values={"id": tournament_id}
+    )
     await database.execute(officials.delete().where(officials.c.tournament_id == tournament_id))
     await database.execute(courts.delete().where(courts.c.tournament_id == tournament_id))
     await database.execute(

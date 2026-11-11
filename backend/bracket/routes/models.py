@@ -13,6 +13,7 @@ from bracket.models.db.discipline import DisciplineOverview, MatchCard
 from bracket.models.db.district_application import DistrictApplication
 from bracket.models.db.match import Match, SuggestedMatch
 from bracket.models.db.official import Official, OfficialsOverview, PublicMatchOfficial
+from bracket.models.db.participating_club import ParticipatingClubWithTeams
 from bracket.models.db.player import Player
 from bracket.models.db.public_info import Announcement, PublicNotices, Rules
 from bracket.models.db.ranking import Ranking
@@ -37,7 +38,7 @@ from bracket.models.db.tournament import Tournament
 from bracket.models.db.user import UserPublic
 from bracket.models.db.util import StageWithStageItems
 from bracket.routes.auth import Token
-from bracket.utils.id_types import CategoryId, StageId, StageItemId
+from bracket.utils.id_types import CategoryId, ParticipatingClubId, StageId, StageItemId
 
 
 class SuccessResponse(BaseModel):
@@ -199,6 +200,14 @@ class NotificationsQueuedResponse(DataResponse[int]):
 
 
 class ScheduleNoticeResponse(DataResponse[ScheduleNoticeResult]):
+    pass
+
+
+class ParticipatingClubsResponse(DataResponse[list[ParticipatingClubWithTeams]]):
+    pass
+
+
+class ParticipatingClubCreatedResponse(DataResponse[ParticipatingClubId]):
     pass
 
 

@@ -14,6 +14,7 @@ import { SWRResponse } from 'swr';
 
 import { CategoryInput, categoryIdToValue, valueToCategoryId } from '@components/utils/category';
 import { DropzoneButton } from '@components/utils/file_upload';
+import { ClubSelect } from '@components/utils/club_select';
 import { FullTeamWithPlayers, Player, TeamsWithPlayersResponse } from '@openapi';
 import {
   getBaseApiUrl,
@@ -61,7 +62,7 @@ export default function TeamUpdateModal({
       active: team.active,
       player_ids: team.players.map((player) => `${player.id}`),
       category: categoryIdToValue(team.category_id),
-      club_name: team.club_name ?? '',
+      club: team.club_id != null ? `${team.club_id}` : (null as string | null),
     },
 
     validate: {
@@ -81,7 +82,7 @@ export default function TeamUpdateModal({
               values.active,
               values.player_ids,
               valueToCategoryId(values.category),
-              values.club_name.trim() === '' ? null : values.club_name.trim(),
+              values.club != null ? Number(values.club) : null,
             );
             if (requestSucceeded(result)) {
               await swrTeamsResponse.mutate();
@@ -98,11 +99,10 @@ export default function TeamUpdateModal({
 
           <CategoryInput categories={categories} inputProps={form.getInputProps('category')} />
 
-          <TextInput
-            mt="md"
-            label={t('club_name_input_label')}
-            description={t('club_name_input_description')}
-            {...form.getInputProps('club_name')}
+          <ClubSelect
+            tournamentId={tournament_id}
+            value={form.values.club}
+            onChange={(club) => form.setFieldValue('club', club)}
           />
 
           <Checkbox

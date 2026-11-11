@@ -11,6 +11,7 @@ from starlette import status
 
 from bracket.database import database
 from bracket.logic.notifications import queue_promotion_email, queue_registration_email
+from bracket.logic.participating_clubs import find_or_create_club
 from bracket.logic.subscriptions import check_requirement
 from bracket.models.db.category import Category
 from bracket.models.db.registration import (
@@ -154,14 +155,18 @@ async def register_team(
             and await participating_count(category.id) >= category.max_teams
         )
         registration_status = RegistrationStatus.WAITLIST if full else RegistrationStatus.REGISTERED
+        # The free-text club from the form: the cup's club with that name, or a new one
+        club_id = (
+            await find_or_create_club(tournament_id, body.club_name) if body.club_name else None
+        )
         team_id = await database.fetch_val(
             """
             INSERT INTO teams (
                 name, created, tournament_id, active, elo_score, swiss_score, wins, draws,
-                losses, category_id, club_name, registration_status
+                losses, category_id, club_id, registration_status
             )
             VALUES (
-                :name, :now, :tournament_id, true, 1200, 0, 0, 0, 0, :category_id, :club_name,
+                :name, :now, :tournament_id, true, 1200, 0, 0, 0, 0, :category_id, :club_id,
                 :registration_status
             )
             RETURNING id
@@ -171,7 +176,7 @@ async def register_team(
                 "now": registered_at,
                 "tournament_id": tournament_id,
                 "category_id": category.id,
-                "club_name": body.club_name,
+                "club_id": club_id,
                 "registration_status": registration_status.value,
             },
         )
@@ -208,12 +213,14 @@ async def get_registrations(tournament_id: TournamentId) -> list[Registration]:
     rows = await database.fetch_all(
         """
         SELECT
-            teams.id AS team_id, teams.name AS team_name, teams.club_name, teams.category_id,
+            teams.id AS team_id, teams.name AS team_name, clubs.name AS club_name,
+            teams.category_id,
             teams.registration_status, teams.withdrawn,
             r.contact_name, r.contact_email, r.contact_phone, r.comment, r.registered_at,
             coalesce(r.paid, false) AS paid, coalesce(r.squad_reported, false) AS squad_reported
         FROM teams
         LEFT JOIN team_registrations r ON r.team_id = teams.id
+        LEFT JOIN participating_clubs clubs ON clubs.id = teams.club_id
         WHERE teams.tournament_id = :tournament_id
         ORDER BY teams.category_id NULLS LAST, r.registered_at NULLS LAST, teams.id
         """,

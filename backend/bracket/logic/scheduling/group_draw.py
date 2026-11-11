@@ -12,7 +12,9 @@ solved exactly with the Hungarian algorithm on these costs (most important first
 
 import random
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import Any
 
 from bracket.logic.scheduling.playoffs import min_cost_assignment
 
@@ -29,6 +31,11 @@ def club_of(team_name: str, club_name: str | None) -> str:
     """The club of a team: given, or its name without a trailing number ("Brann 2" -> "Brann")."""
     club = club_name if club_name else TRAILING_NUMBER.sub("", team_name.strip())
     return club.strip().casefold()
+
+
+def club_name_of(club_id: int | None, club_names: Mapping[Any, str]) -> str | None:
+    """The name of a team's club, if it has one."""
+    return None if club_id is None else club_names.get(club_id)
 
 
 @dataclass(frozen=True)

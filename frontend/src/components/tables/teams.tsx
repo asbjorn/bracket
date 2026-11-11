@@ -1,4 +1,4 @@
-import { Badge, Button, Center, Group, Pagination, Switch, Table } from '@mantine/core';
+import { Badge, Button, Center, Group, Pagination, Switch, Table, Text } from '@mantine/core';
 import { BiEditAlt } from '@react-icons/all-files/bi/BiEditAlt';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +13,7 @@ import RequestErrorAlert from '@components/utils/error_alert';
 import { TableSkeletonSingleColumn } from '@components/utils/skeletons';
 import { TournamentMinimal } from '@components/utils/tournament';
 import { Category, FullTeamWithPlayers, TeamsWithPlayersResponse } from '@openapi';
+import { getParticipatingClubs } from '@services/adapter';
 import { deleteTeam, setTeamCheckedIn } from '@services/team';
 import WithdrawButton from '@components/buttons/withdraw_team';
 import TableLayout, { TableState, ThNotSortable, ThSortable, sortTableEntries } from './table';
@@ -43,6 +44,9 @@ export default function TeamsTable({
 }) {
   const { t } = useTranslation();
   const [editedTeamId, setEditedTeamId] = useState<number | null>(null);
+  const clubNames = Object.fromEntries(
+    (getParticipatingClubs(tournamentData.id).data?.data ?? []).map((club) => [club.id, club.name]),
+  );
   if (swrTeamsResponse.error) return <RequestErrorAlert error={swrTeamsResponse.error} />;
 
   if (swrTeamsResponse.isLoading) {
@@ -88,6 +92,15 @@ export default function TeamsTable({
               </Badge>
             ) : null}
           </Group>
+        </Table.Td>
+        <Table.Td>
+          {team.club_id != null ? (
+            clubNames[team.club_id]
+          ) : (
+            <Text size="sm" c="dimmed">
+              –
+            </Text>
+          )}
         </Table.Td>
         <Table.Td>
           <Switch
@@ -168,6 +181,7 @@ export default function TeamsTable({
             <ThSortable state={tableState} field="name">
               {t('name_table_header')}
             </ThSortable>
+            <ThNotSortable>{t('club_name_input_label')}</ThNotSortable>
             <ThNotSortable>{t('checked_in_label')}</ThNotSortable>
             {showCategories ? <ThNotSortable>{t('category_select_label')}</ThNotSortable> : null}
             <ThNotSortable>{t('members_table_header')}</ThNotSortable>

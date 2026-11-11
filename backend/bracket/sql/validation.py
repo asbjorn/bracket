@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 from starlette import status
 
+from bracket.database import database
 from bracket.models.db.util import StageWithStageItems
 from bracket.sql.categories import get_category_by_id
 from bracket.sql.courts import get_all_courts_in_tournament
@@ -15,6 +16,7 @@ from bracket.utils.id_types import (
     CategoryId,
     CourtId,
     MatchId,
+    ParticipatingClubId,
     PlayerId,
     RoundId,
     StageId,
@@ -107,6 +109,16 @@ async def check_category_belongs_to_tournament(
     return await get_category_by_id(tournament_id, category_id) is not None
 
 
+async def check_participating_club_belongs_to_tournament(
+    club_id: ParticipatingClubId, _: list[StageWithStageItems], tournament_id: TournamentId
+) -> bool:
+    count = await database.fetch_val(
+        "SELECT count(*) FROM participating_clubs WHERE id = :id AND tournament_id = :tid",
+        values={"id": club_id, "tid": tournament_id},
+    )
+    return int(count) > 0
+
+
 def raise_exception(field_type: Any, field_value: Any) -> NoReturn:
     field_name = field_type.__name__ if field_type is not None else "Unknown type"
     msg = f"Could not find {field_name.replace('Id', '')}(s) with ID {field_value}"
@@ -133,6 +145,7 @@ async def check_foreign_keys_belong_to_tournament(
         MatchId: check_match_belongs_to_tournament,
         CourtId: check_court_belongs_to_tournament,
         CategoryId: check_category_belongs_to_tournament,
+        ParticipatingClubId: check_participating_club_belongs_to_tournament,
     }
 
     for field_key, field_info in type(some_body).model_fields.items():

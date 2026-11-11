@@ -971,6 +971,36 @@
         "title": "ClubResponse",
         "type": "object"
       },
+      "ClubTeam": {
+        "properties": {
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "category_id"
+        ],
+        "title": "ClubTeam",
+        "type": "object"
+      },
       "ClubUpdateBody": {
         "properties": {
           "name": {
@@ -1789,16 +1819,16 @@
             "title": "Checked In",
             "type": "boolean"
           },
-          "club_name": {
+          "club_id": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "integer"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Club Name"
+            "title": "Club Id"
           },
           "created": {
             "format": "date-time",
@@ -1884,7 +1914,7 @@
           "losses",
           "logo_path",
           "category_id",
-          "club_name",
+          "club_id",
           "withdrawn",
           "checked_in",
           "registration_status",
@@ -3450,6 +3480,33 @@
         "title": "MatchWithDetailsDefinitive",
         "type": "object"
       },
+      "NewClubTeam": {
+        "properties": {
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "name": {
+            "maxLength": 30,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "category_id"
+        ],
+        "title": "NewClubTeam",
+        "type": "object"
+      },
       "NotificationKind": {
         "enum": [
           "ANNOUNCEMENT",
@@ -4055,6 +4112,134 @@
           "teams"
         ],
         "title": "PaginatedTeams",
+        "type": "object"
+      },
+      "ParticipatingClubCreateBody": {
+        "description": "Creates a club with its teams at once: new teams, and/or existing teams without a club.",
+        "properties": {
+          "name": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "new_teams": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/NewClubTeam"
+            },
+            "maxItems": 50,
+            "title": "New Teams",
+            "type": "array"
+          },
+          "team_ids": {
+            "default": [],
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 200,
+            "title": "Team Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "new_teams",
+          "team_ids"
+        ],
+        "title": "ParticipatingClubCreateBody",
+        "type": "object"
+      },
+      "ParticipatingClubCreatedResponse": {
+        "properties": {
+          "data": {
+            "title": "Data",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ParticipatingClubCreatedResponse",
+        "type": "object"
+      },
+      "ParticipatingClubUpdateBody": {
+        "description": "Renames the club and sets exactly which teams belong to it.",
+        "properties": {
+          "name": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "team_ids": {
+            "default": [],
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 200,
+            "title": "Team Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "team_ids"
+        ],
+        "title": "ParticipatingClubUpdateBody",
+        "type": "object"
+      },
+      "ParticipatingClubWithTeams": {
+        "properties": {
+          "created": {
+            "format": "date-time",
+            "title": "Created",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "teams": {
+            "items": {
+              "$ref": "#/components/schemas/ClubTeam"
+            },
+            "title": "Teams",
+            "type": "array"
+          },
+          "tournament_id": {
+            "title": "Tournament Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "tournament_id",
+          "name",
+          "created",
+          "teams"
+        ],
+        "title": "ParticipatingClubWithTeams",
+        "type": "object"
+      },
+      "ParticipatingClubsResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ParticipatingClubWithTeams"
+            },
+            "title": "Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ParticipatingClubsResponse",
         "type": "object"
       },
       "PlanIssueOut": {
@@ -7145,16 +7330,16 @@
             "title": "Checked In",
             "type": "boolean"
           },
-          "club_name": {
+          "club_id": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "integer"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Club Name"
+            "title": "Club Id"
           },
           "created": {
             "format": "date-time",
@@ -7233,7 +7418,7 @@
           "losses",
           "logo_path",
           "category_id",
-          "club_name",
+          "club_id",
           "withdrawn",
           "checked_in",
           "registration_status",
@@ -7259,18 +7444,16 @@
             ],
             "title": "Category Id"
           },
-          "club_name": {
+          "club_id": {
             "anyOf": [
               {
-                "maxLength": 50,
-                "minLength": 1,
-                "type": "string"
+                "type": "integer"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Club Name"
+            "title": "Club Id"
           },
           "name": {
             "maxLength": 30,
@@ -7292,7 +7475,7 @@
           "active",
           "player_ids",
           "category_id",
-          "club_name"
+          "club_id"
         ],
         "title": "TeamBody",
         "type": "object"
@@ -8121,7 +8304,7 @@
     }
   },
   "info": {
-    "description": "\n### Description\nThis API allows you to do everything the frontend of [Bracket](https://github.com/evroon/bracket)\nallows you to do (the frontend uses this API as well).\n\nFore more information, see the [documentation](https://docs.bracketapp.nl).\n\n### Table of Contents\n*(links only work for [ReDoc](https://api.bracketapp.nl/redoc), not for Swagger UI)*\n\n- [Auth](#tag/Auth)\n\n- [Capacity](#tag/Capacity)\n\n- [Cup setup](#tag/Cup-setup)\n\n- [Notifications](#tag/Notifications)\n\n- [District application](#tag/District-application)\n\n- [Draw](#tag/Draw)\n\n- [Officials](#tag/Officials)\n\n- [Discipline](#tag/Discipline)\n\n- [Public info](#tag/Public-info)\n\n- [Registrations](#tag/Registrations)\n\n- [Score links](#tag/Score-links)\n\n- [Categories](#tag/Categories)\n\n- [Clubs](#tag/Clubs)\n\n- [Courts](#tag/Courts)\n\n- [Internals](#tag/Internals)\n\n- [Matches](#tag/Matches)\n\n- [Players](#tag/Players)\n\n- [Rankings](#tag/Rankings)\n\n- [Rounds](#tag/Rounds)\n\n- [Stage Items](#tag/Stage-Items)\n\n- [Stage Item Inputs](#tag/Stage-Item-Inputs)\n\n- [Stages](#tag/Stages)\n\n- [Teams](#tag/Teams)\n\n- [Tournaments](#tag/Tournaments)\n\n- [Users](#tag/Users)\n\n### Links\nGitHub: <https://github.com/evroon/bracket>\n\nDocs: <https://docs.bracketapp.nl>\n\nDemo: <https://www.bracketapp.nl/demo>\n\nAPI docs (Redoc): <https://api.bracketapp.nl/redoc>\n\nAPI docs (Swagger UI): <https://api.bracketapp.nl/docs>\n",
+    "description": "\n### Description\nThis API allows you to do everything the frontend of [Bracket](https://github.com/evroon/bracket)\nallows you to do (the frontend uses this API as well).\n\nFore more information, see the [documentation](https://docs.bracketapp.nl).\n\n### Table of Contents\n*(links only work for [ReDoc](https://api.bracketapp.nl/redoc), not for Swagger UI)*\n\n- [Auth](#tag/Auth)\n\n- [Capacity](#tag/Capacity)\n\n- [Cup setup](#tag/Cup-setup)\n\n- [Notifications](#tag/Notifications)\n\n- [District application](#tag/District-application)\n\n- [Draw](#tag/Draw)\n\n- [Participating clubs](#tag/Participating-clubs)\n\n- [Officials](#tag/Officials)\n\n- [Discipline](#tag/Discipline)\n\n- [Public info](#tag/Public-info)\n\n- [Registrations](#tag/Registrations)\n\n- [Score links](#tag/Score-links)\n\n- [Categories](#tag/Categories)\n\n- [Clubs](#tag/Clubs)\n\n- [Courts](#tag/Courts)\n\n- [Internals](#tag/Internals)\n\n- [Matches](#tag/Matches)\n\n- [Players](#tag/Players)\n\n- [Rankings](#tag/Rankings)\n\n- [Rounds](#tag/Rounds)\n\n- [Stage Items](#tag/Stage-Items)\n\n- [Stage Item Inputs](#tag/Stage-Item-Inputs)\n\n- [Stages](#tag/Stages)\n\n- [Teams](#tag/Teams)\n\n- [Tournaments](#tag/Tournaments)\n\n- [Users](#tag/Users)\n\n### Links\nGitHub: <https://github.com/evroon/bracket>\n\nDocs: <https://docs.bracketapp.nl>\n\nDemo: <https://www.bracketapp.nl/demo>\n\nAPI docs (Redoc): <https://api.bracketapp.nl/redoc>\n\nAPI docs (Swagger UI): <https://api.bracketapp.nl/docs>\n",
     "license": {
       "name": "AGPL-3.0",
       "url": "https://www.gnu.org/licenses/agpl-3.0.en.html"
@@ -11816,6 +11999,232 @@
         "summary": "Export Official Fees",
         "tags": [
           "Officials"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/participating_clubs": {
+      "get": {
+        "description": "The clubs taking part in the cup, with their teams.",
+        "operationId": "get_clubs_of_cup_tournaments__tournament_id__participating_clubs_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParticipatingClubsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Clubs Of Cup",
+        "tags": [
+          "Participating clubs"
+        ]
+      },
+      "post": {
+        "description": "Adds a club with its teams at once: new teams and/or existing teams without a club.",
+        "operationId": "create_club_of_cup_tournaments__tournament_id__participating_clubs_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParticipatingClubCreateBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParticipatingClubCreatedResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Club Of Cup",
+        "tags": [
+          "Participating clubs"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/participating_clubs/{club_id}": {
+      "delete": {
+        "description": "Deletes the club; its teams stay, without a club.",
+        "operationId": "delete_club_of_cup_tournaments__tournament_id__participating_clubs__club_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "club_id",
+            "required": true,
+            "schema": {
+              "title": "Club Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Delete Club Of Cup",
+        "tags": [
+          "Participating clubs"
+        ]
+      },
+      "put": {
+        "description": "Renames the club and sets exactly which teams belong to it.",
+        "operationId": "update_club_of_cup_tournaments__tournament_id__participating_clubs__club_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "club_id",
+            "required": true,
+            "schema": {
+              "title": "Club Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParticipatingClubUpdateBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Club Of Cup",
+        "tags": [
+          "Participating clubs"
         ]
       }
     },

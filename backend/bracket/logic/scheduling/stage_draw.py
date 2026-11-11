@@ -11,13 +11,27 @@ from pydantic import BaseModel, Field, model_validator
 from starlette import status
 
 from bracket.database import database
-from bracket.logic.scheduling.group_draw import DrawGroup, DrawTeam, club_of, draw_groups
+from bracket.logic.participating_clubs import get_club_names
+from bracket.logic.scheduling.group_draw import (
+    DrawGroup,
+    DrawTeam,
+    club_name_of,
+    club_of,
+    draw_groups,
+)
 from bracket.models.db.stage_item import StageType
 from bracket.models.db.stage_item_inputs import StageItemInputEmpty, StageItemInputFinal
 from bracket.models.db.util import StageWithStageItems
 from bracket.sql.stages import get_full_tournament_details
 from bracket.sql.teams import get_teams_by_id
-from bracket.utils.id_types import StageId, StageItemId, StageItemInputId, TeamId, TournamentId
+from bracket.utils.id_types import (
+    ParticipatingClubId,
+    StageId,
+    StageItemId,
+    StageItemInputId,
+    TeamId,
+    TournamentId,
+)
 
 MAX_POTS = 10
 
@@ -51,7 +65,9 @@ def bad_request(detail: str) -> HTTPException:
     return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
 
 
-def get_groups(stage: StageWithStageItems) -> tuple[list[StageItemId], list[DrawGroup]]:
+def get_groups(
+    stage: StageWithStageItems, club_names: dict[ParticipatingClubId, str]
+) -> tuple[list[StageItemId], list[DrawGroup]]:
     """The groups of the stage with their empty slots and the clubs already in them."""
     if len(stage.stage_items) < 1:
         raise bad_request("The stage has no groups")
@@ -67,7 +83,7 @@ def get_groups(stage: StageWithStageItems) -> tuple[list[StageItemId], list[Draw
                 if isinstance(input_, StageItemInputEmpty)
             ],
             clubs=[
-                club_of(input_.team.name, input_.team.club_name)
+                club_of(input_.team.name, club_name_of(input_.team.club_id, club_names))
                 for input_ in item.inputs
                 if isinstance(input_, StageItemInputFinal)
             ],
@@ -79,7 +95,10 @@ def get_groups(stage: StageWithStageItems) -> tuple[list[StageItemId], list[Draw
 
 
 async def check_teams(
-    tournament_id: TournamentId, stage: StageWithStageItems, body: DrawBody
+    tournament_id: TournamentId,
+    stage: StageWithStageItems,
+    body: DrawBody,
+    club_names: dict[ParticipatingClubId, str],
 ) -> dict[TeamId, DrawTeam]:
     team_ids = {team_id for pot in body.pots for team_id in pot}
     teams = await get_teams_by_id(team_ids, tournament_id)
@@ -97,7 +116,10 @@ async def check_teams(
     }
     if team_ids & placed:
         raise bad_request("Some of the teams are already in a group of this stage")
-    return {team.id: DrawTeam(team.id, club_of(team.name, team.club_name)) for team in teams}
+    return {
+        team.id: DrawTeam(team.id, club_of(team.name, club_name_of(team.club_id, club_names)))
+        for team in teams
+    }
 
 
 async def draw_stage(
@@ -113,8 +135,9 @@ async def draw_stage(
         if stage is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Could not find the stage")
 
-        teams = await check_teams(tournament_id, stage, body)
-        stage_item_ids, groups = get_groups(stage)
+        club_names = await get_club_names(tournament_id)
+        teams = await check_teams(tournament_id, stage, body, club_names)
+        stage_item_ids, groups = get_groups(stage, club_names)
         try:
             placements = draw_groups(
                 [[teams[team_id] for team_id in pot] for pot in body.pots],

@@ -2,7 +2,8 @@ from datetime import timedelta
 
 from bracket.database import database
 from bracket.logic.officials import MatchSlot
-from bracket.logic.scheduling.group_draw import club_of
+from bracket.logic.participating_clubs import get_club_names
+from bracket.logic.scheduling.group_draw import club_name_of, club_of
 from bracket.models.db.official import (
     CourtHost,
     CourtHostBody,
@@ -182,6 +183,7 @@ async def sql_delete_court_host(tournament_id: TournamentId, court_host_id: Cour
 async def get_match_slots(tournament_id: TournamentId) -> dict[MatchId, MatchSlot]:
     """Every match of the tournament with its time, court and the clubs of its teams."""
     slots = {}
+    club_names = await get_club_names(tournament_id)
     for stage in await get_full_tournament_details(tournament_id):
         for stage_item in stage.stage_items:
             for round_ in stage_item.rounds:
@@ -193,7 +195,7 @@ async def get_match_slots(tournament_id: TournamentId) -> dict[MatchId, MatchSlo
                         else None
                     )
                     clubs = frozenset(
-                        club_of(input_.team.name, input_.team.club_name)
+                        club_of(input_.team.name, club_name_of(input_.team.club_id, club_names))
                         for input_ in (match.stage_item_input1, match.stage_item_input2)
                         if isinstance(input_, StageItemInputFinal)
                     )

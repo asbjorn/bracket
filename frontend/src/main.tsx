@@ -52,6 +52,7 @@ import MatchCardsPage from './pages/tournaments/[id]/print/match_cards';
 import StagesPage from './pages/tournaments/[id]/stages';
 import SwissTournamentPage from './pages/tournaments/[id]/stages/swiss/[stage_item_id]';
 import TeamsPage from './pages/tournaments/[id]/teams';
+import ParticipatingClubsPage from './pages/tournaments/[id]/clubs';
 import UserPage from './pages/user';
 
 const theme = createTheme({
@@ -109,6 +110,7 @@ createRoot(document.getElementById('root')!).render(
                     <Route path="players" element={<PlayersPage />} />
                     <Route path="categories" element={<CategoriesPage />} />
                     <Route path="teams" element={<TeamsPage />} />
+                    <Route path="clubs" element={<ParticipatingClubsPage />} />
                     <Route path="schedule" element={<SchedulePage />} />
                     <Route path="rankings" element={<RankingsPage />} />
                     <Route path="settings" element={<SettingsPage />} />

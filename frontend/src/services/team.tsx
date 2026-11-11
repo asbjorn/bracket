@@ -7,7 +7,7 @@ export async function createTeam(
   active: boolean,
   player_ids: string[],
   category_id: number | null,
-  club_name: string | null,
+  club_id: number | null,
 ) {
   return createAxios()
     .post(`tournaments/${tournament_id}/teams`, {
@@ -15,7 +15,7 @@ export async function createTeam(
       active,
       player_ids,
       category_id,
-      club_name,
+      club_id,
     })
     .catch((response: any) => handleRequestError(response));
 }
@@ -44,7 +44,7 @@ export async function updateTeam(
   active: boolean,
   player_ids: string[],
   category_id: number | null,
-  club_name: string | null,
+  club_id: number | null,
 ) {
   return awaitRequestAndHandleError(async (axios) =>
     axios.put(`tournaments/${tournament_id}/teams/${team_id}`, {
@@ -52,7 +52,7 @@ export async function updateTeam(
       active,
       player_ids,
       category_id,
-      club_name,
+      club_id,
     }),
   );
 }

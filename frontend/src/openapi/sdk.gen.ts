@@ -35,6 +35,9 @@ import type {
   CreateCategoryTournamentsTournamentIdCategoriesPostData,
   CreateCategoryTournamentsTournamentIdCategoriesPostErrors,
   CreateCategoryTournamentsTournamentIdCategoriesPostResponses,
+  CreateClubOfCupTournamentsTournamentIdParticipatingClubsPostData,
+  CreateClubOfCupTournamentsTournamentIdParticipatingClubsPostErrors,
+  CreateClubOfCupTournamentsTournamentIdParticipatingClubsPostResponses,
   CreateCourtHostTournamentsTournamentIdCourtHostsPostData,
   CreateCourtHostTournamentsTournamentIdCourtHostsPostErrors,
   CreateCourtHostTournamentsTournamentIdCourtHostsPostResponses,
@@ -107,6 +110,9 @@ import type {
   DeleteClubClubsClubIdDeleteData,
   DeleteClubClubsClubIdDeleteErrors,
   DeleteClubClubsClubIdDeleteResponses,
+  DeleteClubOfCupTournamentsTournamentIdParticipatingClubsClubIdDeleteData,
+  DeleteClubOfCupTournamentsTournamentIdParticipatingClubsClubIdDeleteErrors,
+  DeleteClubOfCupTournamentsTournamentIdParticipatingClubsClubIdDeleteResponses,
   DeleteCourtHostTournamentsTournamentIdCourtHostsCourtHostIdDeleteData,
   DeleteCourtHostTournamentsTournamentIdCourtHostsCourtHostIdDeleteErrors,
   DeleteCourtHostTournamentsTournamentIdCourtHostsCourtHostIdDeleteResponses,
@@ -184,6 +190,9 @@ import type {
   GetClassesOpenForRegistrationTournamentsTournamentIdRegistrationClassesGetResponses,
   GetClubsClubsGetData,
   GetClubsClubsGetResponses,
+  GetClubsOfCupTournamentsTournamentIdParticipatingClubsGetData,
+  GetClubsOfCupTournamentsTournamentIdParticipatingClubsGetErrors,
+  GetClubsOfCupTournamentsTournamentIdParticipatingClubsGetResponses,
   GetCourtsTournamentsTournamentIdCourtsGetData,
   GetCourtsTournamentsTournamentIdCourtsGetErrors,
   GetCourtsTournamentsTournamentIdCourtsGetResponses,
@@ -322,6 +331,9 @@ import type {
   UpdateClubClubsClubIdPutData,
   UpdateClubClubsClubIdPutErrors,
   UpdateClubClubsClubIdPutResponses,
+  UpdateClubOfCupTournamentsTournamentIdParticipatingClubsClubIdPutData,
+  UpdateClubOfCupTournamentsTournamentIdParticipatingClubsClubIdPutErrors,
+  UpdateClubOfCupTournamentsTournamentIdParticipatingClubsClubIdPutResponses,
   UpdateCourtByIdTournamentsTournamentIdCourtsCourtIdPutData,
   UpdateCourtByIdTournamentsTournamentIdCourtsCourtIdPutErrors,
   UpdateCourtByIdTournamentsTournamentIdCourtsCourtIdPutResponses,
@@ -2164,6 +2176,120 @@ export const exportOfficialFeesTournamentsTournamentIdOfficialsFeesCsvGet = <
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/tournaments/{tournament_id}/officials_fees.csv',
     ...options,
+  });
+
+/**
+ * Get Clubs Of Cup
+ *
+ * The clubs taking part in the cup, with their teams.
+ */
+export const getClubsOfCupTournamentsTournamentIdParticipatingClubsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetClubsOfCupTournamentsTournamentIdParticipatingClubsGetData, ThrowOnError>,
+): RequestResult<
+  GetClubsOfCupTournamentsTournamentIdParticipatingClubsGetResponses,
+  GetClubsOfCupTournamentsTournamentIdParticipatingClubsGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetClubsOfCupTournamentsTournamentIdParticipatingClubsGetResponses,
+    GetClubsOfCupTournamentsTournamentIdParticipatingClubsGetErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/participating_clubs',
+    ...options,
+  });
+
+/**
+ * Create Club Of Cup
+ *
+ * Adds a club with its teams at once: new teams and/or existing teams without a club.
+ */
+export const createClubOfCupTournamentsTournamentIdParticipatingClubsPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CreateClubOfCupTournamentsTournamentIdParticipatingClubsPostData, ThrowOnError>,
+): RequestResult<
+  CreateClubOfCupTournamentsTournamentIdParticipatingClubsPostResponses,
+  CreateClubOfCupTournamentsTournamentIdParticipatingClubsPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    CreateClubOfCupTournamentsTournamentIdParticipatingClubsPostResponses,
+    CreateClubOfCupTournamentsTournamentIdParticipatingClubsPostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/participating_clubs',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete Club Of Cup
+ *
+ * Deletes the club; its teams stay, without a club.
+ */
+export const deleteClubOfCupTournamentsTournamentIdParticipatingClubsClubIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    DeleteClubOfCupTournamentsTournamentIdParticipatingClubsClubIdDeleteData,
+    ThrowOnError
+  >,
+): RequestResult<
+  DeleteClubOfCupTournamentsTournamentIdParticipatingClubsClubIdDeleteResponses,
+  DeleteClubOfCupTournamentsTournamentIdParticipatingClubsClubIdDeleteErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    DeleteClubOfCupTournamentsTournamentIdParticipatingClubsClubIdDeleteResponses,
+    DeleteClubOfCupTournamentsTournamentIdParticipatingClubsClubIdDeleteErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/participating_clubs/{club_id}',
+    ...options,
+  });
+
+/**
+ * Update Club Of Cup
+ *
+ * Renames the club and sets exactly which teams belong to it.
+ */
+export const updateClubOfCupTournamentsTournamentIdParticipatingClubsClubIdPut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    UpdateClubOfCupTournamentsTournamentIdParticipatingClubsClubIdPutData,
+    ThrowOnError
+  >,
+): RequestResult<
+  UpdateClubOfCupTournamentsTournamentIdParticipatingClubsClubIdPutResponses,
+  UpdateClubOfCupTournamentsTournamentIdParticipatingClubsClubIdPutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    UpdateClubOfCupTournamentsTournamentIdParticipatingClubsClubIdPutResponses,
+    UpdateClubOfCupTournamentsTournamentIdParticipatingClubsClubIdPutErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/participating_clubs/{club_id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 
 /**

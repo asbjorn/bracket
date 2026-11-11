@@ -243,6 +243,23 @@ matches = Table(
     Column("stage_item_input2_penalties", Integer, nullable=True),
 )
 
+# Clubs that take part in a cup with one or more teams (not the organiser's clubs, which own
+# tournaments)
+participating_clubs = Table(
+    "participating_clubs",
+    metadata,
+    Column("id", BigInteger, primary_key=True, index=True),
+    Column("tournament_id", BigInteger, ForeignKey("tournaments.id"), index=True, nullable=False),
+    Column("name", Text, nullable=False),
+    Column("created", DateTimeTZ, nullable=False, server_default=func.now()),
+    Index(
+        "ix_participating_clubs_tournament_id_lower_name",
+        "tournament_id",
+        text("lower(name)"),
+        unique=True,
+    ),
+)
+
 teams = Table(
     "teams",
     metadata,
@@ -258,8 +275,14 @@ teams = Table(
     Column("losses", Integer, nullable=False, server_default="0"),
     Column("logo_path", String, nullable=True),
     Column("category_id", BigInteger, ForeignKey("categories.id"), index=True, nullable=True),
-    # The club the team plays for, e.g. "Brann" for "Brann 2"; used in the group draw
-    Column("club_name", String, nullable=True),
+    # The club the team plays for (e.g. "Brann" for "Brann 2"); keeps clubs apart in the draw
+    Column(
+        "club_id",
+        BigInteger,
+        ForeignKey("participating_clubs.id", ondelete="SET NULL"),
+        index=True,
+        nullable=True,
+    ),
     # A withdrawn team loses its remaining matches by walkover
     Column("withdrawn", Boolean, nullable=False, server_default="f"),
     Column("checked_in", Boolean, nullable=False, server_default="f"),
