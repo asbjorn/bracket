@@ -404,18 +404,26 @@ async def schedule_lines(
 
 
 async def last_schedule_digest(tournament_id: TournamentId, team_id: TeamId) -> tuple[int, str]:
-    """The id and digest of the last schedule notice to this team (0, "" if none)."""
+    """
+    The id of the last schedule notice to this team, and the digest of the last one that
+    didn't fail (0, "" if none). A failed notice doesn't count as sent, so the same schedule
+    is tried again; its id still goes into the new key, so the retry isn't a duplicate.
+    """
     row = await database.fetch_one(
         """
-        SELECT id, dedupe_key FROM notifications_sent
+        SELECT
+            max(id) AS last_id,
+            (array_agg(dedupe_key ORDER BY id DESC) FILTER (WHERE status <> 'FAILED'))[1]
+                AS last_key
+        FROM notifications_sent
         WHERE tournament_id = :tournament_id AND team_id = :team_id AND kind = 'SCHEDULE'
-        ORDER BY id DESC LIMIT 1
         """,
         values={"tournament_id": tournament_id, "team_id": team_id},
     )
-    if row is None:
+    if row is None or row["last_id"] is None:
         return 0, ""
-    return int(row["id"]), str(row["dedupe_key"]).rsplit(":", 1)[-1]
+    last_key = row["last_key"]
+    return int(row["last_id"]), "" if last_key is None else str(last_key).rsplit(":", 1)[-1]
 
 
 async def queue_schedule_notices(

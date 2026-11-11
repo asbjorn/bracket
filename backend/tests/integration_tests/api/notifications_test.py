@@ -12,6 +12,7 @@ from bracket.logic.notifications import (
     process_pending,
     queue,
     queue_registration_email,
+    queue_schedule_notices,
 )
 from bracket.routes.notifications import bulk_sends, bulk_sends_per_user
 from bracket.schema import notifications_sent, team_registrations, teams, tournament_details
@@ -474,5 +475,40 @@ async def test_address_server_limit(
             )
         )
         assert sum(results) == 3
+    finally:
+        await clean_up(auth_context)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_failed_schedule_notice_is_sent_again(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    """A notice that failed counts as not sent: the next round tries again, same schedule."""
+    tournament_id = auth_context.tournament.id
+    try:
+        team_ids = await set_up_playable_cup(auth_context)
+        await add_contacts(auth_context, team_ids)
+        set_email_sender(FakeSender())
+        first = await queue_schedule_notices(tournament_id, dry_run=False)
+        assert first.teams_to_notify > 0
+        await database.execute(
+            "UPDATE notifications_sent SET status = 'FAILED' WHERE tournament_id = :id",
+            values={"id": tournament_id},
+        )
+        again = await queue_schedule_notices(tournament_id, dry_run=False)
+        assert again.teams_to_notify == first.teams_to_notify
+        pending = await database.fetch_val(
+            "SELECT count(*) FROM notifications_sent WHERE tournament_id = :id "
+            "AND status = 'PENDING'",
+            values={"id": tournament_id},
+        )
+        assert pending == first.teams_to_notify
+        # Once it went out, the unchanged schedule isn't sent a third time
+        await database.execute(
+            "UPDATE notifications_sent SET status = 'SENT' WHERE tournament_id = :id "
+            "AND status = 'PENDING'",
+            values={"id": tournament_id},
+        )
+        assert (await queue_schedule_notices(tournament_id, dry_run=True)).teams_to_notify == 0
     finally:
         await clean_up(auth_context)
