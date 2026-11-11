@@ -24,6 +24,8 @@ class MatchBaseInsertable(BaseModelORM):
     court_id: CourtId | None = None
     stage_item_input1_conflict: bool
     stage_item_input2_conflict: bool
+    # Whether the match has been played. Only played matches count in rankings.
+    played: bool = False
 
     @property
     def end_time(self) -> datetime_utc:
@@ -93,6 +95,14 @@ class MatchBody(BaseModelORM):
     court_id: CourtId | None = None
     custom_duration_minutes: int | None = None
     custom_margin_minutes: int | None = None
+    # When omitted, the match counts as played once a score other than 0-0 is entered.
+    played: bool | None = None
+
+    def is_played(self, previously_played: bool) -> bool:
+        if self.played is not None:
+            return self.played
+        has_score = self.stage_item_input1_score != 0 or self.stage_item_input2_score != 0
+        return previously_played or has_score
 
 
 class MatchCreateBodyFrontend(BaseModelORM):

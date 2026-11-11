@@ -3,6 +3,7 @@ from starlette import status
 
 from bracket.config import config
 from bracket.database import database
+from bracket.logic.results_visibility import hide_results_of_private_categories
 from bracket.logic.scheduling.builder import determine_available_inputs
 from bracket.logic.scheduling.handle_stage_activation import (
     get_updates_to_inputs_in_activated_stage,
@@ -25,6 +26,7 @@ from bracket.routes.models import (
     SuccessResponse,
 )
 from bracket.routes.util import disallow_archived_tournament, stage_dependency
+from bracket.sql.categories import get_all_categories_in_tournament
 from bracket.sql.stages import (
     get_full_tournament_details,
     get_next_stage_in_tournament,
@@ -42,7 +44,7 @@ router = APIRouter(prefix=config.api_prefix)
 @router.get("/tournaments/{tournament_id}/stages", response_model=StagesWithStageItemsResponse)
 async def get_stages(
     tournament_id: TournamentId,
-    user: UserPublic = Depends(user_authenticated_or_public_dashboard),
+    user: UserPublic | None = Depends(user_authenticated_or_public_dashboard),
     no_draft_rounds: bool = False,
 ) -> StagesWithStageItemsResponse:
     if no_draft_rounds is False and user is None:
@@ -52,6 +54,11 @@ async def get_stages(
         )
 
     stages_ = await get_full_tournament_details(tournament_id, no_draft_rounds=no_draft_rounds)
+    if user is None:
+        # Public dashboard: don't reveal results of classes where that's not allowed
+        categories = await get_all_categories_in_tournament(tournament_id)
+        stages_ = hide_results_of_private_categories(stages_, categories)
+
     return StagesWithStageItemsResponse(data=stages_)
 
 

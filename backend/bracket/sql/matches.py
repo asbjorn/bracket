@@ -82,12 +82,15 @@ async def sql_create_match(match: MatchCreateBody) -> Match:
     return Match.model_validate(dict(result._mapping))
 
 
-async def sql_update_match(match_id: MatchId, match: MatchBody, tournament: Tournament) -> None:
+async def sql_update_match(
+    match_id: MatchId, match: MatchBody, tournament: Tournament, *, played: bool
+) -> None:
     query = """
         UPDATE matches
         SET round_id = :round_id,
             stage_item_input1_score = :stage_item_input1_score,
             stage_item_input2_score = :stage_item_input2_score,
+            played = :played,
             court_id = :court_id,
             custom_duration_minutes = :custom_duration_minutes,
             custom_margin_minutes = :custom_margin_minutes,
@@ -111,7 +114,8 @@ async def sql_update_match(match_id: MatchId, match: MatchBody, tournament: Tour
         query=query,
         values={
             "match_id": match_id,
-            **match.model_dump(),
+            **match.model_dump(exclude={"played"}),
+            "played": played,
             "duration_minutes": duration_minutes,
             "margin_minutes": margin_minutes,
         },
@@ -232,7 +236,8 @@ async def clear_scores_for_matches_in_stage_item(
     query = """
         UPDATE matches
         SET stage_item_input1_score = 0,
-            stage_item_input2_score = 0
+            stage_item_input2_score = 0,
+            played = false
         FROM rounds
         JOIN stage_items ON rounds.stage_item_id = stage_items.id
         JOIN stages ON stages.id = stage_items.stage_id

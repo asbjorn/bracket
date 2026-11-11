@@ -66,16 +66,19 @@ def determine_ranking_for_stage_item(
 ) -> defaultdict[StageItemInputId, TeamStatistics]:
     input_x_stats: defaultdict[StageItemInputId, TeamStatistics] = defaultdict(TeamStatistics)
 
-    if stage_item.type is StageType.SWISS:
-        for input_ in stage_item.inputs:
-            input_x_stats[input_.id].points = START_ELO
+    # Every input is part of the ranking, also before it has played a match.
+    for input_ in stage_item.inputs:
+        stats = input_x_stats[input_.id]
+        if stage_item.type is StageType.SWISS:
+            stats.points = START_ELO
 
+    # Matches that have not been played yet (e.g. 0-0 placeholders) don't count.
     matches = [
         match
         for round_ in stage_item.rounds
         if not round_.is_draft
         for match in round_.matches
-        if isinstance(match, MatchWithDetailsDefinitive)
+        if isinstance(match, MatchWithDetailsDefinitive) and match.played
     ]
     for match in matches:
         for team_index, stage_item_input in enumerate(match.stage_item_inputs):

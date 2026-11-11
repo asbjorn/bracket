@@ -366,6 +366,7 @@ async def sql_create_dev_db() -> UserId:
                             }
                         ),
                         tournament=tournament_details,
+                        played=True,
                     )
 
     for _stage_item in (stage_item_1, stage_item_2, stage_item_3):

@@ -18,4 +18,4 @@ def test_production_code_does_not_import_tests() -> None:
             ):
                 offenders.append(f"{path}:{node.lineno}")
 
-    assert offenders == []
+    assert not offenders, offenders

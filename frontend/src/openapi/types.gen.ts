@@ -325,6 +325,10 @@ export type Match = {
    */
   margin_minutes: number;
   /**
+   * Played
+   */
+  played: boolean;
+  /**
    * Position In Schedule
    */
   position_in_schedule: number | null;
@@ -394,6 +398,10 @@ export type MatchBody = {
    * Custom Margin Minutes
    */
   custom_margin_minutes: number | null;
+  /**
+   * Played
+   */
+  played: boolean | null;
   /**
    * Round Id
    */
@@ -496,6 +504,10 @@ export type MatchWithDetails = {
    */
   margin_minutes: number;
   /**
+   * Played
+   */
+  played: boolean;
+  /**
    * Position In Schedule
    */
   position_in_schedule: number | null;
@@ -582,6 +594,10 @@ export type MatchWithDetailsDefinitive = {
    * Margin Minutes
    */
   margin_minutes: number;
+  /**
+   * Played
+   */
+  played: boolean;
   /**
    * Position In Schedule
    */

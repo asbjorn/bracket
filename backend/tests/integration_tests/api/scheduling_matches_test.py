@@ -117,7 +117,8 @@ async def test_schedule_all_matches(
 
     assert response == SUCCESS_RESPONSE
 
-    stage_item = stages[0].stage_items[0]
+    # The order of stage items in the response is not guaranteed, so look up the group by id
+    stage_item = next(si for si in stages[0].stage_items if si.id == stage_item_1.id)
     assert len(stage_item.rounds) == 3
     for round_ in stage_item.rounds:
         assert len(round_.matches) == 2

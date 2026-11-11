@@ -530,6 +530,11 @@
             "title": "Margin Minutes",
             "type": "integer"
           },
+          "played": {
+            "default": false,
+            "title": "Played",
+            "type": "boolean"
+          },
           "position_in_schedule": {
             "anyOf": [
               {
@@ -666,6 +671,7 @@
           "court_id",
           "stage_item_input1_conflict",
           "stage_item_input2_conflict",
+          "played",
           "stage_item_input1_id",
           "stage_item_input2_id",
           "stage_item_input1_winner_from_match_id",
@@ -712,6 +718,17 @@
             ],
             "title": "Custom Margin Minutes"
           },
+          "played": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Played"
+          },
           "round_id": {
             "title": "Round Id",
             "type": "integer"
@@ -733,7 +750,8 @@
           "stage_item_input2_score",
           "court_id",
           "custom_duration_minutes",
-          "custom_margin_minutes"
+          "custom_margin_minutes",
+          "played"
         ],
         "title": "MatchBody",
         "type": "object"
@@ -902,6 +920,11 @@
             "title": "Margin Minutes",
             "type": "integer"
           },
+          "played": {
+            "default": false,
+            "title": "Played",
+            "type": "boolean"
+          },
           "position_in_schedule": {
             "anyOf": [
               {
@@ -1038,6 +1061,7 @@
           "court_id",
           "stage_item_input1_conflict",
           "stage_item_input2_conflict",
+          "played",
           "stage_item_input1_id",
           "stage_item_input2_id",
           "stage_item_input1_winner_from_match_id",
@@ -1112,6 +1136,11 @@
             "title": "Margin Minutes",
             "type": "integer"
           },
+          "played": {
+            "default": false,
+            "title": "Played",
+            "type": "boolean"
+          },
           "position_in_schedule": {
             "anyOf": [
               {
@@ -1242,6 +1271,7 @@
           "court_id",
           "stage_item_input1_conflict",
           "stage_item_input2_conflict",
+          "played",
           "stage_item_input1_id",
           "stage_item_input2_id",
           "stage_item_input1_winner_from_match_id",

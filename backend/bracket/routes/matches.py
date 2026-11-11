@@ -165,7 +165,9 @@ async def update_match_by_id(
     await check_foreign_keys_belong_to_tournament(match_body, tournament_id)
     tournament = await sql_get_tournament(tournament_id)
 
-    await sql_update_match(match_id, match_body, tournament)
+    await sql_update_match(
+        match_id, match_body, tournament, played=match_body.is_played(match.played)
+    )
 
     round_ = await get_round_by_id(tournament_id, match.round_id)
     stage_item = await get_stage_item(tournament_id, round_.stage_item_id)

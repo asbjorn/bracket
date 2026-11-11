@@ -7,7 +7,7 @@ from bracket.logic.ranking.statistics import TeamStatistics
 from bracket.models.db.match import MatchWithDetails, MatchWithDetailsDefinitive
 from bracket.models.db.ranking import Ranking
 from bracket.models.db.stage_item import StageType
-from bracket.models.db.stage_item_inputs import StageItemInputFinal
+from bracket.models.db.stage_item_inputs import StageItemInput, StageItemInputFinal
 from bracket.models.db.team import Team
 from bracket.models.db.util import RoundWithMatches, StageItemWithRounds
 from bracket.utils.dummy_records import DUMMY_TEAM1, DUMMY_TEAM2
@@ -59,6 +59,7 @@ def test_determine_ranking_for_stage_item_elimination() -> None:
                             stage_item_input2_score=0,
                             stage_item_input1_conflict=False,
                             stage_item_input2_conflict=False,
+                            played=True,
                         ),
                         MatchWithDetailsDefinitive(
                             id=MatchId(-2),
@@ -72,6 +73,7 @@ def test_determine_ranking_for_stage_item_elimination() -> None:
                             stage_item_input2_score=2,
                             stage_item_input1_conflict=False,
                             stage_item_input2_conflict=False,
+                            played=True,
                         ),
                         MatchWithDetails(  # This gets ignored in ranking calculation
                             id=MatchId(-3),
@@ -155,6 +157,7 @@ def test_determine_ranking_for_stage_item_swiss() -> None:
                             stage_item_input2_score=0,
                             stage_item_input1_conflict=False,
                             stage_item_input2_conflict=False,
+                            played=True,
                         ),
                         MatchWithDetailsDefinitive(
                             id=MatchId(-2),
@@ -168,6 +171,7 @@ def test_determine_ranking_for_stage_item_swiss() -> None:
                             stage_item_input2_score=2,
                             stage_item_input1_conflict=False,
                             stage_item_input2_conflict=False,
+                            played=True,
                         ),
                         MatchWithDetails(  # This gets ignored in ranking calculation
                             id=MatchId(-3),
@@ -270,4 +274,81 @@ def test_determine_ranking_for_stage_item_swiss_no_matches() -> None:
     assert ranking == {
         -2: TeamStatistics(wins=0, draws=0, losses=0, points=Decimal("1200")),
         -1: TeamStatistics(wins=0, draws=0, losses=0, points=Decimal("1200")),
+    }
+
+
+def test_determine_ranking_for_stage_item_ignores_unplayed_matches() -> None:
+    """
+    Unplayed matches (0-0 placeholders) must not count as draws, and teams that haven't played
+    yet are still part of the ranking.
+    """
+    tournament_id = TournamentId(-1)
+    now = datetime_utc.now()
+    inputs: list[StageItemInput] = [
+        StageItemInputFinal(
+            id=StageItemInputId(-index),
+            team_id=TeamId(-index),
+            slot=index,
+            tournament_id=tournament_id,
+            team=Team(**DUMMY_TEAM1.model_dump(), id=TeamId(-index)),
+        )
+        for index in (1, 2, 3)
+    ]
+
+    def match(
+        match_id: int, score1: int, score2: int, *, played: bool
+    ) -> MatchWithDetailsDefinitive:
+        return MatchWithDetailsDefinitive(
+            id=MatchId(match_id),
+            stage_item_input1=inputs[0],
+            stage_item_input2=inputs[1],
+            created=now,
+            duration_minutes=10,
+            margin_minutes=5,
+            round_id=RoundId(-1),
+            stage_item_input1_score=score1,
+            stage_item_input2_score=score2,
+            stage_item_input1_conflict=False,
+            stage_item_input2_conflict=False,
+            played=played,
+        )
+
+    ranking = determine_ranking_for_stage_item(
+        StageItemWithRounds(
+            rounds=[
+                RoundWithMatches(
+                    id=RoundId(-1),
+                    matches=[match(-1, 2, 0, played=True), match(-2, 0, 0, played=False)],
+                    stage_item_id=StageItemId(-1),
+                    created=now,
+                    is_draft=False,
+                    name="",
+                )
+            ],
+            inputs=inputs,
+            type_name="Round robin",
+            team_count=3,
+            ranking_id=None,
+            id=StageItemId(-1),
+            stage_id=StageId(-1),
+            name="",
+            created=now,
+            type=StageType.ROUND_ROBIN,
+        ),
+        Ranking(
+            id=RankingId(-1),
+            tournament_id=tournament_id,
+            created=now,
+            win_points=Decimal("3"),
+            draw_points=Decimal("1"),
+            loss_points=Decimal("0"),
+            add_score_points=False,
+            position=0,
+        ),
+    )
+
+    assert ranking == {
+        -1: TeamStatistics(wins=1, draws=0, losses=0, points=Decimal("3")),
+        -2: TeamStatistics(wins=0, draws=0, losses=1, points=Decimal("0")),
+        -3: TeamStatistics(wins=0, draws=0, losses=0, points=Decimal("0")),
     }
