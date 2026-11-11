@@ -3,7 +3,9 @@ Entering results with a score link: no account, only the token of the link. A li
 to a tournament and optionally to one court; only those matches can be seen and changed.
 """
 
-from fastapi import HTTPException
+import hashlib
+
+from fastapi import HTTPException, Request
 from starlette import status
 
 from bracket.logic.match_results import save_match
@@ -23,9 +25,19 @@ from bracket.sql.score_links import get_valid_score_link
 from bracket.sql.stages import get_full_tournament_details
 from bracket.sql.tournaments import sql_get_tournament
 from bracket.utils.id_types import MatchId, TeamId
+from bracket.utils.rate_limit import SlidingWindowLimiter
+
+# Per link and client: reading (the page refreshes) and writing (results, check-ins, notices)
+score_link_reads = SlidingWindowLimiter(limit=300, window_seconds=60)
+score_link_writes = SlidingWindowLimiter(limit=60, window_seconds=60)
 
 
-async def score_link_dependency(token: str) -> ScoreLink:
+async def score_link_dependency(token: str, request: Request) -> ScoreLink:
+    token_key = hashlib.sha256(token.encode()).hexdigest()[:32]
+    client = request.client.host if request.client is not None else "unknown"
+    limiter = score_link_reads if request.method == "GET" else score_link_writes
+    limiter.check(f"{token_key}:{client}")
+
     link = await get_valid_score_link(token)
     if link is None:
         raise HTTPException(

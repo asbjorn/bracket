@@ -514,5 +514,7 @@
     "team_reinstated_message": "{{team}} takes part again. Change walkovers per match if needed.",
     "score_walkover_description": "Which team showed up? It wins {{goals}}–0.",
     "score_walkover_winner_button": "{{team}} showed up",
-    "score_walkover_saved": "Walkover to {{team}}"
+    "score_walkover_saved": "Walkover to {{team}}",
+    "walkover_winner_label": "Walkover: the other team didn't show up",
+    "walkover_winner_button": "{{team}} wins by walkover"
 }

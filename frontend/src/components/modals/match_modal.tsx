@@ -24,7 +24,7 @@ import {
   StagesWithStageItemsResponse,
 } from '@openapi';
 import { getMatchLookup, getStageItemLookup } from '@services/lookups';
-import { deleteMatch, updateMatch } from '@services/match';
+import { deleteMatch, giveWalkover, updateMatch } from '@services/match';
 
 const RESULT_TYPES: MatchResultType[] = ['NORMAL', 'EXTRA_TIME', 'PENALTIES', 'WALKOVER'];
 
@@ -125,6 +125,22 @@ function MatchModalForm({
   const team1Name = formatMatchInput1(t, stageItemsLookup, matchesLookup, match);
   const team2Name = formatMatchInput2(t, stageItemsLookup, matchesLookup, match);
   const isShootout = form.getValues().result_type === 'PENALTIES';
+  const teamIdOf = (input: MatchWithDetails['stage_item_input1']) =>
+    input != null && 'team' in input && input.team != null ? input.team.id : null;
+  const walkoverWinners = [
+    { teamId: teamIdOf(match.stage_item_input1), name: team1Name },
+    { teamId: teamIdOf(match.stage_item_input2), name: team2Name },
+  ];
+  const canGiveWalkover = walkoverWinners.every((winner) => winner.teamId != null);
+
+  async function walkover(winnerTeamId: number) {
+    if (match == null) return;
+    const result = await giveWalkover(tournamentData.id, match.id, winnerTeamId);
+    if (result == null) return;
+    await swrStagesResponse.mutate();
+    if (swrUpcomingMatchesResponse != null) await swrUpcomingMatchesResponse.mutate();
+    setOpened(false);
+  }
   // Set by the button that submits the form: a live score doesn't count yet, a final result does
   const saveAsFinalResult = useRef(true);
 
@@ -199,6 +215,26 @@ function MatchModalForm({
               />
             </Grid.Col>
           </Grid>
+        ) : null}
+        {canGiveWalkover ? (
+          <>
+            <Text size="sm" mt="lg">
+              {t('walkover_winner_label')}
+            </Text>
+            <Grid mt="xs">
+              {walkoverWinners.map((winner) => (
+                <Grid.Col key={winner.teamId} span={{ base: 12, sm: 6 }}>
+                  <Button
+                    fullWidth
+                    variant="default"
+                    onClick={() => walkover(winner.teamId as number)}
+                  >
+                    {t('walkover_winner_button', { team: winner.name })}
+                  </Button>
+                </Grid.Col>
+              ))}
+            </Grid>
+          </>
         ) : null}
         <Divider mt="lg" />
 

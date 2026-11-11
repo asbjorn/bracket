@@ -22,6 +22,17 @@ export async function updateMatch(tournament_id: number, match_id: number, match
     .catch((response: any) => handleRequestError(response));
 }
 
+/** The other team didn't show up: `winner_team_id` wins by the tournament's walkover score. */
+export async function giveWalkover(
+  tournament_id: number,
+  match_id: number,
+  winner_team_id: number,
+) {
+  return createAxios()
+    .put(`tournaments/${tournament_id}/matches/${match_id}/walkover`, { winner_team_id })
+    .catch((response: any) => handleRequestError(response));
+}
+
 export async function rescheduleMatch(
   tournament_id: number,
   match_id: number,

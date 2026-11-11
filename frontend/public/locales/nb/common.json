@@ -514,5 +514,7 @@
     "team_reinstated_message": "{{team}} er med igjen. Endre W.O.-resultater per kamp om nødvendig.",
     "score_walkover_description": "Hvilket lag møtte? Det vinner {{goals}}–0.",
     "score_walkover_winner_button": "{{team}} møtte",
-    "score_walkover_saved": "W.O. til {{team}}"
+    "score_walkover_saved": "W.O. til {{team}}",
+    "walkover_winner_label": "Walkover: det andre laget møtte ikke",
+    "walkover_winner_button": "{{team}} vinner på walkover"
 }

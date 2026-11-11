@@ -2,6 +2,7 @@ import pytest
 from heliclockter import datetime_utc, timedelta
 
 from bracket.database import database
+from bracket.logic import score_entry
 from bracket.schema import match_day_notices, score_links
 from bracket.sql.courts import get_all_courts_in_tournament
 from bracket.sql.stages import get_full_tournament_details
@@ -176,3 +177,29 @@ async def test_score_link_rules(
     finally:
         await delete_score_links(auth_context)
         await delete_cup(auth_context)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_score_link_rate_limit(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    """Also invalid tokens count, so tokens can't be guessed quickly."""
+    limit = score_entry.score_link_writes.limit
+    score_entry.score_link_writes.limit = 2
+    try:
+        body = {"delay_minutes": 5}
+        responses = [
+            await send_request(HTTPMethod.POST, "score/not-a-real-token/notices", json=body)
+            for _ in range(3)
+        ]
+        assert [r["detail"][:20] for r in responses] == [
+            "This link is not val",
+            "This link is not val",
+            "Too many requests, p",
+        ]
+        # Reading has its own, larger limit
+        read = await send_request(HTTPMethod.GET, "score/not-a-real-token")
+        assert read["detail"].startswith("This link is not valid")
+    finally:
+        score_entry.score_link_writes.limit = limit
+        score_entry.score_link_writes.hits.clear()
