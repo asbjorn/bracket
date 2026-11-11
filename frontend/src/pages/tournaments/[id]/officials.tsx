@@ -19,7 +19,6 @@ import {
   TextInput,
   Title,
 } from '@mantine/core';
-import { DateTimePicker } from '@mantine/dates';
 import {
   IconAlertTriangle,
   IconDownload,
@@ -37,6 +36,7 @@ import { Time } from '@components/utils/datetime';
 import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
 import { getTournamentIdFromRouter } from '@components/utils/util';
 import { contentLanguage } from '@components/utils/language';
+import { DateTimeField } from '@components/utils/time_fields';
 import {
   Court,
   MatchWithDetails,
@@ -396,18 +396,13 @@ function BlockForm({
         onChange={setCourtId}
         w="10rem"
       />
-      <DateTimePicker
+      <DateTimeField
         label={t('official_block_from_label')}
         value={start}
         onChange={setStart}
         w="13rem"
       />
-      <DateTimePicker
-        label={t('official_block_to_label')}
-        value={end}
-        onChange={setEnd}
-        w="13rem"
-      />
+      <DateTimeField label={t('official_block_to_label')} value={end} onChange={setEnd} w="13rem" />
       <Button
         loading={saving}
         disabled={officialId == null || courtId == null || start == null || end == null}

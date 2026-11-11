@@ -22,7 +22,6 @@ import {
   Title,
   Tooltip,
 } from '@mantine/core';
-import { DateTimePicker } from '@mantine/dates';
 import {
   IconArrowUp,
   IconCheck,
@@ -38,6 +37,7 @@ import { useTranslation } from 'react-i18next';
 import { NoContent } from '@components/no_content/empty_table_info';
 import { getBaseURL, getTournamentIdFromRouter } from '@components/utils/util';
 import { contentLanguage } from '@components/utils/language';
+import { DateTimeField } from '@components/utils/time_fields';
 import { Category, Registration, RegistrationStatus, Tournament } from '@openapi';
 import TournamentLayout from '@pages/tournaments/_tournament_layout';
 import { getCategories, getTournamentById, requestSucceeded } from '@services/adapter';
@@ -156,7 +156,7 @@ function ClassCard({
           checked={open}
           onChange={(event) => setOpen(event.currentTarget.checked)}
         />
-        <DateTimePicker
+        <DateTimeField
           label={t('registration_deadline_label')}
           value={deadline}
           onChange={setDeadline}

@@ -1,10 +1,11 @@
 import { Button, Group, Stack, Table, Text } from '@mantine/core';
-import { DatePickerInput, TimeInput } from '@mantine/dates';
+import { DatePickerInput } from '@mantine/dates';
 import dayjs from 'dayjs';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { DayAndTime } from '@components/utils/datetime';
+import { TimeField } from '@components/utils/time_fields';
 import { requestSucceeded } from '@services/adapter';
 import { TimeWindowValue, saveTimeWindows } from '@services/planning';
 
@@ -21,7 +22,10 @@ export function buildTimeWindows(
   lunchEnd: string,
 ): TimeWindowValue[] {
   const windows: TimeWindowValue[] = [];
-  const hasLunch = lunchStart !== '' && lunchEnd !== '';
+  // A field that is empty or still being typed gives no windows instead of an invalid date
+  const isTime = (time: string) => /^\d{2}:\d{2}(:\d{2})?$/.test(time);
+  if (!isTime(dayStart) || !isTime(dayEnd) || dayStart >= dayEnd) return windows;
+  const hasLunch = isTime(lunchStart) && isTime(lunchEnd) && lunchStart < lunchEnd;
   const at = (day: dayjs.Dayjs, time: string) =>
     dayjs(`${day.format('YYYY-MM-DD')}T${time}`).toISOString();
 
@@ -62,31 +66,26 @@ export default function TimeWindowsEditor({
       <DatePickerInput
         type="range"
         allowSingleDateInRange
+        valueFormat="DD.MM.YYYY"
         label={t('time_windows_days_label')}
         value={days}
         onChange={(value) => setDays(value as [string | null, string | null])}
         maw="24rem"
       />
       <Group>
-        <TimeInput
-          label={t('time_windows_start_label')}
-          value={dayStart}
-          onChange={(event) => setDayStart(event.currentTarget.value)}
-        />
-        <TimeInput
-          label={t('time_windows_end_label')}
-          value={dayEnd}
-          onChange={(event) => setDayEnd(event.currentTarget.value)}
-        />
-        <TimeInput
+        <TimeField label={t('time_windows_start_label')} value={dayStart} onChange={setDayStart} />
+        <TimeField label={t('time_windows_end_label')} value={dayEnd} onChange={setDayEnd} />
+        <TimeField
           label={t('time_windows_lunch_start_label')}
           value={lunchStart}
-          onChange={(event) => setLunchStart(event.currentTarget.value)}
+          onChange={setLunchStart}
+          clearable
         />
-        <TimeInput
+        <TimeField
           label={t('time_windows_lunch_end_label')}
           value={lunchEnd}
-          onChange={(event) => setLunchEnd(event.currentTarget.value)}
+          onChange={setLunchEnd}
+          clearable
         />
       </Group>
       <Group>

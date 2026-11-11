@@ -11,13 +11,14 @@ import {
   Text,
   TextInput,
 } from '@mantine/core';
-import { DatePickerInput, TimeInput } from '@mantine/dates';
+import { DatePickerInput } from '@mantine/dates';
 import { IconTrash } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 
 import { GAME_FORMATS } from '@components/scheduling/match_plan_panel';
 import { buildTimeWindows } from '@components/scheduling/time_windows_editor';
 import { nffPreset } from '@components/utils/nff_presets';
+import { TimeField } from '@components/utils/time_fields';
 import { CapacityCourts, CapacityResult, CupSetupClass, GameFormat, PlayoffPreset } from '@openapi';
 import { TimeWindowValue } from '@services/planning';
 
@@ -351,38 +352,41 @@ export function PlayingDaysEditor({
   onChange: (value: PlayingDays) => void;
 }) {
   const { t } = useTranslation();
-  const time = (field: keyof PlayingDays) => (event: React.ChangeEvent<HTMLInputElement>) =>
-    onChange({ ...value, [field]: event.currentTarget.value });
+  const time = (field: keyof PlayingDays) => (input: string) =>
+    onChange({ ...value, [field]: input });
   return (
     <Stack>
       <DatePickerInput
         type="range"
         allowSingleDateInRange
+        valueFormat="DD.MM.YYYY"
         label={t('time_windows_days_label')}
         value={value.days}
         onChange={(days) => onChange({ ...value, days: days as [string | null, string | null] })}
         maw="24rem"
       />
       <Group>
-        <TimeInput
+        <TimeField
           label={t('time_windows_start_label')}
           value={value.dayStart}
           onChange={time('dayStart')}
         />
-        <TimeInput
+        <TimeField
           label={t('time_windows_end_label')}
           value={value.dayEnd}
           onChange={time('dayEnd')}
         />
-        <TimeInput
+        <TimeField
           label={t('time_windows_lunch_start_label')}
           value={value.lunchStart}
           onChange={time('lunchStart')}
+          clearable
         />
-        <TimeInput
+        <TimeField
           label={t('time_windows_lunch_end_label')}
           value={value.lunchEnd}
           onChange={time('lunchEnd')}
+          clearable
         />
       </Group>
     </Stack>

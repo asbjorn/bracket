@@ -8,7 +8,6 @@ import {
   Select,
   TextInput,
 } from '@mantine/core';
-import { DateTimePicker } from '@mantine/dates';
 import { useForm } from '@mantine/form';
 import { GoPlus } from '@react-icons/all-files/go/GoPlus';
 import { IconCalendar, IconCalendarTime } from '@tabler/icons-react';
@@ -18,6 +17,7 @@ import { SWRResponse } from 'swr';
 
 import SaveButton from '@components/buttons/save';
 import { assert_not_none } from '@components/utils/assert';
+import { DateTimeField } from '@components/utils/time_fields';
 import { Club, Tournament, TournamentsResponse } from '@openapi';
 import { getBaseApiUrl, getClubs } from '@services/adapter';
 import { createTournament } from '@services/tournament';
@@ -112,7 +112,7 @@ function GeneralTournamentForm({
       />
       <Grid mt="1rem">
         <Grid.Col span={{ sm: 9 }}>
-          <DateTimePicker
+          <DateTimeField
             leftSection={<IconCalendar size="1.1rem" stroke={1.5} />}
             mx="auto"
             {...form.getInputProps('start_time')}

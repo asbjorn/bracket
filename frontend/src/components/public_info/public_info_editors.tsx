@@ -11,7 +11,6 @@ import {
   Text,
   Textarea,
 } from '@mantine/core';
-import { DateTimePicker } from '@mantine/dates';
 import { IconArrowRight } from '@tabler/icons-react';
 import { showNotification } from '@mantine/notifications';
 import dayjs from 'dayjs';
@@ -21,6 +20,7 @@ import { Link } from 'react-router';
 
 import { NotificationsSettings } from '@components/notifications/notifications_panel';
 import { getBaseURL } from '@components/utils/util';
+import { DateTimeField } from '@components/utils/time_fields';
 import { AnnouncementLevel, Tournament } from '@openapi';
 import { requestSucceeded } from '@services/adapter';
 import { getNotificationStatus, sendAnnouncementEmail } from '@services/notifications';
@@ -83,7 +83,7 @@ export function AnnouncementEditor({ tournamentId }: { tournamentId: number }) {
             { value: 'WARNING', label: t('announcement_level_warning') },
           ]}
         />
-        <DateTimePicker
+        <DateTimeField
           label={t('announcement_until_label')}
           placeholder={t('announcement_until_placeholder')}
           value={until}

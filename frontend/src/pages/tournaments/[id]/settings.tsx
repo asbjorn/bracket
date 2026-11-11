@@ -14,7 +14,6 @@ import {
   Text,
   TextInput,
 } from '@mantine/core';
-import { DateTimePicker } from '@mantine/dates';
 import { useForm } from '@mantine/form';
 import { MdDelete } from '@react-icons/all-files/md/MdDelete';
 import { MdUnarchive } from '@react-icons/all-files/md/MdUnarchive';
@@ -31,6 +30,7 @@ import { capitalize, getBaseURL, getTournamentIdFromRouter } from '@components/u
 import { Club, Tournament, TournamentResponse } from '@openapi';
 import NotFoundTitle from '@pages/404';
 import { PublicInfoSettings } from '@components/public_info/public_info_editors';
+import { DateTimeField } from '@components/utils/time_fields';
 import TournamentLayout from '@pages/tournaments/_tournament_layout';
 import {
   getBaseApiUrl,
@@ -198,7 +198,7 @@ function GeneralTournamentForm({
         <Text fz="sm">{t('planning_of_matches_description')}</Text>
         <Grid>
           <Grid.Col span={{ sm: 9 }}>
-            <DateTimePicker
+            <DateTimeField
               rightSection={<IconCalendar size="1.1rem" stroke={1.5} />}
               mx="auto"
               {...form.getInputProps('start_time')}
