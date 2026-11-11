@@ -134,8 +134,14 @@ async def register_team(
             team_ids.append(team_id)
             results.append(result)
 
-    for team_id, result in zip(team_ids, results, strict=True):
-        await queue_registration_email(tournament_id, team_id, result.waitlist_place)
+    # One confirmation for the whole sign-up, however many teams it has
+    await queue_registration_email(
+        tournament_id,
+        [
+            (team_id, result.waitlist_place)
+            for team_id, result in zip(team_ids, results, strict=True)
+        ],
+    )
     first = results[0]
     return PublicRegistrationResult(
         team_name=first.team_name,

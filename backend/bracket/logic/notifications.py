@@ -465,33 +465,45 @@ async def queue_schedule_notices(
 
 
 async def queue_registration_email(
-    tournament_id: TournamentId, team_id: TeamId, waitlist_place: int | None
+    tournament_id: TournamentId, entries: list[tuple[TeamId, int | None]]
 ) -> None:
     """
-    Confirms a sign-up: registered, or on the waitlist (with the place).
+    Confirms a sign-up in one email: per team its class and whether it is registered or on the
+    waitlist (with the place). A club signing up several teams gets one email, not one each.
 
     Anyone can sign up with any address, so this email must not be usable to send text of
     the sender's choice: it only contains what the organiser wrote (cup and class names, the
     organiser's contact), never the team name, contact name or comment from the form. And
     an address gets at most a few of them a day, a cup at most `MAX_REGISTRATION_EMAILS_HOUR`.
     """
-    if get_email_sender() is None:
+    if get_email_sender() is None or len(entries) < 1:
         return
+    team_id = entries[0][0]
     recipients = await get_recipients(tournament_id, team_id, only_participating=False)
     if len(recipients) < 1:
         return
     [recipient] = recipients
     texts = TEXTS[await get_language(tournament_id)]
-    category = recipient.category_name or ""
-    if waitlist_place is None:
-        subject_key, line = "registered_subject", texts["registered"].format(category=category)
-    else:
-        subject_key = "waitlist_subject"
-        line = texts["waitlist"].format(category=category, place=waitlist_place)
+    lines = []
+    for entry_team_id, waitlist_place in entries:
+        entry_recipients = await get_recipients(
+            tournament_id, entry_team_id, only_participating=False
+        )
+        category = (entry_recipients[0].category_name if entry_recipients else None) or ""
+        if waitlist_place is None:
+            lines.append(texts["registered"].format(category=category))
+        else:
+            lines.append(texts["waitlist"].format(category=category, place=waitlist_place))
+    all_waitlisted = all(place is not None for _, place in entries)
+    subject_key = "waitlist_subject" if all_waitlisted else "registered_subject"
     subject, body, reply_to = await compose(
-        tournament_id, recipient, subject_key, [line], personal=False
+        tournament_id, recipient, subject_key, lines, personal=False
     )
-    key = f"registration:{team_id}:{'waitlist' if waitlist_place is not None else 'registered'}"
+    statuses = ",".join(
+        f"{entry_team_id}:{'waitlist' if place is not None else 'registered'}"
+        for entry_team_id, place in sorted(entries)
+    )
+    key = f"registration:{statuses}"
     async with database.transaction():
         # Check and queue at once: concurrent sign-ups can't pass the limits together.
         # Always the tournament first, then the address, so two locks can't deadlock.

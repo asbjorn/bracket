@@ -182,7 +182,7 @@ async def test_emails_without_smtp_and_retries(
         ]
         assert overview["email_enabled"] is False
         assert overview["contact_emails"] == sorted(CONTACTS.values())
-        await queue_registration_email(tournament_id, team_ids["Brann"], None)
+        await queue_registration_email(tournament_id, [(team_ids["Brann"], None)])
         overview = (await send_tournament_request(HTTPMethod.GET, "notifications", auth_context))[
             "data"
         ]
@@ -193,7 +193,7 @@ async def test_emails_without_smtp_and_retries(
         await send_tournament_request(
             HTTPMethod.PUT, "notification_settings", auth_context, json={"language": "en"}
         )
-        await queue_registration_email(tournament_id, team_ids["Brann"], 2)
+        await queue_registration_email(tournament_id, [(team_ids["Brann"], 2)])
         sender.failing = True
         for _ in range(3):
             assert await process_pending(sender) == 0
@@ -255,8 +255,8 @@ async def test_registration_email_is_no_spam_relay(
             team_registrations.update().where(team_registrations.c.team_id == team_ids["Brann"]),
             values={"contact_name": "Visit spam.example"},
         )
-        await queue_registration_email(tournament_id, team_ids["Brann"], None)
-        await queue_registration_email(tournament_id, team_ids["Brann"], 2)
+        await queue_registration_email(tournament_id, [(team_ids["Brann"], None)])
+        await queue_registration_email(tournament_id, [(team_ids["Brann"], 2)])
         assert await process_pending(sender) == 2
         for message in sender.sent:
             text = message["Subject"] + message.get_content()
@@ -269,7 +269,7 @@ async def test_registration_email_is_no_spam_relay(
                 team_registrations.update().where(team_registrations.c.team_id == team_ids[name]),
                 values={"contact_email": CONTACTS["Brann"]},
             )
-            await queue_registration_email(tournament_id, team_ids[name], None)
+            await queue_registration_email(tournament_id, [(team_ids[name], None)])
         assert await process_pending(sender) == 1
     finally:
         await clean_up(auth_context)
@@ -352,7 +352,7 @@ async def test_registration_email_limit_holds_under_concurrency(
         set_email_sender(sender)
         await asyncio.gather(
             *(
-                queue_registration_email(tournament_id, team_ids[name], place)
+                queue_registration_email(tournament_id, [(team_ids[name], place)])
                 for name in CONTACTS
                 for place in (None, 1)
             )
@@ -510,5 +510,34 @@ async def test_failed_schedule_notice_is_sent_again(
             values={"id": tournament_id},
         )
         assert (await queue_schedule_notices(tournament_id, dry_run=True)).teams_to_notify == 0
+    finally:
+        await clean_up(auth_context)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_club_sign_up_gets_one_email(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    """Several teams signed up at once with one contact: one confirmation listing all of them."""
+    tournament_id = auth_context.tournament.id
+    sender = FakeSender()
+    try:
+        team_ids = await set_up_playable_cup(auth_context)
+        await add_contacts(auth_context, team_ids)
+        await database.execute(
+            team_registrations.update().where(team_registrations.c.tournament_id == tournament_id),
+            values={"contact_email": "club@example.org"},
+        )
+        set_email_sender(sender)
+        await queue_registration_email(
+            tournament_id, [(team_ids["Brann"], None), (team_ids["Lyn"], 2)]
+        )
+        assert await process_pending(sender) == 1
+        assert len(sender.sent) == 1
+        body = sender.sent[0].get_content()
+        assert "venteliste, plass 2" in body or "waitlist, place 2" in body
+        assert body.count("G10") >= 2 or body.count("klassen") >= 2 or body.count("class") >= 2
+        # No team names from the public form in the email
+        assert "Brann" not in body and "Lyn" not in body
     finally:
         await clean_up(auth_context)
