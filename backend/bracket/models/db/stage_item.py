@@ -1,5 +1,5 @@
 from enum import auto
-from typing import Any
+from typing import Any, Self
 
 from heliclockter import datetime_utc
 from pydantic import Field, model_validator
@@ -48,6 +48,17 @@ class StageItemCreateBody(BaseModelORM):
     type: StageType
     team_count: int = Field(ge=2, le=64)
     ranking_id: RankingId | None = None
+    # Knockout only: add a match for third place between the losers of the semifinals
+    third_place_match: bool = False
+
+    @model_validator(mode="after")
+    def check_third_place_match(self) -> Self:
+        if self.third_place_match:
+            if self.type is not StageType.SINGLE_ELIMINATION:
+                raise ValueError("A third place match is only possible in a knockout bracket")
+            if self.team_count < 4:
+                raise ValueError("A third place match needs at least 4 teams")
+        return self
 
     def get_name_or_default_name(self) -> str:
         return (

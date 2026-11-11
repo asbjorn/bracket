@@ -52,6 +52,21 @@ def get_inputs_to_update_in_subsequent_elimination_rounds(
         ):
             updated_inputs[1] = affected_match2.get_winner()
 
+        # Third place match
+        if subsequent_match.stage_item_input1_loser_from_match_id is not None and (
+            affected_match1 := affected_matches.get(
+                subsequent_match.stage_item_input1_loser_from_match_id
+            )
+        ):
+            updated_inputs[0] = affected_match1.get_loser()
+
+        if subsequent_match.stage_item_input2_loser_from_match_id is not None and (
+            affected_match2 := affected_matches.get(
+                subsequent_match.stage_item_input2_loser_from_match_id
+            )
+        ):
+            updated_inputs[1] = affected_match2.get_loser()
+
         if original_inputs != updated_inputs:
             input_ids = [input_.id if input_ else None for input_ in updated_inputs]
 

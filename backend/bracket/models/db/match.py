@@ -53,6 +53,9 @@ class MatchInsertable(MatchBaseInsertable):
     stage_item_input2_id: StageItemInputId | None = None
     stage_item_input1_winner_from_match_id: MatchId | None = None
     stage_item_input2_winner_from_match_id: MatchId | None = None
+    # Third place match: the inputs are the losers of the semifinals
+    stage_item_input1_loser_from_match_id: MatchId | None = None
+    stage_item_input2_loser_from_match_id: MatchId | None = None
 
 
 class Match(MatchInsertable):
@@ -79,6 +82,16 @@ class Match(MatchInsertable):
                 return self.stage_item_input1 if penalties1 > penalties2 else self.stage_item_input2
 
         return None
+
+    def get_loser(self) -> StageItemInput | None:
+        winner = self.get_winner()
+        if winner is None or self.stage_item_input1 is None:
+            return None
+        return (
+            self.stage_item_input2
+            if winner.id == self.stage_item_input1.id
+            else self.stage_item_input1
+        )
 
 
 class MatchWithDetails(Match):
@@ -166,6 +179,8 @@ class MatchCreateBodyFrontend(BaseModelORM):
 class MatchCreateBody(MatchCreateBodyFrontend):
     duration_minutes: int
     margin_minutes: int
+    stage_item_input1_loser_from_match_id: MatchId | None = None
+    stage_item_input2_loser_from_match_id: MatchId | None = None
     custom_duration_minutes: int | None = None
     custom_margin_minutes: int | None = None
 

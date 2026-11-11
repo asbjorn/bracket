@@ -43,6 +43,12 @@ export function formatMatchInput1(
   const formatted = formatStageItemInput(match.stage_item_input1, stageItemsLookup);
   if (formatted != null) return formatted;
 
+  if (match.stage_item_input1_loser_from_match_id != null) {
+    const loser = matchesLookup[match.stage_item_input1_loser_from_match_id].match;
+    const loser_1 = formatMatchInput1(t, stageItemsLookup, matchesLookup, loser);
+    const loser_2 = formatMatchInput2(t, stageItemsLookup, matchesLookup, loser);
+    return t('loser_of_match', { match: `${loser_1} - ${loser_2}` });
+  }
   if (match.stage_item_input1_winner_from_match_id == null) {
     return t('empty_slot');
   }
@@ -61,6 +67,12 @@ export function formatMatchInput2(
   const formatted = formatStageItemInput(match.stage_item_input2, stageItemsLookup);
   if (formatted != null) return formatted;
 
+  if (match.stage_item_input2_loser_from_match_id != null) {
+    const loser = matchesLookup[match.stage_item_input2_loser_from_match_id].match;
+    const loser_1 = formatMatchInput1(t, stageItemsLookup, matchesLookup, loser);
+    const loser_2 = formatMatchInput2(t, stageItemsLookup, matchesLookup, loser);
+    return t('loser_of_match', { match: `${loser_1} - ${loser_2}` });
+  }
   if (match.stage_item_input2_winner_from_match_id == null) {
     return t('empty_slot');
   }

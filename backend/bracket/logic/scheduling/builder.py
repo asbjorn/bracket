@@ -50,7 +50,9 @@ async def create_rounds_for_new_stage_item(
         )
 
 
-async def build_matches_for_stage_item(stage_item: StageItem, tournament_id: TournamentId) -> None:
+async def build_matches_for_stage_item(
+    stage_item: StageItem, tournament_id: TournamentId, *, third_place_match: bool = False
+) -> None:
     await create_rounds_for_new_stage_item(tournament_id, stage_item)
     stage_item_with_rounds = await get_stage_item(tournament_id, stage_item.id)
 
@@ -58,7 +60,9 @@ async def build_matches_for_stage_item(stage_item: StageItem, tournament_id: Tou
         case StageType.ROUND_ROBIN:
             await build_round_robin_stage_item(tournament_id, stage_item_with_rounds)
         case StageType.SINGLE_ELIMINATION:
-            await build_single_elimination_stage_item(tournament_id, stage_item_with_rounds)
+            await build_single_elimination_stage_item(
+                tournament_id, stage_item_with_rounds, third_place_match=third_place_match
+            )
         case StageType.SWISS:
             return None
 

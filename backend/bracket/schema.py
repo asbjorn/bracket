@@ -159,6 +159,19 @@ matches = Table(
         ForeignKey("matches.id"),
         nullable=True,
     ),
+    # Third place match: the inputs are the losers of the semifinals
+    Column(
+        "stage_item_input1_loser_from_match_id",
+        BigInteger,
+        ForeignKey("matches.id"),
+        nullable=True,
+    ),
+    Column(
+        "stage_item_input2_loser_from_match_id",
+        BigInteger,
+        ForeignKey("matches.id"),
+        nullable=True,
+    ),
     Column("court_id", BigInteger, ForeignKey("courts.id"), nullable=True),
     Column("stage_item_input1_score", Integer, nullable=False),
     Column("stage_item_input2_score", Integer, nullable=False),

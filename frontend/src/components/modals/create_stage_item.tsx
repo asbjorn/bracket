@@ -1,12 +1,12 @@
 import {
   Button,
   Card,
+  Checkbox,
   Divider,
   Grid,
   Image,
   Modal,
   NumberInput,
-  Select,
   Text,
   UnstyledButton,
 } from '@mantine/core';
@@ -117,25 +117,28 @@ export function CreateStagesFromTemplateButtons({
 
 function TeamCountSelectElimination({ form }: { form: UseFormReturnType<any> }) {
   const { t } = useTranslation();
-  const data = [
-    { value: '2', label: '2' },
-    { value: '4', label: '4' },
-    { value: '8', label: '8' },
-    { value: '16', label: '16' },
-    { value: '32', label: '32' },
-  ];
+  const teamCount = Number(form.values.team_count_elimination);
   return (
-    <Select
-      withAsterisk
-      data={data}
-      label={t('team_count_select_elimination_label')}
-      placeholder={t('team_count_select_elimination_placeholder')}
-      searchable
-      limit={20}
-      mt="1rem"
-      maw="50%"
-      {...form.getInputProps('team_count_elimination')}
-    />
+    <>
+      <NumberInput
+        withAsterisk
+        label={t('team_count_select_elimination_label')}
+        description={t('team_count_elimination_description')}
+        min={2}
+        max={64}
+        allowDecimal={false}
+        mt="1rem"
+        maw="50%"
+        {...form.getInputProps('team_count_elimination')}
+      />
+      <Checkbox
+        mt="md"
+        disabled={teamCount < 4}
+        label={t('third_place_match_label')}
+        description={t('third_place_match_description')}
+        {...form.getInputProps('third_place_match', { type: 'checkbox' })}
+      />
+    </>
   );
 }
 
@@ -173,6 +176,7 @@ interface FormValues {
   type: 'ROUND_ROBIN' | 'SWISS' | 'SINGLE_ELIMINATION';
   team_count_round_robin: number;
   team_count_elimination: number;
+  third_place_match: boolean;
 }
 export function CreateStageItemModal({
   tournament,
@@ -189,10 +193,16 @@ export function CreateStageItemModal({
   const [opened, setOpened] = useState(false);
 
   const form = useForm<FormValues>({
-    initialValues: { type: 'ROUND_ROBIN', team_count_round_robin: 4, team_count_elimination: 2 },
+    initialValues: {
+      type: 'ROUND_ROBIN',
+      team_count_round_robin: 4,
+      team_count_elimination: 4,
+      third_place_match: false,
+    },
     validate: {
       team_count_round_robin: (value) => (value >= 2 ? null : t('at_least_two_team_validation')),
-      team_count_elimination: (value) => (value >= 2 ? null : t('at_least_two_team_validation')),
+      team_count_elimination: (value) =>
+        value >= 2 && value <= 64 ? null : t('team_count_elimination_validation'),
     },
   });
 
@@ -214,7 +224,15 @@ export function CreateStageItemModal({
       >
         <form
           onSubmit={form.onSubmit(async (values) => {
-            await createStageItem(tournament.id, stage.id, values.type, getTeamCount(values));
+            await createStageItem(
+              tournament.id,
+              stage.id,
+              values.type,
+              getTeamCount(values),
+              values.type === 'SINGLE_ELIMINATION' &&
+                values.third_place_match &&
+                getTeamCount(values) >= 4,
+            );
             await swrStagesResponse.mutate();
             await swrAvailableInputsResponse.mutate();
             setOpened(false);

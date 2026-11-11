@@ -22,9 +22,16 @@ def test_number_of_rounds_single_elimination() -> None:
     assert get_number_of_rounds_to_create_single_elimination(16) == 4
     assert get_number_of_rounds_to_create_single_elimination(32) == 5
 
-    err_msg = re.escape("400: Number of teams invalid, should be one of [2, 4, 8, 16, 32]")
+    # Any number of teams works, some teams get a bye in the first round
+    assert get_number_of_rounds_to_create_single_elimination(3) == 2
+    assert get_number_of_rounds_to_create_single_elimination(5) == 3
+    assert get_number_of_rounds_to_create_single_elimination(6) == 3
+    assert get_number_of_rounds_to_create_single_elimination(12) == 4
+    assert get_number_of_rounds_to_create_single_elimination(64) == 6
+
+    err_msg = re.escape("400: A knockout bracket needs at least 2 teams")
     with pytest.raises(HTTPException, match=err_msg):
-        get_number_of_rounds_to_create_single_elimination(64)
+        get_number_of_rounds_to_create_single_elimination(1)
 
     with pytest.raises(HTTPException, match=err_msg):
         get_number_of_rounds_to_create_single_elimination(1)

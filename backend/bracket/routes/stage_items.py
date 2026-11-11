@@ -104,7 +104,9 @@ async def create_stage_item(
     check_stage_item_type_allowed(category, stage_body.type)
 
     stage_item = await sql_create_stage_item_with_empty_inputs(tournament_id, stage_body)
-    await build_matches_for_stage_item(stage_item, tournament_id)
+    await build_matches_for_stage_item(
+        stage_item, tournament_id, third_place_match=stage_body.third_place_match
+    )
     return SuccessResponse()
 
 

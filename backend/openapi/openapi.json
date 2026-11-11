@@ -647,6 +647,17 @@
             ],
             "title": "Stage Item Input1 Id"
           },
+          "stage_item_input1_loser_from_match_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage Item Input1 Loser From Match Id"
+          },
           "stage_item_input1_penalties": {
             "anyOf": [
               {
@@ -704,6 +715,17 @@
               }
             ],
             "title": "Stage Item Input2 Id"
+          },
+          "stage_item_input2_loser_from_match_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage Item Input2 Loser From Match Id"
           },
           "stage_item_input2_penalties": {
             "anyOf": [
@@ -766,6 +788,8 @@
           "stage_item_input2_id",
           "stage_item_input1_winner_from_match_id",
           "stage_item_input2_winner_from_match_id",
+          "stage_item_input1_loser_from_match_id",
+          "stage_item_input2_loser_from_match_id",
           "id",
           "stage_item_input1",
           "stage_item_input2"
@@ -1109,6 +1133,17 @@
             ],
             "title": "Stage Item Input1 Id"
           },
+          "stage_item_input1_loser_from_match_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage Item Input1 Loser From Match Id"
+          },
           "stage_item_input1_penalties": {
             "anyOf": [
               {
@@ -1166,6 +1201,17 @@
               }
             ],
             "title": "Stage Item Input2 Id"
+          },
+          "stage_item_input2_loser_from_match_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage Item Input2 Loser From Match Id"
           },
           "stage_item_input2_penalties": {
             "anyOf": [
@@ -1228,6 +1274,8 @@
           "stage_item_input2_id",
           "stage_item_input1_winner_from_match_id",
           "stage_item_input2_winner_from_match_id",
+          "stage_item_input1_loser_from_match_id",
+          "stage_item_input2_loser_from_match_id",
           "id",
           "stage_item_input1",
           "stage_item_input2",
@@ -1351,6 +1399,17 @@
             ],
             "title": "Stage Item Input1 Id"
           },
+          "stage_item_input1_loser_from_match_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage Item Input1 Loser From Match Id"
+          },
           "stage_item_input1_penalties": {
             "anyOf": [
               {
@@ -1405,6 +1464,17 @@
               }
             ],
             "title": "Stage Item Input2 Id"
+          },
+          "stage_item_input2_loser_from_match_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage Item Input2 Loser From Match Id"
           },
           "stage_item_input2_penalties": {
             "anyOf": [
@@ -1467,6 +1537,8 @@
           "stage_item_input2_id",
           "stage_item_input1_winner_from_match_id",
           "stage_item_input2_winner_from_match_id",
+          "stage_item_input1_loser_from_match_id",
+          "stage_item_input2_loser_from_match_id",
           "id",
           "stage_item_input1",
           "stage_item_input2",
@@ -2106,6 +2178,11 @@
             "title": "Team Count",
             "type": "integer"
           },
+          "third_place_match": {
+            "default": false,
+            "title": "Third Place Match",
+            "type": "boolean"
+          },
           "type": {
             "$ref": "#/components/schemas/StageType"
           }
@@ -2115,7 +2192,8 @@
           "name",
           "type",
           "team_count",
-          "ranking_id"
+          "ranking_id",
+          "third_place_match"
         ],
         "title": "StageItemCreateBody",
         "type": "object"

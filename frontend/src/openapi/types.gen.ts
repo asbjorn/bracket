@@ -382,6 +382,10 @@ export type Match = {
    */
   stage_item_input1_id: number | null;
   /**
+   * Stage Item Input1 Loser From Match Id
+   */
+  stage_item_input1_loser_from_match_id: number | null;
+  /**
    * Stage Item Input1 Penalties
    */
   stage_item_input1_penalties: number | null;
@@ -405,6 +409,10 @@ export type Match = {
    * Stage Item Input2 Id
    */
   stage_item_input2_id: number | null;
+  /**
+   * Stage Item Input2 Loser From Match Id
+   */
+  stage_item_input2_loser_from_match_id: number | null;
   /**
    * Stage Item Input2 Penalties
    */
@@ -584,6 +592,10 @@ export type MatchWithDetails = {
    */
   stage_item_input1_id: number | null;
   /**
+   * Stage Item Input1 Loser From Match Id
+   */
+  stage_item_input1_loser_from_match_id: number | null;
+  /**
    * Stage Item Input1 Penalties
    */
   stage_item_input1_penalties: number | null;
@@ -607,6 +619,10 @@ export type MatchWithDetails = {
    * Stage Item Input2 Id
    */
   stage_item_input2_id: number | null;
+  /**
+   * Stage Item Input2 Loser From Match Id
+   */
+  stage_item_input2_loser_from_match_id: number | null;
   /**
    * Stage Item Input2 Penalties
    */
@@ -684,6 +700,10 @@ export type MatchWithDetailsDefinitive = {
    */
   stage_item_input1_id: number | null;
   /**
+   * Stage Item Input1 Loser From Match Id
+   */
+  stage_item_input1_loser_from_match_id: number | null;
+  /**
    * Stage Item Input1 Penalties
    */
   stage_item_input1_penalties: number | null;
@@ -707,6 +727,10 @@ export type MatchWithDetailsDefinitive = {
    * Stage Item Input2 Id
    */
   stage_item_input2_id: number | null;
+  /**
+   * Stage Item Input2 Loser From Match Id
+   */
+  stage_item_input2_loser_from_match_id: number | null;
   /**
    * Stage Item Input2 Penalties
    */
@@ -1089,6 +1113,10 @@ export type StageItemCreateBody = {
    * Team Count
    */
   team_count: number;
+  /**
+   * Third Place Match
+   */
+  third_place_match: boolean;
   type: StageType;
 };
 
