@@ -4,7 +4,7 @@ from bracket.config import config
 from bracket.logic.subscriptions import check_requirement
 from bracket.models.db.club import ClubCreateBody, ClubUpdateBody
 from bracket.models.db.user import UserPublic
-from bracket.routes.auth import user_authenticated, user_authenticated_for_club
+from bracket.routes.auth import user_authenticated, user_is_club_owner
 from bracket.routes.models import ClubResponse, ClubsResponse, SuccessResponse
 from bracket.sql.clubs import create_club, get_clubs_for_user_id, sql_delete_club, sql_update_club
 from bracket.utils.errors import ForeignKey, check_foreign_key_violation
@@ -29,7 +29,7 @@ async def create_new_club(
 
 @router.delete("/clubs/{club_id}", response_model=SuccessResponse)
 async def delete_club(
-    club_id: ClubId, _: UserPublic = Depends(user_authenticated_for_club)
+    club_id: ClubId, _: UserPublic = Depends(user_is_club_owner)
 ) -> SuccessResponse:
     with check_foreign_key_violation({ForeignKey.tournaments_club_id_fkey}):
         await sql_delete_club(club_id)
@@ -39,6 +39,6 @@ async def delete_club(
 
 @router.put("/clubs/{club_id}", response_model=ClubResponse)
 async def update_club(
-    club_id: ClubId, club: ClubUpdateBody, _: UserPublic = Depends(user_authenticated_for_club)
+    club_id: ClubId, club: ClubUpdateBody, _: UserPublic = Depends(user_is_club_owner)
 ) -> ClubResponse:
     return ClubResponse(data=await sql_update_club(club_id, club))

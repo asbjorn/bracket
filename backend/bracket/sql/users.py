@@ -35,6 +35,28 @@ async def get_user_access_to_club(club_id: ClubId, user_id: UserId) -> bool:
     return club_id in await get_which_clubs_has_user_access_to(user_id)
 
 
+async def get_user_is_club_owner(club_id: ClubId, user_id: UserId) -> bool:
+    query = """
+        SELECT 1
+        FROM users_x_clubs
+        WHERE user_id = :user_id AND club_id = :club_id AND relation = 'OWNER'
+        """
+    return (
+        await database.fetch_one(query, values={"user_id": user_id, "club_id": club_id}) is not None
+    )
+
+
+async def get_user_is_tournament_owner(tournament_id: TournamentId, user_id: UserId) -> bool:
+    query = """
+        SELECT 1
+        FROM users_x_clubs
+        JOIN tournaments t ON t.club_id = users_x_clubs.club_id
+        WHERE user_id = :user_id AND t.id = :tournament_id AND relation = 'OWNER'
+        """
+    values = {"user_id": user_id, "tournament_id": tournament_id}
+    return await database.fetch_one(query, values=values) is not None
+
+
 async def update_user(user_id: UserId, user: UserToUpdate) -> None:
     query = """
         UPDATE users

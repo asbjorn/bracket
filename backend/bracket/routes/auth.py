@@ -14,7 +14,13 @@ from bracket.models.db.tournament import Tournament
 from bracket.models.db.user import UserInDB, UserPublic
 from bracket.schema import tournaments
 from bracket.sql.tournaments import sql_get_tournament_by_endpoint_name
-from bracket.sql.users import get_user, get_user_access_to_club, get_user_access_to_tournament
+from bracket.sql.users import (
+    get_user,
+    get_user_access_to_club,
+    get_user_access_to_tournament,
+    get_user_is_club_owner,
+    get_user_is_tournament_owner,
+)
 from bracket.utils.db import fetch_all_parsed
 from bracket.utils.id_types import ClubId, TournamentId, UserId
 from bracket.utils.security import verify_password
@@ -126,6 +132,30 @@ async def user_authenticated_for_club(
         )
 
     return UserPublic.model_validate(user.model_dump())
+
+
+def owner_required() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Only an owner of the club can do this",
+    )
+
+
+async def user_is_club_owner(
+    club_id: ClubId, user: UserPublic = Depends(user_authenticated_for_club)
+) -> UserPublic:
+    """Owners manage the club itself; collaborators run its tournaments."""
+    if not await get_user_is_club_owner(club_id, user.id):
+        raise owner_required()
+    return user
+
+
+async def user_is_tournament_owner(
+    tournament_id: TournamentId, user: UserPublic = Depends(user_authenticated_for_tournament)
+) -> UserPublic:
+    if not await get_user_is_tournament_owner(tournament_id, user.id):
+        raise owner_required()
+    return user
 
 
 async def user_authenticated_or_public_dashboard(

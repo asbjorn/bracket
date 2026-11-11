@@ -24,6 +24,7 @@ from bracket.routes.auth import (
     user_authenticated_for_tournament,
     user_authenticated_or_public_dashboard,
     user_authenticated_or_public_dashboard_by_endpoint_name,
+    user_is_tournament_owner,
 )
 from bracket.routes.models import SuccessResponse, TournamentResponse, TournamentsResponse
 from bracket.routes.util import disallow_archived_tournament
@@ -115,7 +116,7 @@ async def update_tournament_by_id(
 
 @router.delete("/tournaments/{tournament_id}", response_model=SuccessResponse)
 async def delete_tournament(
-    tournament_id: TournamentId, _: UserPublic = Depends(user_authenticated_for_tournament)
+    tournament_id: TournamentId, _: UserPublic = Depends(user_is_tournament_owner)
 ) -> SuccessResponse:
     for ranking in await get_all_rankings_in_tournament(tournament_id):
         await sql_delete_ranking(tournament_id, ranking.id)
