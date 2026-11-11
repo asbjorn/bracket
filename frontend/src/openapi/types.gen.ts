@@ -55,6 +55,69 @@ export type BodyUploadLogoTournamentsTournamentIdLogoPost = {
 };
 
 /**
+ * CategoriesResponse
+ */
+export type CategoriesResponse = {
+  /**
+   * Data
+   */
+  data: Array<Category>;
+};
+
+/**
+ * Category
+ */
+export type Category = {
+  /**
+   * Age
+   */
+  age: number | null;
+  /**
+   * Created
+   */
+  created: string;
+  /**
+   * Id
+   */
+  id: number;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Results Public
+   */
+  results_public: boolean;
+  /**
+   * Tournament Id
+   */
+  tournament_id: number;
+};
+
+/**
+ * CategoryBody
+ *
+ * An age class (e.g. "G10" or "J12") within a tournament.
+ *
+ * `results_public` defaults to `False` for children's classes (age 12 and younger) and `True`
+ * otherwise, following the NFF rules.
+ */
+export type CategoryBody = {
+  /**
+   * Age
+   */
+  age: number | null;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Results Public
+   */
+  results_public: boolean | null;
+};
+
+/**
  * Club
  */
 export type Club = {
@@ -169,6 +232,10 @@ export type FullTeamWithPlayers = {
    * Active
    */
   active: boolean;
+  /**
+   * Category Id
+   */
+  category_id: number | null;
   /**
    * Created
    */
@@ -833,6 +900,13 @@ export type RoundWithMatches = {
 };
 
 /**
+ * SingleCategoryResponse
+ */
+export type SingleCategoryResponse = {
+  data: Category;
+};
+
+/**
  * SingleCourtResponse
  */
 export type SingleCourtResponse = {
@@ -865,9 +939,23 @@ export type SingleTeamResponse = {
  */
 export type StageActivateBody = {
   /**
+   * Category Id
+   */
+  category_id: number | null;
+  /**
    * Direction
    */
   direction: 'next' | 'previous';
+};
+
+/**
+ * StageCreateBody
+ */
+export type StageCreateBody = {
+  /**
+   * Category Id
+   */
+  category_id: number | null;
 };
 
 /**
@@ -1237,6 +1325,10 @@ export type StageUpdateBody = {
  */
 export type StageWithStageItems = {
   /**
+   * Category Id
+   */
+  category_id: number | null;
+  /**
    * Created
    */
   created: string;
@@ -1325,6 +1417,10 @@ export type Team = {
    */
   active: boolean;
   /**
+   * Category Id
+   */
+  category_id: number | null;
+  /**
    * Created
    */
   created: string;
@@ -1375,6 +1471,10 @@ export type TeamBody = {
    */
   active: boolean;
   /**
+   * Category Id
+   */
+  category_id: number | null;
+  /**
    * Name
    */
   name: string;
@@ -1392,6 +1492,10 @@ export type TeamMultiBody = {
    * Active
    */
   active: boolean;
+  /**
+   * Category Id
+   */
+  category_id: number | null;
   /**
    * Names
    */
@@ -1689,6 +1793,16 @@ export type UserToUpdate = {
  * ValidationError
  */
 export type ValidationError = {
+  /**
+   * Context
+   */
+  ctx?: {
+    [key: string]: unknown;
+  };
+  /**
+   * Input
+   */
+  input?: unknown;
   /**
    * Location
    */
@@ -2063,6 +2177,142 @@ export type GetAvailableInputsTournamentsTournamentIdAvailableInputsGetResponses
 export type GetAvailableInputsTournamentsTournamentIdAvailableInputsGetResponse =
   GetAvailableInputsTournamentsTournamentIdAvailableInputsGetResponses[keyof GetAvailableInputsTournamentsTournamentIdAvailableInputsGetResponses];
 
+export type GetCategoriesTournamentsTournamentIdCategoriesGetData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/categories';
+};
+
+export type GetCategoriesTournamentsTournamentIdCategoriesGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetCategoriesTournamentsTournamentIdCategoriesGetError =
+  GetCategoriesTournamentsTournamentIdCategoriesGetErrors[keyof GetCategoriesTournamentsTournamentIdCategoriesGetErrors];
+
+export type GetCategoriesTournamentsTournamentIdCategoriesGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: CategoriesResponse;
+};
+
+export type GetCategoriesTournamentsTournamentIdCategoriesGetResponse =
+  GetCategoriesTournamentsTournamentIdCategoriesGetResponses[keyof GetCategoriesTournamentsTournamentIdCategoriesGetResponses];
+
+export type CreateCategoryTournamentsTournamentIdCategoriesPostData = {
+  body: CategoryBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/categories';
+};
+
+export type CreateCategoryTournamentsTournamentIdCategoriesPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateCategoryTournamentsTournamentIdCategoriesPostError =
+  CreateCategoryTournamentsTournamentIdCategoriesPostErrors[keyof CreateCategoryTournamentsTournamentIdCategoriesPostErrors];
+
+export type CreateCategoryTournamentsTournamentIdCategoriesPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: SingleCategoryResponse;
+};
+
+export type CreateCategoryTournamentsTournamentIdCategoriesPostResponse =
+  CreateCategoryTournamentsTournamentIdCategoriesPostResponses[keyof CreateCategoryTournamentsTournamentIdCategoriesPostResponses];
+
+export type DeleteCategoryTournamentsTournamentIdCategoriesCategoryIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+    /**
+     * Category Id
+     */
+    category_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/categories/{category_id}';
+};
+
+export type DeleteCategoryTournamentsTournamentIdCategoriesCategoryIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteCategoryTournamentsTournamentIdCategoriesCategoryIdDeleteError =
+  DeleteCategoryTournamentsTournamentIdCategoriesCategoryIdDeleteErrors[keyof DeleteCategoryTournamentsTournamentIdCategoriesCategoryIdDeleteErrors];
+
+export type DeleteCategoryTournamentsTournamentIdCategoriesCategoryIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type DeleteCategoryTournamentsTournamentIdCategoriesCategoryIdDeleteResponse =
+  DeleteCategoryTournamentsTournamentIdCategoriesCategoryIdDeleteResponses[keyof DeleteCategoryTournamentsTournamentIdCategoriesCategoryIdDeleteResponses];
+
+export type UpdateCategoryTournamentsTournamentIdCategoriesCategoryIdPutData = {
+  body: CategoryBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+    /**
+     * Category Id
+     */
+    category_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/categories/{category_id}';
+};
+
+export type UpdateCategoryTournamentsTournamentIdCategoriesCategoryIdPutErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateCategoryTournamentsTournamentIdCategoriesCategoryIdPutError =
+  UpdateCategoryTournamentsTournamentIdCategoriesCategoryIdPutErrors[keyof UpdateCategoryTournamentsTournamentIdCategoriesCategoryIdPutErrors];
+
+export type UpdateCategoryTournamentsTournamentIdCategoriesCategoryIdPutResponses = {
+  /**
+   * Successful Response
+   */
+  200: SingleCategoryResponse;
+};
+
+export type UpdateCategoryTournamentsTournamentIdCategoriesCategoryIdPutResponse =
+  UpdateCategoryTournamentsTournamentIdCategoriesCategoryIdPutResponses[keyof UpdateCategoryTournamentsTournamentIdCategoriesCategoryIdPutResponses];
+
 export type ChangeStatusTournamentsTournamentIdChangeStatusPostData = {
   body: TournamentChangeStatusBody;
   path: {
@@ -2411,7 +2661,12 @@ export type GetNextStageRankingsTournamentsTournamentIdNextStageRankingsGetData 
      */
     tournament_id: number;
   };
-  query?: never;
+  query?: {
+    /**
+     * Category Id
+     */
+    category_id?: number | null;
+  };
   url: '/tournaments/{tournament_id}/next_stage_rankings';
 };
 
@@ -3205,7 +3460,10 @@ export type GetStagesTournamentsTournamentIdStagesGetResponse =
   GetStagesTournamentsTournamentIdStagesGetResponses[keyof GetStagesTournamentsTournamentIdStagesGetResponses];
 
 export type CreateStageTournamentsTournamentIdStagesPostData = {
-  body?: never;
+  /**
+   * Stage Body
+   */
+  body?: StageCreateBody | null;
   path: {
     /**
      * Tournament Id
@@ -3349,6 +3607,10 @@ export type GetTeamsTournamentsTournamentIdTeamsGetData = {
     tournament_id: number;
   };
   query?: {
+    /**
+     * Category Id
+     */
+    category_id?: number | null;
     /**
      * Limit
      *

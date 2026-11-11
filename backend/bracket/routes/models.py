@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 from bracket.logic.scheduling.handle_stage_activation import StageItemInputUpdate
+from bracket.models.db.category import Category
 from bracket.models.db.club import Club
 from bracket.models.db.court import Court
 from bracket.models.db.match import Match, SuggestedMatch
@@ -89,6 +90,14 @@ class TokenResponse(DataResponse[Token]):
 
 
 class CourtsResponse(DataResponse[list[Court]]):
+    pass
+
+
+class CategoriesResponse(DataResponse[list[Category]]):
+    pass
+
+
+class SingleCategoryResponse(DataResponse[Category]):
     pass
 
 

@@ -6,11 +6,13 @@ from pydantic import BaseModel
 from starlette import status
 
 from bracket.models.db.util import StageWithStageItems
+from bracket.sql.categories import get_category_by_id
 from bracket.sql.courts import get_all_courts_in_tournament
 from bracket.sql.players import get_all_players_in_tournament, get_player_by_id
 from bracket.sql.stages import get_full_tournament_details
 from bracket.sql.teams import get_team_by_id
 from bracket.utils.id_types import (
+    CategoryId,
     CourtId,
     MatchId,
     PlayerId,
@@ -99,6 +101,12 @@ async def check_court_belongs_to_tournament(
     return any(court_id == court.id for court in await get_all_courts_in_tournament(tournament_id))
 
 
+async def check_category_belongs_to_tournament(
+    category_id: CategoryId, _: list[StageWithStageItems], tournament_id: TournamentId
+) -> bool:
+    return await get_category_by_id(tournament_id, category_id) is not None
+
+
 def raise_exception(field_type: Any, field_value: Any) -> NoReturn:
     field_name = field_type.__name__ if field_type is not None else "Unknown type"
     msg = f"Could not find {field_name.replace('Id', '')}(s) with ID {field_value}"
@@ -124,6 +132,7 @@ async def check_foreign_keys_belong_to_tournament(
         PlayerId: check_player_belongs_to_tournament,
         MatchId: check_match_belongs_to_tournament,
         CourtId: check_court_belongs_to_tournament,
+        CategoryId: check_category_belongs_to_tournament,
     }
 
     for field_key, field_info in type(some_body).model_fields.items():

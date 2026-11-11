@@ -75,12 +75,28 @@ def determine_available_inputs(
     stages: list[StageWithStageItems],
 ) -> dict[StageId, list[StageItemInputOptionTentative | StageItemInputOptionFinal]]:
     """
-    Returns available inputs for the given stage.
+    Returns available inputs per stage.
 
     Inputs are either from:
     - Teams directly
     - Previous ROUND_ROBIN or SWISS stage items (tentative options)
+
+    Age classes (categories) are independent: a stage only gets teams and previous stage items
+    of its own class. Stages and teams without a class form their own group.
     """
+    results: dict[StageId, list[StageItemInputOptionTentative | StageItemInputOptionFinal]] = {}
+    for category_id in {stage.category_id for stage in stages}:
+        results |= determine_available_inputs_for_category(
+            [team for team in teams if team.category_id == category_id],
+            [stage for stage in stages if stage.category_id == category_id],
+        )
+    return results
+
+
+def determine_available_inputs_for_category(
+    teams: list[FullTeamWithPlayers],
+    stages: list[StageWithStageItems],
+) -> dict[StageId, list[StageItemInputOptionTentative | StageItemInputOptionFinal]]:
     all_team_options = {
         team.id: StageItemInputOptionFinal(team_id=team.id, already_taken=False) for team in teams
     }

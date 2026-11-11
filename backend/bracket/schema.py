@@ -42,6 +42,24 @@ tournaments = Table(
     ),
 )
 
+categories = Table(
+    "categories",
+    metadata,
+    Column("id", BigInteger, primary_key=True, index=True),
+    Column("name", Text, nullable=False),
+    Column("created", DateTimeTZ, nullable=False, server_default=func.now()),
+    Column(
+        "tournament_id",
+        BigInteger,
+        ForeignKey("tournaments.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    ),
+    Column("age", Integer, nullable=True),
+    Column("results_public", Boolean, nullable=False, server_default="t"),
+    UniqueConstraint("tournament_id", "name"),
+)
+
 stages = Table(
     "stages",
     metadata,
@@ -50,6 +68,7 @@ stages = Table(
     Column("created", DateTimeTZ, nullable=False, server_default=func.now()),
     Column("tournament_id", BigInteger, ForeignKey("tournaments.id"), index=True, nullable=False),
     Column("is_active", Boolean, nullable=False, server_default="false"),
+    Column("category_id", BigInteger, ForeignKey("categories.id"), index=True, nullable=True),
 )
 
 stage_items = Table(
@@ -155,6 +174,7 @@ teams = Table(
     Column("draws", Integer, nullable=False, server_default="0"),
     Column("losses", Integer, nullable=False, server_default="0"),
     Column("logo_path", String, nullable=True),
+    Column("category_id", BigInteger, ForeignKey("categories.id"), index=True, nullable=True),
 )
 
 players = Table(

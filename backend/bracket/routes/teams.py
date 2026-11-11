@@ -4,8 +4,9 @@ from uuid import uuid4
 
 import aiofiles
 import aiofiles.os
-from fastapi import APIRouter, Depends, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from heliclockter import datetime_utc
+from starlette import status
 
 from bracket.config import config
 from bracket.database import database
@@ -38,6 +39,7 @@ from bracket.routes.util import (
 )
 from bracket.schema import players_x_teams, teams
 from bracket.sql.players import get_all_players_in_tournament, insert_player
+from bracket.sql.stages import get_full_tournament_details
 from bracket.sql.teams import (
     get_team_by_id,
     get_team_count,
@@ -47,7 +49,7 @@ from bracket.sql.teams import (
 from bracket.sql.validation import check_foreign_keys_belong_to_tournament
 from bracket.utils.db import fetch_one_parsed
 from bracket.utils.errors import ForeignKey, check_foreign_key_violation
-from bracket.utils.id_types import PlayerId, TeamId, TournamentId
+from bracket.utils.id_types import CategoryId, PlayerId, TeamId, TournamentId
 from bracket.utils.logging import logger
 from bracket.utils.pagination import PaginationTeams
 from bracket.utils.types import assert_some
@@ -81,14 +83,41 @@ async def update_team_members(
 async def get_teams(
     tournament_id: TournamentId,
     pagination: PaginationTeams = Depends(),
+    category_id: CategoryId | None = None,
     _: UserPublic = Depends(user_authenticated_or_public_dashboard),
 ) -> TeamsWithPlayersResponse:
+    """
+    Returns the teams of the tournament, optionally only those of one age class (`category_id`).
+    """
     return TeamsWithPlayersResponse(
         data=PaginatedTeams(
-            teams=await get_teams_with_members(tournament_id, pagination=pagination),
-            count=await get_team_count(tournament_id),
+            teams=await get_teams_with_members(
+                tournament_id, pagination=pagination, category_id=category_id
+            ),
+            count=await get_team_count(tournament_id, category_id=category_id),
         )
     )
+
+
+async def check_team_can_change_category(team: Team, new_category_id: CategoryId | None) -> None:
+    """
+    A team that is already placed in a stage can't move to another age class, because stages
+    only contain teams of their own class.
+    """
+    if team.category_id == new_category_id:
+        return
+
+    stages = await get_full_tournament_details(team.tournament_id)
+    if any(
+        input_.team_id == team.id
+        for stage in stages
+        for stage_item in stage.stage_items
+        for input_ in stage_item.inputs
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Team is placed in a stage of its class, remove it there first",
+        )
 
 
 @router.put("/tournaments/{tournament_id}/teams/{team_id}", response_model=SingleTeamResponse)
@@ -100,6 +129,7 @@ async def update_team_by_id(
     team: Team = Depends(team_dependency),
 ) -> SingleTeamResponse:
     await check_foreign_keys_belong_to_tournament(team_body, tournament_id)
+    await check_team_can_change_category(team, team_body.category_id)
 
     await database.execute(
         query=teams.update().where(
@@ -213,6 +243,7 @@ async def create_multiple_teams(
     user: UserPublic = Depends(user_authenticated_for_tournament),
     _: Tournament = Depends(disallow_archived_tournament),
 ) -> SuccessResponse:
+    await check_foreign_keys_belong_to_tournament(team_body, tournament_id)
     reader = list(csv.reader(team_body.names.split("\n"), delimiter=","))
     teams_and_players = [
         (row[0], [p for p in row[1:] if len(p) > 0] if len(row) > 1 else [])
@@ -236,6 +267,7 @@ async def create_multiple_teams(
                     active=team_body.active,
                     created=datetime_utc.now(),
                     tournament_id=tournament_id,
+                    category_id=team_body.category_id,
                 ).model_dump(),
             )
             for player in players:

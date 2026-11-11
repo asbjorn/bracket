@@ -10,7 +10,7 @@ from bracket.logic.scheduling.handle_stage_activation import (
     update_matches_in_deactivated_stage,
 )
 from bracket.logic.subscriptions import check_requirement
-from bracket.models.db.stage import Stage, StageActivateBody, StageUpdateBody
+from bracket.models.db.stage import Stage, StageActivateBody, StageCreateBody, StageUpdateBody
 from bracket.models.db.tournament import Tournament
 from bracket.models.db.user import UserPublic
 from bracket.models.db.util import StageWithStageItems
@@ -33,7 +33,8 @@ from bracket.sql.stages import (
     sql_delete_stage,
 )
 from bracket.sql.teams import get_teams_with_members
-from bracket.utils.id_types import StageId, TournamentId
+from bracket.sql.validation import check_foreign_keys_belong_to_tournament
+from bracket.utils.id_types import CategoryId, StageId, TournamentId
 
 router = APIRouter(prefix=config.api_prefix)
 
@@ -82,13 +83,17 @@ async def delete_stage(
 @router.post("/tournaments/{tournament_id}/stages", response_model=SuccessResponse)
 async def create_stage(
     tournament_id: TournamentId,
+    stage_body: StageCreateBody | None = None,
     user: UserPublic = Depends(user_authenticated_for_tournament),
     _: Tournament = Depends(disallow_archived_tournament),
 ) -> SuccessResponse:
+    stage_body = stage_body or StageCreateBody()
+    await check_foreign_keys_belong_to_tournament(stage_body, tournament_id)
+
     existing_stages = await get_full_tournament_details(tournament_id)
     check_requirement(existing_stages, user, "max_stages")
 
-    await sql_create_stage(tournament_id)
+    await sql_create_stage(tournament_id, stage_body.category_id)
     return SuccessResponse()
 
 
@@ -122,7 +127,10 @@ async def activate_next_stage(
     _: UserPublic = Depends(user_authenticated_for_tournament),
     __: Tournament = Depends(disallow_archived_tournament),
 ) -> SuccessResponse:
-    new_active_stage_id = await get_next_stage_in_tournament(tournament_id, stage_body.direction)
+    await check_foreign_keys_belong_to_tournament(stage_body, tournament_id)
+    new_active_stage_id = await get_next_stage_in_tournament(
+        tournament_id, stage_body.direction, stage_body.category_id
+    )
     if new_active_stage_id is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -130,7 +138,14 @@ async def activate_next_stage(
         )
 
     stages = await get_full_tournament_details(tournament_id)
-    deactivated_stage = next((stage for stage in stages if stage.is_active), None)
+    deactivated_stage = next(
+        (
+            stage
+            for stage in stages
+            if stage.is_active and stage.category_id == stage_body.category_id
+        ),
+        None,
+    )
 
     if stage_body.direction == "next":
         await update_matches_in_activated_stage(tournament_id, new_active_stage_id)
@@ -138,7 +153,7 @@ async def activate_next_stage(
         if deactivated_stage:
             await update_matches_in_deactivated_stage(tournament_id, deactivated_stage)
 
-    await sql_activate_next_stage(new_active_stage_id, tournament_id)
+    await sql_activate_next_stage(new_active_stage_id, tournament_id, stage_body.category_id)
     return SuccessResponse()
 
 
@@ -158,12 +173,13 @@ async def get_available_inputs(
 @router.get("/tournaments/{tournament_id}/next_stage_rankings")
 async def get_next_stage_rankings(
     tournament_id: TournamentId,
+    category_id: CategoryId | None = None,
     _: UserPublic = Depends(user_authenticated_for_tournament),
 ) -> StageRankingResponse:
     """
-    Get the rankings for the stage items in this stage.
+    Get the rankings for the stage items in the next stage of the given age class (category).
     """
-    next_stage_id = await get_next_stage_in_tournament(tournament_id, "next")
+    next_stage_id = await get_next_stage_in_tournament(tournament_id, "next", category_id)
 
     if next_stage_id is None:
         return StageRankingResponse(data={})

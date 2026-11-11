@@ -59,6 +59,7 @@ async def test_stages_endpoint(
                     "tournament_id": auth_context.tournament.id,
                     "created": DUMMY_MOCK_TIME.isoformat().replace("+00:00", "Z"),
                     "is_active": True,
+                    "category_id": None,
                     "name": "Group Stage",
                     "stage_items": [
                         {

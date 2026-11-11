@@ -28,9 +28,10 @@ Copy `ci.env` to `prod.env` and fill in the values:
   requests go to `localhost:8400/api/ping` instead of `localhost:8400/ping`.
   Please make sure that `VITE_API_BASE_URL` of the frontend contains this prefix as well.
 - `LIMIT_MAX_TEAMS`, `LIMIT_MAX_PLAYERS`, `LIMIT_MAX_COURTS`, `LIMIT_MAX_STAGES`,
-  `LIMIT_MAX_STAGE_ITEMS`, `LIMIT_MAX_ROUNDS`, `LIMIT_MAX_RANKINGS`: Maximum number of these
-  objects per tournament for regular (non-demo) accounts. Defaults: 128 teams, 256 players,
-  32 courts, 16 stages, 64 stage items, 64 rounds and 16 rankings.
+  `LIMIT_MAX_STAGE_ITEMS`, `LIMIT_MAX_ROUNDS`, `LIMIT_MAX_RANKINGS`, `LIMIT_MAX_CATEGORIES`:
+  Maximum number of these objects per tournament for regular (non-demo) accounts. Defaults:
+  128 teams, 256 players, 32 courts, 16 stages, 64 stage items, 64 rounds, 16 rankings and
+  32 categories (age classes).
 - `LIMIT_MAX_CLUBS` and `LIMIT_MAX_TOURNAMENTS`: Maximum number of clubs per user (default 32)
   and tournaments per club (default 64) for regular accounts.
 

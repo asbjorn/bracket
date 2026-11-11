@@ -11,7 +11,7 @@ from bracket.models.db.stage_item_inputs import (
 )
 from bracket.models.db.tournament import Tournament
 from bracket.models.db.user import UserPublic
-from bracket.models.db.util import StageItemWithRounds
+from bracket.models.db.util import StageItemWithRounds, StageWithStageItems
 from bracket.routes.auth import (
     user_authenticated_for_tournament,
 )
@@ -31,10 +31,24 @@ from bracket.utils.id_types import StageItemId, StageItemInputId, TournamentId
 router = APIRouter(prefix=config.api_prefix)
 
 
+def get_stage_of_stage_item(
+    stages: list[StageWithStageItems], stage_item_id: StageItemId
+) -> StageWithStageItems | None:
+    return next(
+        (
+            stage
+            for stage in stages
+            if any(stage_item.id == stage_item_id for stage_item in stage.stage_items)
+        ),
+        None,
+    )
+
+
 async def validate_stage_item_update(
     stage_item_input_db: StageItemInput | None,
     stage_item_input_body: StageItemInputUpdateBody,
     tournament_id: TournamentId,
+    stage_item_id: StageItemId,
 ) -> None:
     if stage_item_input_db is None:
         raise HTTPException(
@@ -42,25 +56,36 @@ async def validate_stage_item_update(
             detail="Could not find the stage item input",
         )
 
+    stages = await get_full_tournament_details(tournament_id)
+    target_stage = get_stage_of_stage_item(stages, stage_item_id)
+    assert target_stage is not None, "Stage item should exist, checked by stage_item_dependency"
+
     if isinstance(stage_item_input_body, StageItemInputUpdateBodyTentative):
         input_id = stage_item_input_body.winner_from_stage_item_id
-        winner_from_stage = await get_full_tournament_details(
-            tournament_id, stage_item_ids={input_id}
-        )
+        winner_from_stage = get_stage_of_stage_item(stages, input_id)
         if winner_from_stage is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Could not find stage item with id {input_id}",
             )
+        if winner_from_stage.category_id != target_stage.category_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Teams can only advance to stages of the same class",
+            )
 
-    if (
-        isinstance(stage_item_input_body, StageItemInputUpdateBodyFinal)
-        and await get_team_by_id(stage_item_input_body.team_id, tournament_id) is None
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Could not find team with id {stage_item_input_body.team_id}",
-        )
+    if isinstance(stage_item_input_body, StageItemInputUpdateBodyFinal):
+        team = await get_team_by_id(stage_item_input_body.team_id, tournament_id)
+        if team is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Could not find team with id {stage_item_input_body.team_id}",
+            )
+        if team.category_id != target_stage.category_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This team belongs to another class than this stage",
+            )
 
 
 @router.put(
@@ -77,7 +102,9 @@ async def update_stage_item_input(
     ___: Tournament = Depends(disallow_archived_tournament),
 ) -> SuccessResponse:
     stage_item_input = await get_stage_item_input_by_id(tournament_id, stage_item_input_id)
-    await validate_stage_item_update(stage_item_input, stage_item_body, tournament_id)
+    await validate_stage_item_update(
+        stage_item_input, stage_item_body, tournament_id, stage_item_id
+    )
 
     query = """
         UPDATE stage_item_inputs

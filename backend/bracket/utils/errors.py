@@ -10,6 +10,7 @@ from bracket.utils.types import EnumAutoStr
 
 
 class UniqueIndex(EnumAutoStr):
+    categories_tournament_id_name_key = auto()
     ix_tournaments_dashboard_endpoint = auto()
     ix_users_email = auto()
     stage_item_inputs_stage_item_id_team_id_key = auto()
@@ -17,6 +18,8 @@ class UniqueIndex(EnumAutoStr):
 
 
 class ForeignKey(EnumAutoStr):
+    stages_category_id_fkey = auto()
+    teams_category_id_fkey = auto()
     courts_tournament_id_fkey = auto()
     matches_stage_item_input1_id_fkey = auto()
     matches_stage_item_input2_id_fkey = auto()
@@ -29,6 +32,7 @@ class ForeignKey(EnumAutoStr):
 
 
 unique_index_violation_error_lookup = {
+    UniqueIndex.categories_tournament_id_name_key: "A class with this name already exists",
     UniqueIndex.ix_tournaments_dashboard_endpoint: "This dashboard link is already taken",
     UniqueIndex.ix_users_email: "This email is already taken",
     UniqueIndex.stage_item_inputs_stage_item_id_team_id_key: (
@@ -41,6 +45,10 @@ unique_index_violation_error_lookup = {
 
 
 foreign_key_violation_error_lookup = {
+    ForeignKey.stages_category_id_fkey: "This class still has stages, delete those first",
+    ForeignKey.teams_category_id_fkey: (
+        "This class still has teams, move them to another class or delete them first"
+    ),
     ForeignKey.courts_tournament_id_fkey: "This tournament still has courts, delete those first",
     ForeignKey.matches_stage_item_input1_id_fkey: "This team is still part of matches",
     ForeignKey.matches_stage_item_input2_id_fkey: "This team is still part of matches",

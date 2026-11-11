@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, StringConstraints, field_validator
 from bracket.logic.ranking.statistics import START_ELO
 from bracket.models.db.player import Player
 from bracket.models.db.shared import BaseModelORM
-from bracket.utils.id_types import PlayerId, TeamId, TournamentId
+from bracket.utils.id_types import CategoryId, PlayerId, TeamId, TournamentId
 
 
 class TeamInsertable(BaseModelORM):
@@ -24,6 +24,7 @@ class TeamInsertable(BaseModelORM):
     draws: int = 0
     losses: int = 0
     logo_path: str | None = None
+    category_id: CategoryId | None = None
 
 
 class Team(TeamInsertable):
@@ -40,6 +41,7 @@ class TeamWithPlayers(BaseModel):
     losses: int = 0
     name: str
     logo_path: str | None = None
+    category_id: CategoryId | None = None
 
     @property
     def player_ids(self) -> list[PlayerId]:
@@ -65,8 +67,10 @@ class TeamBody(BaseModelORM):
     name: Annotated[str, StringConstraints(min_length=1, max_length=30)]
     active: bool
     player_ids: set[PlayerId]
+    category_id: CategoryId | None = None
 
 
 class TeamMultiBody(BaseModelORM):
     names: str = Field(..., min_length=1)
     active: bool
+    category_id: CategoryId | None = None

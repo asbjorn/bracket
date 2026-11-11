@@ -106,6 +106,111 @@
         "title": "Body_upload_logo_tournaments__tournament_id__logo_post",
         "type": "object"
       },
+      "CategoriesResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/Category"
+            },
+            "title": "Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "CategoriesResponse",
+        "type": "object"
+      },
+      "Category": {
+        "properties": {
+          "age": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "created": {
+            "format": "date-time",
+            "title": "Created",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "results_public": {
+            "default": true,
+            "title": "Results Public",
+            "type": "boolean"
+          },
+          "tournament_id": {
+            "title": "Tournament Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "tournament_id",
+          "name",
+          "created",
+          "age",
+          "results_public",
+          "id"
+        ],
+        "title": "Category",
+        "type": "object"
+      },
+      "CategoryBody": {
+        "description": "An age class (e.g. \"G10\" or \"J12\") within a tournament.\n\n`results_public` defaults to `False` for children's classes (age 12 and younger) and `True`\notherwise, following the NFF rules.",
+        "properties": {
+          "age": {
+            "anyOf": [
+              {
+                "maximum": 99.0,
+                "minimum": 4.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "name": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "results_public": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Results Public"
+          }
+        },
+        "required": [
+          "name",
+          "age",
+          "results_public"
+        ],
+        "title": "CategoryBody",
+        "type": "object"
+      },
       "Club": {
         "properties": {
           "created": {
@@ -268,6 +373,17 @@
             "title": "Active",
             "type": "boolean"
           },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
           "created": {
             "format": "date-time",
             "title": "Created",
@@ -342,6 +458,7 @@
           "draws",
           "losses",
           "logo_path",
+          "category_id",
           "id",
           "players"
         ],
@@ -1569,6 +1686,18 @@
         "title": "RoundWithMatches",
         "type": "object"
       },
+      "SingleCategoryResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Category"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "SingleCategoryResponse",
+        "type": "object"
+      },
       "SingleCourtResponse": {
         "properties": {
           "data": {
@@ -1619,6 +1748,17 @@
       },
       "StageActivateBody": {
         "properties": {
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
           "direction": {
             "default": "next",
             "enum": [
@@ -1630,9 +1770,30 @@
           }
         },
         "required": [
-          "direction"
+          "direction",
+          "category_id"
         ],
         "title": "StageActivateBody",
+        "type": "object"
+      },
+      "StageCreateBody": {
+        "properties": {
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          }
+        },
+        "required": [
+          "category_id"
+        ],
+        "title": "StageCreateBody",
         "type": "object"
       },
       "StageItemActivateNextBody": {
@@ -2230,6 +2391,17 @@
       },
       "StageWithStageItems": {
         "properties": {
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
           "created": {
             "format": "date-time",
             "title": "Created",
@@ -2264,6 +2436,7 @@
           "name",
           "created",
           "is_active",
+          "category_id",
           "id",
           "stage_items"
         ],
@@ -2371,6 +2544,17 @@
             "title": "Active",
             "type": "boolean"
           },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
           "created": {
             "format": "date-time",
             "title": "Created",
@@ -2438,6 +2622,7 @@
           "draws",
           "losses",
           "logo_path",
+          "category_id",
           "id"
         ],
         "title": "Team",
@@ -2448,6 +2633,17 @@
           "active": {
             "title": "Active",
             "type": "boolean"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
           },
           "name": {
             "maxLength": 30,
@@ -2467,7 +2663,8 @@
         "required": [
           "name",
           "active",
-          "player_ids"
+          "player_ids",
+          "category_id"
         ],
         "title": "TeamBody",
         "type": "object"
@@ -2478,6 +2675,17 @@
             "title": "Active",
             "type": "boolean"
           },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
           "names": {
             "minLength": 1,
             "title": "Names",
@@ -2486,7 +2694,8 @@
         },
         "required": [
           "names",
-          "active"
+          "active",
+          "category_id"
         ],
         "title": "TeamMultiBody",
         "type": "object"
@@ -2978,7 +3187,7 @@
     }
   },
   "info": {
-    "description": "\n### Description\nThis API allows you to do everything the frontend of [Bracket](https://github.com/evroon/bracket)\nallows you to do (the frontend uses this API as well).\n\nFore more information, see the [documentation](https://docs.bracketapp.nl).\n\n### Table of Contents\n*(links only work for [ReDoc](https://api.bracketapp.nl/redoc), not for Swagger UI)*\n\n- [Auth](#tag/Auth)\n\n- [Clubs](#tag/Clubs)\n\n- [Courts](#tag/Courts)\n\n- [Internals](#tag/Internals)\n\n- [Matches](#tag/Matches)\n\n- [Players](#tag/Players)\n\n- [Rankings](#tag/Rankings)\n\n- [Rounds](#tag/Rounds)\n\n- [Stage Items](#tag/Stage-Items)\n\n- [Stage Item Inputs](#tag/Stage-Item-Inputs)\n\n- [Stages](#tag/Stages)\n\n- [Teams](#tag/Teams)\n\n- [Tournaments](#tag/Tournaments)\n\n- [Users](#tag/Users)\n\n### Links\nGitHub: <https://github.com/evroon/bracket>\n\nDocs: <https://docs.bracketapp.nl>\n\nDemo: <https://www.bracketapp.nl/demo>\n\nAPI docs (Redoc): <https://api.bracketapp.nl/redoc>\n\nAPI docs (Swagger UI): <https://api.bracketapp.nl/docs>\n",
+    "description": "\n### Description\nThis API allows you to do everything the frontend of [Bracket](https://github.com/evroon/bracket)\nallows you to do (the frontend uses this API as well).\n\nFore more information, see the [documentation](https://docs.bracketapp.nl).\n\n### Table of Contents\n*(links only work for [ReDoc](https://api.bracketapp.nl/redoc), not for Swagger UI)*\n\n- [Auth](#tag/Auth)\n\n- [Categories](#tag/Categories)\n\n- [Clubs](#tag/Clubs)\n\n- [Courts](#tag/Courts)\n\n- [Internals](#tag/Internals)\n\n- [Matches](#tag/Matches)\n\n- [Players](#tag/Players)\n\n- [Rankings](#tag/Rankings)\n\n- [Rounds](#tag/Rounds)\n\n- [Stage Items](#tag/Stage-Items)\n\n- [Stage Item Inputs](#tag/Stage-Item-Inputs)\n\n- [Stages](#tag/Stages)\n\n- [Teams](#tag/Teams)\n\n- [Tournaments](#tag/Tournaments)\n\n- [Users](#tag/Users)\n\n### Links\nGitHub: <https://github.com/evroon/bracket>\n\nDocs: <https://docs.bracketapp.nl>\n\nDemo: <https://www.bracketapp.nl/demo>\n\nAPI docs (Redoc): <https://api.bracketapp.nl/redoc>\n\nAPI docs (Swagger UI): <https://api.bracketapp.nl/docs>\n",
     "license": {
       "name": "AGPL-3.0",
       "url": "https://www.gnu.org/licenses/agpl-3.0.en.html"
@@ -3544,6 +3753,223 @@
         "summary": "Get Available Inputs",
         "tags": [
           "Stages"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/categories": {
+      "get": {
+        "operationId": "get_categories_tournaments__tournament_id__categories_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoriesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Categories",
+        "tags": [
+          "Categories"
+        ]
+      },
+      "post": {
+        "operationId": "create_category_tournaments__tournament_id__categories_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SingleCategoryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Category",
+        "tags": [
+          "Categories"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/categories/{category_id}": {
+      "delete": {
+        "operationId": "delete_category_tournaments__tournament_id__categories__category_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "category_id",
+            "required": true,
+            "schema": {
+              "title": "Category Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Delete Category",
+        "tags": [
+          "Categories"
+        ]
+      },
+      "put": {
+        "operationId": "update_category_tournaments__tournament_id__categories__category_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "category_id",
+            "required": true,
+            "schema": {
+              "title": "Category Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SingleCategoryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Category",
+        "tags": [
+          "Categories"
         ]
       }
     },
@@ -4123,7 +4549,7 @@
     },
     "/tournaments/{tournament_id}/next_stage_rankings": {
       "get": {
-        "description": "Get the rankings for the stage items in this stage.",
+        "description": "Get the rankings for the stage items in the next stage of the given age class (category).",
         "operationId": "get_next_stage_rankings_tournaments__tournament_id__next_stage_rankings_get",
         "parameters": [
           {
@@ -4133,6 +4559,22 @@
             "schema": {
               "title": "Tournament Id",
               "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category Id"
             }
           }
         ],
@@ -5479,6 +5921,23 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/StageCreateBody"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Stage Body"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "content": {
@@ -5691,6 +6150,7 @@
     },
     "/tournaments/{tournament_id}/teams": {
       "get": {
+        "description": "Returns the teams of the tournament, optionally only those of one age class (`category_id`).",
         "operationId": "get_teams_tournaments__tournament_id__teams_get",
         "parameters": [
           {
@@ -5700,6 +6160,22 @@
             "schema": {
               "title": "Tournament Id",
               "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category Id"
             }
           },
           {

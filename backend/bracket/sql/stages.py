@@ -3,7 +3,7 @@ from typing import Literal, cast
 from bracket.database import database
 from bracket.models.db.stage import Stage
 from bracket.models.db.util import StageWithStageItems
-from bracket.utils.id_types import RoundId, StageId, StageItemId, TournamentId
+from bracket.utils.id_types import CategoryId, RoundId, StageId, StageItemId, TournamentId
 from bracket.utils.types import dict_without_none
 
 
@@ -132,15 +132,17 @@ async def sql_delete_stage(tournament_id: TournamentId, stage_id: StageId) -> No
         )
 
 
-async def sql_create_stage(tournament_id: TournamentId) -> Stage:
+async def sql_create_stage(
+    tournament_id: TournamentId, category_id: CategoryId | None = None
+) -> Stage:
     query = """
-        INSERT INTO stages (created, is_active, name, tournament_id)
-        VALUES (NOW(), false, :name, :tournament_id)
+        INSERT INTO stages (created, is_active, name, tournament_id, category_id)
+        VALUES (NOW(), false, :name, :tournament_id, :category_id)
         RETURNING *
         """
     result = await database.fetch_one(
         query=query,
-        values={"tournament_id": tournament_id, "name": "Stage"},
+        values={"tournament_id": tournament_id, "name": "Stage", "category_id": category_id},
     )
 
     if result is None:
@@ -150,8 +152,14 @@ async def sql_create_stage(tournament_id: TournamentId) -> Stage:
 
 
 async def get_next_stage_in_tournament(
-    tournament_id: TournamentId, direction: Literal["next", "previous"]
+    tournament_id: TournamentId,
+    direction: Literal["next", "previous"],
+    category_id: CategoryId | None = None,
 ) -> StageId | None:
+    """
+    Stages are activated per age class (category), so only stages of the given class are
+    considered. `category_id=None` refers to the stages without a class.
+    """
     select_query = """
         SELECT id
         FROM stages
@@ -163,6 +171,7 @@ async def get_next_stage_in_tournament(
                         SELECT id FROM stages
                         WHERE is_active IS TRUE
                         AND stages.tournament_id = :tournament_id
+                        AND stages.category_id IS NOT DISTINCT FROM :category_id
                         ORDER BY id ASC
                         LIMIT 1
                     ),
@@ -175,6 +184,7 @@ async def get_next_stage_in_tournament(
                         SELECT id FROM stages
                         WHERE is_active IS TRUE
                         AND stages.tournament_id = :tournament_id
+                        AND stages.category_id IS NOT DISTINCT FROM :category_id
                         ORDER BY id DESC
                         LIMIT 1
                     ),
@@ -183,6 +193,7 @@ async def get_next_stage_in_tournament(
             )
             END
         AND stages.tournament_id = :tournament_id
+        AND stages.category_id IS NOT DISTINCT FROM :category_id
         AND is_active IS FALSE
         ORDER BY
             CASE WHEN :direction='next' THEN id END ASC,
@@ -192,21 +203,34 @@ async def get_next_stage_in_tournament(
         "StageId | None",
         await database.execute(
             query=select_query,
-            values={"tournament_id": tournament_id, "direction": direction},
+            values={
+                "tournament_id": tournament_id,
+                "direction": direction,
+                "category_id": category_id,
+            },
         ),
     )
 
 
 async def sql_activate_next_stage(
-    new_active_stage_id: StageId, tournament_id: TournamentId
+    new_active_stage_id: StageId,
+    tournament_id: TournamentId,
+    category_id: CategoryId | None = None,
 ) -> None:
+    """
+    Activates the given stage and deactivates the other stages of the same age class.
+    """
     update_query = """
         UPDATE stages
         SET is_active = (stages.id = :new_active_stage_id)
         WHERE stages.tournament_id = :tournament_id
-
+        AND stages.category_id IS NOT DISTINCT FROM :category_id
     """
     await database.execute(
         query=update_query,
-        values={"tournament_id": tournament_id, "new_active_stage_id": new_active_stage_id},
+        values={
+            "tournament_id": tournament_id,
+            "new_active_stage_id": new_active_stage_id,
+            "category_id": category_id,
+        },
     )

@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from sqlalchemy import Table
 
 from bracket.database import database
+from bracket.models.db.category import Category, CategoryInsertable
 from bracket.models.db.club import Club, ClubInsertable
 from bracket.models.db.court import Court, CourtInsertable
 from bracket.models.db.match import Match, MatchInsertable
@@ -26,6 +27,7 @@ from bracket.models.db.tournament import Tournament, TournamentInsertable
 from bracket.models.db.user import UserBase, UserInDB
 from bracket.models.db.user_x_club import UserXClub, UserXClubInsertable, UserXClubRelation
 from bracket.schema import (
+    categories,
     clubs,
     courts,
     matches,
@@ -82,6 +84,12 @@ async def inserted_club(club: ClubInsertable) -> AsyncIterator[Club]:
 async def inserted_tournament(tournament: TournamentInsertable) -> AsyncIterator[Tournament]:
     async with inserted_generic(tournament, tournaments, Tournament) as row_inserted:
         yield cast("Tournament", row_inserted)
+
+
+@asynccontextmanager
+async def inserted_category(category: CategoryInsertable) -> AsyncIterator[Category]:
+    async with inserted_generic(category, categories, Category) as row_inserted:
+        yield cast("Category", row_inserted)
 
 
 @asynccontextmanager

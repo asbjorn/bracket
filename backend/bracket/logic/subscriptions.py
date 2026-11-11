@@ -30,6 +30,7 @@ class Subscription(BaseModel):
     max_stage_items: int
     max_rounds: int
     max_rankings: int
+    max_categories: int
 
 
 demo_subscription = Subscription(
@@ -42,6 +43,7 @@ demo_subscription = Subscription(
     max_stage_items=6,
     max_rounds=6,
     max_rankings=2,
+    max_categories=4,
 )
 
 
@@ -55,6 +57,7 @@ regular_subscription = Subscription(
     max_stage_items=config.limit_max_stage_items,
     max_rounds=config.limit_max_rounds,
     max_rankings=config.limit_max_rankings,
+    max_categories=config.limit_max_categories,
 )
 
 subscription_lookup = {
