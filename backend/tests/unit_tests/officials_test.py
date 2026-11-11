@@ -162,3 +162,23 @@ def test_matches_in_block() -> None:
     assert matches_in_block(SLOTS_BY_ID, CourtId(1), at(9), at(9, 25)) == [1]
     assert matches_in_block(SLOTS_BY_ID, CourtId(1), at(9), at(10)) == [1, 3]
     assert matches_in_block(SLOTS_BY_ID, CourtId(2), at(10), at(11)) == []
+
+
+def test_referee_age() -> None:
+    slots = {
+        MatchId(1): MatchSlot(MatchId(1), at(9), at(9, 25), CourtId(1), frozenset(), 10),
+        MatchId(2): MatchSlot(MatchId(2), at(10), at(10, 25), CourtId(1), frozenset(), 14),
+    }
+    conflicts = find_conflicts(
+        [official(1, age=12), official(2, age=13), official(3, age=40)],
+        [assign(1, 1), assign(2, 2), assign(2, 3)],
+        slots,
+        [],
+    )
+    assert [(c.official_id, c.kind, c.match_id) for c in conflicts] == [
+        (1, OfficialConflictKind.TOO_YOUNG, None),
+        (2, OfficialConflictKind.YOUNGER_THAN_PLAYERS, 2),
+    ]
+    # Match hosts (kampverter) may be any age
+    host = official(4, age=11, role="HOST")
+    assert find_conflicts([host], [assign(1, 4)], slots, []) == []

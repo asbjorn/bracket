@@ -1,19 +1,14 @@
-from typing import Annotated, Self
+from typing import Self
 
 from heliclockter import datetime_utc
-from pydantic import BaseModel, Field, StringConstraints, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 from bracket.models.db.shared import BaseModelORM
-from bracket.models.db.team import ClubName
+from bracket.models.db.team import ClubName, TeamName
 from bracket.utils.id_types import CategoryId, ParticipatingClubId, TeamId, TournamentId
-from bracket.utils.text import SingleLine
 
 MAX_NEW_TEAMS = 50
 MAX_TEAMS_PER_CLUB = 200
-
-TeamName = Annotated[
-    str, StringConstraints(min_length=1, max_length=30, strip_whitespace=True), SingleLine
-]
 
 
 class ParticipatingClub(BaseModelORM):
@@ -23,6 +18,8 @@ class ParticipatingClub(BaseModelORM):
     tournament_id: TournamentId
     name: str
     created: datetime_utc
+    # The club's teams never play at the same time (shared coaches or players)
+    no_overlap: bool = False
 
 
 class ClubTeam(BaseModel):
@@ -48,6 +45,7 @@ class ParticipatingClubCreateBody(BaseModelORM):
     name: ClubName
     new_teams: list[NewClubTeam] = Field(default=[], max_length=MAX_NEW_TEAMS)
     team_ids: list[TeamId] = Field(default=[], max_length=MAX_TEAMS_PER_CLUB)
+    no_overlap: bool = False
 
     @model_validator(mode="after")
     def check_unique(self) -> Self:
@@ -64,6 +62,9 @@ class ParticipatingClubUpdateBody(BaseModelORM):
 
     name: ClubName
     team_ids: list[TeamId] = Field(default=[], max_length=MAX_TEAMS_PER_CLUB)
+    # New teams for the club, created at the same time
+    new_teams: list[NewClubTeam] = Field(default=[], max_length=MAX_NEW_TEAMS)
+    no_overlap: bool = False
 
     @model_validator(mode="after")
     def check_unique(self) -> Self:

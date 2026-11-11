@@ -1,4 +1,5 @@
 import {
+  Alert,
   Button,
   Center,
   Checkbox,
@@ -10,6 +11,7 @@ import {
   Switch,
   Text,
 } from '@mantine/core';
+import { IconInfoCircle } from '@tabler/icons-react';
 import { useForm } from '@mantine/form';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -149,6 +151,12 @@ function MatchModalForm({
   }));
   // Cards only for classes from 13 years with public results (NFF)
   const stageItemId = matchesLookup[match.id]?.stageItem?.id;
+  const matchCategory =
+    stageItemId != null
+      ? categoryOfStageItem(swrStagesResponse.data?.data ?? [], categories, stageItemId)
+      : null;
+  // Children's football (results hidden): the match is only marked as played
+  const hiddenResults = matchCategory != null && !matchCategory.results_public;
   const allowsCards =
     stageItemId != null &&
     disciplineAllowed(
@@ -200,49 +208,57 @@ function MatchModalForm({
           setOpened(false);
         })}
       >
-        <NumberInput
-          withAsterisk
-          label={`${t('score_of_label')} ${team1Name}`}
-          placeholder={`${t('score_of_label')} ${team1Name}`}
-          {...form.getInputProps('stage_item_input1_score')}
-          onChange={(value) => form.setFieldValue('stage_item_input1_score', Number(value))}
-        />
-        <NumberInput
-          withAsterisk
-          mt="lg"
-          label={`${t('score_of_label')} ${team2Name}`}
-          placeholder={`${t('score_of_label')} ${team2Name}`}
-          {...form.getInputProps('stage_item_input2_score')}
-          onChange={(value) => form.setFieldValue('stage_item_input2_score', Number(value))}
-        />
-        <Select
-          mt="lg"
-          label={t('result_type_label')}
-          data={RESULT_TYPES.map((resultType) => ({
-            value: resultType,
-            label: t(`result_type_${resultType.toLowerCase()}`),
-          }))}
-          allowDeselect={false}
-          {...form.getInputProps('result_type')}
-        />
-        {isShootout ? (
-          <Grid mt="xs">
-            <Grid.Col span={6}>
-              <NumberInput
-                min={0}
-                label={`${t('penalties_of_label')} ${team1Name}`}
-                {...form.getInputProps('stage_item_input1_penalties')}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <NumberInput
-                min={0}
-                label={`${t('penalties_of_label')} ${team2Name}`}
-                {...form.getInputProps('stage_item_input2_penalties')}
-              />
-            </Grid.Col>
-          </Grid>
-        ) : null}
+        {hiddenResults ? (
+          <Alert color="gray" icon={<IconInfoCircle />}>
+            {t('match_hidden_results_description')}
+          </Alert>
+        ) : (
+          <>
+            <NumberInput
+              withAsterisk
+              label={`${t('score_of_label')} ${team1Name}`}
+              placeholder={`${t('score_of_label')} ${team1Name}`}
+              {...form.getInputProps('stage_item_input1_score')}
+              onChange={(value) => form.setFieldValue('stage_item_input1_score', Number(value))}
+            />
+            <NumberInput
+              withAsterisk
+              mt="lg"
+              label={`${t('score_of_label')} ${team2Name}`}
+              placeholder={`${t('score_of_label')} ${team2Name}`}
+              {...form.getInputProps('stage_item_input2_score')}
+              onChange={(value) => form.setFieldValue('stage_item_input2_score', Number(value))}
+            />
+            <Select
+              mt="lg"
+              label={t('result_type_label')}
+              data={RESULT_TYPES.map((resultType) => ({
+                value: resultType,
+                label: t(`result_type_${resultType.toLowerCase()}`),
+              }))}
+              allowDeselect={false}
+              {...form.getInputProps('result_type')}
+            />
+            {isShootout ? (
+              <Grid mt="xs">
+                <Grid.Col span={6}>
+                  <NumberInput
+                    min={0}
+                    label={`${t('penalties_of_label')} ${team1Name}`}
+                    {...form.getInputProps('stage_item_input1_penalties')}
+                  />
+                </Grid.Col>
+                <Grid.Col span={6}>
+                  <NumberInput
+                    min={0}
+                    label={`${t('penalties_of_label')} ${team2Name}`}
+                    {...form.getInputProps('stage_item_input2_penalties')}
+                  />
+                </Grid.Col>
+              </Grid>
+            ) : null}
+          </>
+        )}
         {!match.played ? (
           <Switch
             mt="lg"
@@ -333,10 +349,38 @@ function MatchModalForm({
           </Grid.Col>
         </Grid>
 
-        <Text size="sm" c="dimmed" mt="lg">
+        {hiddenResults ? (
+          <Grid mt="lg">
+            <Grid.Col span={{ base: 12, sm: 6 }}>
+              <Button
+                fullWidth
+                variant="default"
+                type="submit"
+                onClick={() => {
+                  saveAsFinalResult.current = false;
+                }}
+              >
+                {t('score_not_played_button')}
+              </Button>
+            </Grid.Col>
+            <Grid.Col span={{ base: 12, sm: 6 }}>
+              <Button
+                fullWidth
+                color="green"
+                type="submit"
+                onClick={() => {
+                  saveAsFinalResult.current = true;
+                }}
+              >
+                {t('score_played_button')}
+              </Button>
+            </Grid.Col>
+          </Grid>
+        ) : null}
+        <Text size="sm" c="dimmed" mt="lg" display={hiddenResults ? 'none' : undefined}>
           {t('save_result_description')}
         </Text>
-        <Grid mt="xs">
+        <Grid mt="xs" display={hiddenResults ? 'none' : undefined}>
           <Grid.Col span={{ base: 12, sm: 6 }}>
             <Button
               fullWidth

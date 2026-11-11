@@ -61,11 +61,14 @@ async def update_club_of_cup(
     tournament_id: TournamentId,
     club_id: ParticipatingClubId,
     body: ParticipatingClubUpdateBody,
-    _: UserPublic = Depends(user_authenticated_for_tournament),
+    user: UserPublic = Depends(user_authenticated_for_tournament),
     __: Tournament = Depends(disallow_archived_tournament),
 ) -> SuccessResponse:
-    """Renames the club and sets exactly which teams belong to it."""
-    await update_participating_club(tournament_id, club_id, body)
+    """
+    Renames the club, sets exactly which existing teams belong to it, creates new teams for it
+    and sets whether its teams may play at the same time.
+    """
+    await update_participating_club(tournament_id, club_id, body, user)
     return SuccessResponse()
 
 

@@ -16,6 +16,8 @@ export async function editRanking(
   add_score_points: boolean,
   position: number,
   tiebreakers: Tiebreaker[],
+  fair_play_yellow_points: number,
+  fair_play_red_points: number,
 ) {
   return createAxios()
     .put(`tournaments/${tournament_id}/rankings/${ranking_id}`, {
@@ -25,6 +27,8 @@ export async function editRanking(
       add_score_points,
       position,
       tiebreakers,
+      fair_play_yellow_points,
+      fair_play_red_points,
     })
     .catch((response: any) => handleRequestError(response));
 }

@@ -69,8 +69,13 @@ function missingItems(application: DistrictApplication, t: TFunction): string[] 
   if (!details.contact_name || !details.contact_phone) {
     missing.push(t('application_field_contact_name'));
   }
-  if (!details.jury_chair_name || !details.jury_chair_phone) {
-    missing.push(t('application_field_jury_chair_name'));
+  // The jury is kept on the discipline page; the old chair fields count when it's empty
+  if (application.jury_members.length > 0) {
+    for (const warning of application.jury_warnings) {
+      missing.push(t(`jury_warning_${warning.toLowerCase()}`));
+    }
+  } else if (!details.jury_chair_name || !details.jury_chair_phone) {
+    missing.push(t('application_missing_jury'));
   }
   if (!details.venue) missing.push(t('application_field_venue'));
   if (application.days.length < 1) missing.push(t('application_missing_days'));
@@ -95,9 +100,26 @@ function applicationText(application: DistrictApplication, t: TFunction, languag
         .filter(Boolean)
         .join(', ') || dash
     }`,
-    `${t('application_text_jury_chair')}: ${
-      [details.jury_chair_name, details.jury_chair_phone].filter(Boolean).join(', ') || dash
-    }`,
+    ...(application.jury_members.length > 0
+      ? [
+          `${t('application_text_jury')}:`,
+          ...application.jury_members.map(
+            (member) =>
+              `  - ${[
+                member.name,
+                member.role === 'CHAIR' ? t('jury_role_chair') : null,
+                member.club_name,
+                member.phone,
+              ]
+                .filter(Boolean)
+                .join(', ')}`,
+          ),
+        ]
+      : [
+          `${t('application_text_jury_chair')}: ${
+            [details.jury_chair_name, details.jury_chair_phone].filter(Boolean).join(', ') || dash
+          }`,
+        ]),
     '',
     `${t('application_text_days')}:`,
   ];

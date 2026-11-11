@@ -20,6 +20,8 @@ from bracket.models.db.team import (
     FullTeamWithPlayers,
     Team,
     TeamBody,
+    TeamConflict,
+    TeamConflictsBody,
     TeamInsertable,
     TeamMultiBody,
 )
@@ -34,6 +36,7 @@ from bracket.routes.models import (
     PaginatedTeams,
     SingleTeamResponse,
     SuccessResponse,
+    TeamConflictsResponse,
     TeamsWithPlayersResponse,
 )
 from bracket.routes.util import (
@@ -45,9 +48,11 @@ from bracket.schema import players_x_teams, teams
 from bracket.sql.categories import get_all_categories_in_tournament
 from bracket.sql.players import get_all_players_in_tournament, insert_player
 from bracket.sql.stages import get_full_tournament_details
+from bracket.sql.team_conflicts import get_team_conflicts, sql_set_team_conflicts
 from bracket.sql.teams import (
     get_team_by_id,
     get_team_count,
+    get_teams_by_id,
     get_teams_with_members,
     sql_delete_team,
 )
@@ -334,4 +339,39 @@ async def create_multiple_teams(
                 player_body = PlayerBody(name=player, active=team_body.active)
                 await insert_player(player_body, tournament_id)
 
+    return SuccessResponse()
+
+
+@router.get("/tournaments/{tournament_id}/team_conflicts", response_model=TeamConflictsResponse)
+async def get_tournament_team_conflicts(
+    tournament_id: TournamentId,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+) -> TeamConflictsResponse:
+    """Pairs of teams that must never play at the same time."""
+    return TeamConflictsResponse(
+        data=[
+            TeamConflict(team1_id=team1, team2_id=team2)
+            for team1, team2 in await get_team_conflicts(tournament_id)
+        ]
+    )
+
+
+@router.put(
+    "/tournaments/{tournament_id}/teams/{team_id}/conflicts", response_model=SuccessResponse
+)
+async def set_team_conflicts(
+    tournament_id: TournamentId,
+    body: TeamConflictsBody,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+    __: Tournament = Depends(disallow_archived_tournament),
+    team: Team = Depends(team_dependency),
+) -> SuccessResponse:
+    """Sets the teams that can't play at the same time as this one (shared coach or players)."""
+    other_ids = set(body.team_ids) - {team.id}
+    if len(await get_teams_by_id(other_ids, tournament_id)) != len(other_ids):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Some of the teams don't exist in this tournament",
+        )
+    await sql_set_team_conflicts(tournament_id, team.id, other_ids)
     return SuccessResponse()

@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from bracket.database import database
 from bracket.logic.planning.conflicts import handle_conflicts
 from bracket.logic.planning.scheduler import (
+    SHARED_PREFIX,
     Assignment,
     CourtToPlan,
     Dependency,
@@ -38,9 +39,10 @@ from bracket.sql.categories import get_all_categories_in_tournament
 from bracket.sql.courts import get_all_courts_in_tournament
 from bracket.sql.matches import sql_apply_default_timing, sql_set_match_slot
 from bracket.sql.stages import get_full_tournament_details
+from bracket.sql.team_conflicts import get_no_overlap_club_teams, get_team_conflicts
 from bracket.sql.time_windows import get_own_time_windows, get_time_windows
 from bracket.sql.tournaments import sql_get_tournament
-from bracket.utils.id_types import CategoryId, CourtId, MatchId, TournamentId
+from bracket.utils.id_types import CategoryId, CourtId, MatchId, TeamId, TournamentId
 
 # Without time windows, matches are planned from the start time of the tournament onward
 DEFAULT_WINDOW_HOURS = 12
@@ -94,13 +96,53 @@ def get_stage_index_per_class(stages: list[StageWithStageItems]) -> dict[int, in
     }
 
 
+def shared_keys_per_team(
+    conflicts: list[tuple[TeamId, TeamId]], no_overlap_clubs: dict[int, list[TeamId]]
+) -> dict[TeamId, frozenset[str]]:
+    """
+    Extra planning keys for teams that share coaches or players: a key per pair of teams that
+    can't play at the same time, and one per club whose teams never play at the same time.
+    Matches with a common key don't overlap and keep the rest between them.
+    """
+    keys: dict[TeamId, set[str]] = {}
+    for team1, team2 in conflicts:
+        key = f"{SHARED_PREFIX}pair:{min(team1, team2)}:{max(team1, team2)}"
+        keys.setdefault(team1, set()).add(key)
+        keys.setdefault(team2, set()).add(key)
+    for club_id, team_ids in no_overlap_clubs.items():
+        for team_id in team_ids:
+            keys.setdefault(team_id, set()).add(f"{SHARED_PREFIX}club:{club_id}")
+    return {team_id: frozenset(team_keys) for team_id, team_keys in keys.items()}
+
+
 def get_matches_to_plan(
     tournament: Tournament,
     stages: list[StageWithStageItems],
     categories: list[Category],
     category_windows: dict[CategoryId, list[TimeWindow]] | None = None,
+    shared_keys: dict[TeamId, frozenset[str]] | None = None,
 ) -> list[MatchToPlan]:
-    """`category_windows`: the days/hours of the classes that have their own."""
+    """
+    `category_windows`: the days/hours of the classes that have their own. `shared_keys`:
+    extra keys of teams that share coaches or players (see `shared_keys_per_team`).
+    """
+    team_of_input: dict[int, TeamId] = {}
+    for stage in stages:
+        for item in stage.stage_items:
+            for input_ in item.inputs:
+                team_id = getattr(input_, "team_id", None)
+                if team_id is not None:
+                    team_of_input[input_.id] = team_id
+
+    def keys_of(input_id: int | None) -> frozenset[str]:
+        if input_id is None:
+            return frozenset()
+        team_id = team_of_input.get(input_id)
+        extra = (
+            (shared_keys or {}).get(team_id, frozenset()) if team_id is not None else frozenset()
+        )
+        return frozenset({f"input:{input_id}"}) | extra
+
     windows_per_class = {
         category_id: tuple(Window(w.start_time, w.end_time) for w in windows)
         for category_id, windows in (category_windows or {}).items()
@@ -159,14 +201,8 @@ def get_matches_to_plan(
                                 category.margin_minutes if category else None,
                                 tournament.margin_minutes,
                             ),
-                            teams=frozenset(
-                                f"input:{input_id}"
-                                for input_id in (
-                                    match.stage_item_input1_id,
-                                    match.stage_item_input2_id,
-                                )
-                                if input_id is not None
-                            ),
+                            teams=keys_of(match.stage_item_input1_id)
+                            | keys_of(match.stage_item_input2_id),
                             rest_minutes=rest,
                             game_format=category.game_format if category else None,
                             dependencies=tuple(dependencies),
@@ -217,7 +253,10 @@ async def get_planning_input(
                 tournament.start_time + timedelta(hours=DEFAULT_WINDOW_HOURS),
             )
         ]
-    matches = get_matches_to_plan(tournament, stages, categories, category_windows)
+    shared_keys = shared_keys_per_team(
+        await get_team_conflicts(tournament_id), await get_no_overlap_club_teams(tournament_id)
+    )
+    matches = get_matches_to_plan(tournament, stages, categories, category_windows, shared_keys)
     return matches, courts, windows, uses_default_window
 
 

@@ -58,6 +58,8 @@ class JuryDecisionBody(BaseModelORM):
     team_id: TeamId | None = None
     # The card it is about; its suspension changes by `suspension_change` matches
     card_id: MatchCardId | None = None
+    # Jury members who took the decision
+    member_ids: list[int] = Field(default=[], max_length=10)
     suspension_change: int = Field(0, ge=-10, le=10)
 
 

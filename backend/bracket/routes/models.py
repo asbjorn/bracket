@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 from bracket.logic.category_warnings import CategoryWarning
+from bracket.logic.final_results import ClassFinalResults
 from bracket.logic.notifications import NotificationStatus, ScheduleNoticeResult
 from bracket.logic.planning.capacity import CapacityResult
 from bracket.logic.planning.propose import PlanIssueOut, ReplanPreview, ScheduleProposal
@@ -11,6 +12,7 @@ from bracket.models.db.club import Club
 from bracket.models.db.court import Court
 from bracket.models.db.discipline import DisciplineOverview, MatchCard
 from bracket.models.db.district_application import DistrictApplication
+from bracket.models.db.jury import JuryOverview
 from bracket.models.db.match import Match, SuggestedMatch
 from bracket.models.db.official import Official, OfficialsOverview, PublicMatchOfficial
 from bracket.models.db.participating_club import ParticipatingClubWithTeams
@@ -32,7 +34,7 @@ from bracket.models.db.stage_item_inputs import (
     StageItemInputOptionFinal,
     StageItemInputOptionTentative,
 )
-from bracket.models.db.team import FullTeamWithPlayers, Team
+from bracket.models.db.team import FullTeamWithPlayers, Team, TeamConflict
 from bracket.models.db.time_window import PlanningHours, TimeWindow
 from bracket.models.db.tournament import Tournament
 from bracket.models.db.user import UserPublic
@@ -220,6 +222,18 @@ class ParticipatingClubsResponse(DataResponse[list[ParticipatingClubWithTeams]])
 
 
 class ParticipatingClubCreatedResponse(DataResponse[ParticipatingClubId]):
+    pass
+
+
+class TeamConflictsResponse(DataResponse[list[TeamConflict]]):
+    pass
+
+
+class JuryMembersResponse(DataResponse[JuryOverview]):
+    pass
+
+
+class FinalResultsResponse(DataResponse[list[ClassFinalResults]]):
     pass
 
 

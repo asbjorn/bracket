@@ -1,4 +1,8 @@
-import { ParticipatingClubCreateBody, ParticipatingClubCreatedResponse } from '@openapi';
+import {
+  ParticipatingClubUpdateBody,
+  ParticipatingClubCreateBody,
+  ParticipatingClubCreatedResponse,
+} from '@openapi';
 import { awaitRequestAndHandleError } from './adapter';
 
 export async function createParticipatingClub(
@@ -16,11 +20,10 @@ export async function createParticipatingClub(
 export async function updateParticipatingClub(
   tournament_id: number,
   club_id: number,
-  name: string,
-  team_ids: number[],
+  body: ParticipatingClubUpdateBody,
 ) {
   return awaitRequestAndHandleError(async (axios) =>
-    axios.put(`tournaments/${tournament_id}/participating_clubs/${club_id}`, { name, team_ids }),
+    axios.put(`tournaments/${tournament_id}/participating_clubs/${club_id}`, body),
   );
 }
 

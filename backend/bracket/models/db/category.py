@@ -1,3 +1,4 @@
+from enum import auto
 from typing import Annotated
 
 from heliclockter import datetime_utc
@@ -7,6 +8,7 @@ from bracket.models.db.game_format import GameFormat
 from bracket.models.db.shared import BaseModelORM
 from bracket.utils.id_types import CategoryId, TournamentId
 from bracket.utils.text import SingleLine
+from bracket.utils.types import EnumAutoStr
 
 # NFF: from the 13-year class, results and tables may be published (youth football).
 # In children's football (12 and younger) they must not be.
@@ -33,6 +35,17 @@ def max_matches_per_day_for_age(age: int | None) -> int | None:
     return 3
 
 
+class CategoryKind(EnumAutoStr):
+    """Who plays in the class: boys (G), girls (J) or mixed."""
+
+    BOYS = auto()
+    GIRLS = auto()
+    MIXED = auto()
+
+
+KindNote = Annotated[str, StringConstraints(max_length=200, strip_whitespace=True), SingleLine]
+
+
 def default_results_public(age: int | None) -> bool:
     return age is None or age >= YOUTH_FOOTBALL_MIN_AGE
 
@@ -55,6 +68,9 @@ class CategoryInsertable(BaseModelORM):
     entry_fee: int | None = None
     # `None`: the default for the age
     max_matches_per_day: int | None = None
+    kind: CategoryKind | None = None
+    # E.g. "Jenter kan spille ett år ned"
+    kind_note: str | None = None
 
     def get_max_matches_per_day(self) -> int | None:
         if self.max_matches_per_day is not None:
@@ -85,6 +101,8 @@ class CategoryBody(BaseModelORM):
     game_format: GameFormat | None = None
     # At most this many matches per team per day; `None`: the default for the age
     max_matches_per_day: int | None = Field(None, ge=1, le=MAX_MATCHES_PER_DAY_LIMIT)
+    kind: CategoryKind | None = None
+    kind_note: KindNote | None = None
 
     def get_results_public(self) -> bool:
         if self.results_public is not None:

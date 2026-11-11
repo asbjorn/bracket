@@ -11,6 +11,7 @@ from bracket.logic.scheduling.handle_stage_activation import (
     update_matches_in_activated_stage,
     update_matches_in_deactivated_stage,
 )
+from bracket.logic.scheduling.level_round import LevelRoundBody, create_level_round
 from bracket.logic.subscriptions import check_requirement
 from bracket.models.db.playoffs import PlayoffsCreateBody
 from bracket.models.db.stage import Stage, StageActivateBody, StageCreateBody, StageUpdateBody
@@ -28,7 +29,7 @@ from bracket.routes.models import (
     SuccessResponse,
 )
 from bracket.routes.util import disallow_archived_tournament, stage_dependency
-from bracket.sql.categories import get_all_categories_in_tournament
+from bracket.sql.categories import get_all_categories_in_tournament, get_category_by_id
 from bracket.sql.stages import (
     get_full_tournament_details,
     get_next_stage_in_tournament,
@@ -216,3 +217,24 @@ async def get_next_stage_rankings(
     return StageRankingResponse(
         data=await get_updates_to_inputs_in_activated_stage(tournament_id, next_stage_id)
     )
+
+
+@router.post(
+    "/tournaments/{tournament_id}/categories/{category_id}/level_round",
+    response_model=SuccessResponse,
+)
+async def create_level_split_round(
+    tournament_id: TournamentId,
+    category_id: CategoryId,
+    body: LevelRoundBody,
+    user: UserPublic = Depends(user_authenticated_for_tournament),
+    _: Tournament = Depends(disallow_archived_tournament),
+) -> SuccessResponse:
+    """
+    A new round of groups composed by hand (e.g. by level, "nivådelt"), after the stages of the
+    class. Nothing is placed from results, so it's also possible when results are hidden.
+    """
+    if await get_category_by_id(tournament_id, category_id) is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Could not find the class")
+    await create_level_round(tournament_id, category_id, body, user)
+    return SuccessResponse()

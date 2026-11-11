@@ -79,11 +79,11 @@ async def sql_create_jury_decision(
         """
         INSERT INTO jury_decisions (
             tournament_id, match_id, team_id, card_id, text, suspension_change, decided_at,
-            decided_by
+            decided_by, member_ids
         )
         VALUES (
             :tournament_id, :match_id, :team_id, :card_id, :text, :suspension_change, NOW(),
-            :decided_by
+            :decided_by, :member_ids
         )
         """,
         values={
@@ -94,6 +94,7 @@ async def sql_create_jury_decision(
             "text": body.text,
             "suspension_change": body.suspension_change,
             "decided_by": user_id,
+            "member_ids": sorted(set(body.member_ids)),
         },
     )
 

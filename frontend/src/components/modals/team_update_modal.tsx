@@ -6,9 +6,11 @@ import {
   Image,
   Modal,
   MultiSelect,
+  NumberInput,
   TextInput,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SWRResponse } from 'swr';
 
@@ -22,8 +24,10 @@ import {
   getPlayers,
   removeTeamLogo,
   requestSucceeded,
+  getAllTeams,
+  getTeamConflicts,
 } from '@services/adapter';
-import { updateTeam } from '@services/team';
+import { setTeamConflicts, updateTeam } from '@services/team';
 
 function TeamLogo({ team }: { team: FullTeamWithPlayers | null }) {
   if (team == null || team.logo_path == null) return null;
@@ -55,6 +59,18 @@ export default function TeamUpdateModal({
   const { data } = getPlayers(tournament_id, false);
   const players: Player[] = data != null ? data.data.players : [];
   const categories = getCategories(tournament_id).data?.data ?? [];
+  const allTeams = getAllTeams(tournament_id).data ?? [];
+  const swrConflicts = getTeamConflicts(tournament_id);
+  const conflictIds = (swrConflicts.data?.data ?? []).flatMap((pair) =>
+    pair.team1_id === team.id
+      ? [`${pair.team2_id}`]
+      : pair.team2_id === team.id
+        ? [`${pair.team1_id}`]
+        : [],
+  );
+  // `null` until changed: the saved conflicts may still be loading
+  const [conflicts, setConflicts] = useState<string[] | null>(null);
+  const categoryName = (id: number | null) => categories.find((c) => c.id === id)?.name;
 
   const form = useForm({
     initialValues: {
@@ -63,6 +79,7 @@ export default function TeamUpdateModal({
       player_ids: team.players.map((player) => `${player.id}`),
       category: categoryIdToValue(team.category_id),
       club: team.club_id != null ? `${team.club_id}` : (null as string | null),
+      squad_size: (team.squad_size ?? '') as number | string,
     },
 
     validate: {
@@ -83,7 +100,12 @@ export default function TeamUpdateModal({
               values.player_ids,
               valueToCategoryId(values.category),
               values.club != null ? Number(values.club) : null,
+              values.squad_size === '' ? null : Number(values.squad_size),
             );
+            if (requestSucceeded(result) && conflicts != null) {
+              await setTeamConflicts(tournament_id, team.id, conflicts.map(Number));
+              await swrConflicts.mutate();
+            }
             if (requestSucceeded(result)) {
               await swrTeamsResponse.mutate();
               onClose();
@@ -103,6 +125,35 @@ export default function TeamUpdateModal({
             tournamentId={tournament_id}
             value={form.values.club}
             onChange={(club) => form.setFieldValue('club', club)}
+          />
+
+          <NumberInput
+            mt="md"
+            label={t('squad_size_label')}
+            description={t('squad_size_description')}
+            min={1}
+            max={60}
+            w="12rem"
+            {...form.getInputProps('squad_size')}
+          />
+
+          <MultiSelect
+            mt="md"
+            label={t('team_conflicts_label')}
+            description={t('team_conflicts_description')}
+            data={allTeams
+              .filter((other) => other.id !== team.id)
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map((other) => ({
+                value: `${other.id}`,
+                label: [other.name, categoryName(other.category_id)].filter(Boolean).join(' · '),
+              }))}
+            value={conflicts ?? conflictIds}
+            onChange={setConflicts}
+            searchable
+            clearable
+            hidePickedOptions
+            maxDropdownHeight={200}
           />
 
           <Checkbox

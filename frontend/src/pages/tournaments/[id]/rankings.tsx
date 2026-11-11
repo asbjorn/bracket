@@ -5,8 +5,10 @@ import {
   Center,
   Checkbox,
   Container,
+  Group,
   MultiSelect,
   NumberInput,
+  Text,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useTranslation } from 'react-i18next';
@@ -24,7 +26,13 @@ import { getRankings, getTournamentById } from '@services/adapter';
 import { createRanking, deleteRanking, editRanking } from '@services/ranking';
 
 // In the order a user would typically use them; the selected order is what counts
-const TIEBREAKERS: Tiebreaker[] = ['GOAL_DIFFERENCE', 'GOALS_SCORED', 'HEAD_TO_HEAD'];
+const TIEBREAKERS: Tiebreaker[] = [
+  'GOAL_DIFFERENCE',
+  'GOALS_SCORED',
+  'HEAD_TO_HEAD',
+  'FAIR_PLAY',
+  'LOTS',
+];
 
 function RankingDeleteButton({
   t,
@@ -77,6 +85,8 @@ function EditRankingForm({
       add_score_points: ranking.add_score_points,
       position: ranking.position,
       tiebreakers: ranking.tiebreakers,
+      fair_play_yellow_points: ranking.fair_play_yellow_points,
+      fair_play_red_points: ranking.fair_play_red_points,
     },
     validate: {},
   });
@@ -94,6 +104,8 @@ function EditRankingForm({
           values.add_score_points,
           values.position,
           values.tiebreakers,
+          values.fair_play_yellow_points,
+          values.fair_play_red_points,
         );
         await swrRankingsResponse.mutate();
       })}
@@ -143,6 +155,27 @@ function EditRankingForm({
             }))}
             {...form.getInputProps('tiebreakers')}
           />
+          {form.values.tiebreakers.includes('FAIR_PLAY') ? (
+            <Group mt="md" grow>
+              <NumberInput
+                label={t('fair_play_yellow_points_label')}
+                min={0}
+                max={100}
+                {...form.getInputProps('fair_play_yellow_points')}
+              />
+              <NumberInput
+                label={t('fair_play_red_points_label')}
+                min={0}
+                max={100}
+                {...form.getInputProps('fair_play_red_points')}
+              />
+            </Group>
+          ) : null}
+          {form.values.tiebreakers.includes('LOTS') ? (
+            <Text size="sm" c="dimmed" mt="xs">
+              {t('tiebreaker_lots_description')}
+            </Text>
+          ) : null}
           <Button fullWidth style={{ marginTop: 16 }} color="green" type="submit">
             {`${t('save_button')} ${rankingTitle}`}
           </Button>

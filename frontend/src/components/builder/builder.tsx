@@ -16,7 +16,7 @@ import {
 import { useColorScheme } from '@mantine/hooks';
 import { AiFillWarning } from '@react-icons/all-files/ai/AiFillWarning';
 import { BiCheck } from '@react-icons/all-files/bi/BiCheck';
-import { IconDots, IconPencil, IconTrash } from '@tabler/icons-react';
+import { IconArrowsShuffle, IconDots, IconPencil, IconTrash } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BiSolidWrench } from 'react-icons/bi';
@@ -29,6 +29,7 @@ import { UpdateStageItemModal } from '@components/modals/update_stage_item';
 import { assert_not_none } from '@components/utils/assert';
 import RequestErrorAlert from '@components/utils/error_alert';
 import PreloadLink from '@components/utils/link';
+import LotsModal from '@components/modals/lots_modal';
 import {
   StageItemInput,
   StageItemInputChoice,
@@ -270,6 +271,7 @@ function StageItemRow({
 }) {
   const { t } = useTranslation();
   const [opened, setOpened] = useState(false);
+  const [lotsOpened, setLotsOpened] = useState(false);
 
   const inputs = stageItem.inputs
     .sort((i1, i2) => (i1.slot > i2.slot ? 1 : -1))
@@ -338,6 +340,14 @@ function StageItemRow({
                 >
                   {t('edit_stage_item_label')}
                 </Menu.Item>
+                {stageItem.type === 'ROUND_ROBIN' ? (
+                  <Menu.Item
+                    leftSection={<IconArrowsShuffle size="1.5rem" />}
+                    onClick={() => setLotsOpened(true)}
+                  >
+                    {t('lots_title')}
+                  </Menu.Item>
+                ) : null}
                 {stageItem.type === 'SWISS' ? (
                   <Menu.Item
                     leftSection={<BiSolidWrench size="1.5rem" />}
@@ -364,6 +374,16 @@ function StageItemRow({
         </Group>
       </Card.Section>
       {inputs}
+      {lotsOpened ? (
+        <LotsModal
+          tournamentId={tournament.id}
+          stageItem={stageItem}
+          onClose={() => setLotsOpened(false)}
+          onSaved={async () => {
+            await swrStagesResponse.mutate();
+          }}
+        />
+      ) : null}
     </Card>
   );
 }

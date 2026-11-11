@@ -8,6 +8,7 @@ import {
   IconBrowser,
   IconBuildingCommunity,
   IconCalculator,
+  IconMedal,
   IconCalendar,
   IconCards,
   IconCategory,
@@ -193,6 +194,11 @@ export function TournamentLinks({ tournament_id }: any) {
         icon: IconScoreboard,
         label: capitalize(t('rankings_title')),
         link: `${tm_prefix}/rankings`,
+      },
+      {
+        icon: IconMedal,
+        label: t('ceremony_title'),
+        link: `${tm_prefix}/ceremony`,
       },
     ],
     [

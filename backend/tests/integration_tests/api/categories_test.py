@@ -127,6 +127,8 @@ async def test_update_category(
         "max_teams": None,
         "entry_fee": None,
         "max_matches_per_day": None,
+        "kind": None,
+        "kind_note": None,
         "created": None,
     }
 

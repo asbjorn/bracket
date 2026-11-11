@@ -5,6 +5,7 @@ import {
   Button,
   Card,
   Group,
+  MultiSelect,
   NumberInput,
   SegmentedControl,
   Select,
@@ -22,9 +23,10 @@ import { CardIcon } from '@components/discipline/cards_editor';
 import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
 import { getTournamentIdFromRouter } from '@components/utils/util';
 import { formatDayTime } from '@components/utils/datetime';
+import JuryMembers from '@components/discipline/jury_members';
 import { DisciplineOverview, MatchWithDetails, StageWithStageItems } from '@openapi';
 import TournamentLayout from '@pages/tournaments/_tournament_layout';
-import { getStages, requestSucceeded } from '@services/adapter';
+import { getStages, requestSucceeded, getJuryMembers } from '@services/adapter';
 import {
   createJuryDecision,
   deleteCard,
@@ -132,6 +134,10 @@ function JuryForm({
   const [cardId, setCardId] = useState<string | null>(null);
   const [change, setChange] = useState('0');
   const [saving, setSaving] = useState(false);
+  const jury = getJuryMembers(tournamentId).data?.data.members ?? [];
+  // Unless chosen otherwise, the whole jury took the decision
+  const [memberIds, setMemberIds] = useState<string[] | null>(null);
+  const chosenMembers = memberIds ?? jury.map((member) => `${member.id}`);
 
   return (
     <Stack gap="xs">
@@ -143,6 +149,15 @@ function JuryForm({
         value={text}
         onChange={(event) => setText(event.currentTarget.value)}
       />
+      {jury.length > 0 ? (
+        <MultiSelect
+          label={t('jury_decided_by_label')}
+          data={jury.map((member) => ({ value: `${member.id}`, label: member.name }))}
+          value={chosenMembers}
+          onChange={setMemberIds}
+          maw="32rem"
+        />
+      ) : null}
       <Group align="end">
         <Select
           label={t('jury_card_label')}
@@ -184,12 +199,14 @@ function JuryForm({
               match_id: card?.match_id ?? null,
               team_id: card?.team_id ?? null,
               suspension_change: card != null ? Number(change) : 0,
+              member_ids: chosenMembers.map(Number),
             });
             setSaving(false);
             if (requestSucceeded(response)) {
               setText('');
               setCardId(null);
               setChange('0');
+              setMemberIds(null);
               await refresh();
             }
           }}
@@ -209,6 +226,9 @@ export default function DisciplinePage() {
   const swrStagesResponse = getStages(tournamentId);
   const overview = swrDiscipline.data?.data;
   const refresh = () => swrDiscipline.mutate();
+  const juryNames: Record<number, string> = Object.fromEntries(
+    (getJuryMembers(tournamentId).data?.data.members ?? []).map((m) => [m.id, m.name]),
+  );
 
   const stages = swrStagesResponse.data?.data ?? [];
   const teams = teamNames(stages);
@@ -346,6 +366,8 @@ export default function DisciplinePage() {
             )}
 
             <Title order={3}>{t('jury_title')}</Title>
+            <JuryMembers tournamentId={tournamentId} />
+            <Title order={4}>{t('jury_log_title')}</Title>
             <JuryForm
               tournamentId={tournamentId}
               overview={overview}
@@ -373,6 +395,15 @@ export default function DisciplinePage() {
                         : ''}
                     </Text>
                     <Text style={{ whiteSpace: 'pre-wrap' }}>{decision.text}</Text>
+                    {decision.member_ids.length > 0 ? (
+                      <Text size="xs" c="dimmed">
+                        {t('jury_decided_by_label')}:{' '}
+                        {decision.member_ids
+                          .map((id) => juryNames[id])
+                          .filter(Boolean)
+                          .join(', ')}
+                      </Text>
+                    ) : null}
                   </Stack>
                   <ActionIcon
                     variant="subtle"

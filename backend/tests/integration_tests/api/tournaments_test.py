@@ -45,6 +45,7 @@ async def test_tournaments_endpoint(
                 "min_rest_minutes": 0,
                 "stage_buffer_minutes": 10,
                 "walkover_goals": 3,
+                "ceremony_offset_minutes": 15,
                 "status": "OPEN",
             }
         ],
@@ -74,6 +75,7 @@ async def test_tournament_endpoint(
             "min_rest_minutes": 0,
             "stage_buffer_minutes": 10,
             "walkover_goals": 3,
+            "ceremony_offset_minutes": 15,
             "status": "OPEN",
         },
     }

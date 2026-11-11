@@ -56,6 +56,7 @@ export function ClubSelect({
           name: typed,
           new_teams: [],
           team_ids: [],
+          no_overlap: false,
         });
         if (requestSucceeded(response) && 'data' in response) {
           await swrClubsResponse.mutate();

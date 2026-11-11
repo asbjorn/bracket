@@ -1,4 +1,4 @@
-import { Button, Group, Stack } from '@mantine/core';
+import { Button, Group, Stack, Title } from '@mantine/core';
 import { IconWand } from '@tabler/icons-react';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,7 +13,8 @@ import { NoContent } from '@components/no_content/empty_table_info';
 import { CategorySelector, useSelectedCategory } from '@components/utils/category';
 import PreloadLink from '@components/utils/link';
 import { TableSkeletonTwoColumnsSmall } from '@components/utils/skeletons';
-import { getTournamentIdFromRouter } from '@components/utils/util';
+import { capitalize, getTournamentIdFromRouter } from '@components/utils/util';
+import LevelRoundButton from '@components/modals/level_round_modal';
 import { StageWithStageItems } from '@openapi';
 import TournamentLayout from '@pages/tournaments/_tournament_layout';
 import {
@@ -142,6 +143,17 @@ export default function StagesPage() {
             swrStagesResponse={swrStagesResponse}
           />
         ) : null}
+        {categoryId != null ? (
+          <Group mt="sm">
+            <LevelRoundButton
+              tournamentId={tournamentData.id}
+              categoryId={categoryId}
+              onCreated={async () => {
+                await swrStagesResponse.mutate();
+              }}
+            />
+          </Group>
+        ) : null}
         <Group mt="1rem" align="top">
           <Builder
             tournament={tournamentDataFull}
@@ -156,5 +168,10 @@ export default function StagesPage() {
     );
   }
 
-  return <TournamentLayout tournament_id={tournamentData.id}>{content}</TournamentLayout>;
+  return (
+    <TournamentLayout tournament_id={tournamentData.id}>
+      <Title mb="sm">{capitalize(t('stage_title'))}</Title>
+      {content}
+    </TournamentLayout>
+  );
 }

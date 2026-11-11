@@ -53,6 +53,12 @@ import type {
   CreateJuryDecisionTournamentsTournamentIdJuryDecisionsPostData,
   CreateJuryDecisionTournamentsTournamentIdJuryDecisionsPostErrors,
   CreateJuryDecisionTournamentsTournamentIdJuryDecisionsPostResponses,
+  CreateJuryMemberTournamentsTournamentIdJuryMembersPostData,
+  CreateJuryMemberTournamentsTournamentIdJuryMembersPostErrors,
+  CreateJuryMemberTournamentsTournamentIdJuryMembersPostResponses,
+  CreateLevelSplitRoundTournamentsTournamentIdCategoriesCategoryIdLevelRoundPostData,
+  CreateLevelSplitRoundTournamentsTournamentIdCategoriesCategoryIdLevelRoundPostErrors,
+  CreateLevelSplitRoundTournamentsTournamentIdCategoriesCategoryIdLevelRoundPostResponses,
   CreateMatchCardTournamentsTournamentIdMatchesMatchIdCardsPostData,
   CreateMatchCardTournamentsTournamentIdMatchesMatchIdCardsPostErrors,
   CreateMatchCardTournamentsTournamentIdMatchesMatchIdCardsPostResponses,
@@ -122,6 +128,9 @@ import type {
   DeleteJuryDecisionTournamentsTournamentIdJuryDecisionsDecisionIdDeleteData,
   DeleteJuryDecisionTournamentsTournamentIdJuryDecisionsDecisionIdDeleteErrors,
   DeleteJuryDecisionTournamentsTournamentIdJuryDecisionsDecisionIdDeleteResponses,
+  DeleteJuryMemberTournamentsTournamentIdJuryMembersMemberIdDeleteData,
+  DeleteJuryMemberTournamentsTournamentIdJuryMembersMemberIdDeleteErrors,
+  DeleteJuryMemberTournamentsTournamentIdJuryMembersMemberIdDeleteResponses,
   DeleteMatchCardTournamentsTournamentIdCardsCardIdDeleteData,
   DeleteMatchCardTournamentsTournamentIdCardsCardIdDeleteErrors,
   DeleteMatchCardTournamentsTournamentIdCardsCardIdDeleteResponses,
@@ -170,6 +179,9 @@ import type {
   EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutData,
   EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutErrors,
   EnterMatchWalkoverScoreTokenMatchesMatchIdWalkoverPutResponses,
+  ExportFinalResultsTournamentsTournamentIdFinalResultsCsvGetData,
+  ExportFinalResultsTournamentsTournamentIdFinalResultsCsvGetErrors,
+  ExportFinalResultsTournamentsTournamentIdFinalResultsCsvGetResponses,
   ExportOfficialFeesTournamentsTournamentIdOfficialsFeesCsvGetData,
   ExportOfficialFeesTournamentsTournamentIdOfficialsFeesCsvGetErrors,
   ExportOfficialFeesTournamentsTournamentIdOfficialsFeesCsvGetResponses,
@@ -246,6 +258,12 @@ import type {
   GetTournamentDistrictApplicationTournamentsTournamentIdDistrictApplicationGetData,
   GetTournamentDistrictApplicationTournamentsTournamentIdDistrictApplicationGetErrors,
   GetTournamentDistrictApplicationTournamentsTournamentIdDistrictApplicationGetResponses,
+  GetTournamentFinalResultsTournamentsTournamentIdFinalResultsGetData,
+  GetTournamentFinalResultsTournamentsTournamentIdFinalResultsGetErrors,
+  GetTournamentFinalResultsTournamentsTournamentIdFinalResultsGetResponses,
+  GetTournamentJuryMembersTournamentsTournamentIdJuryMembersGetData,
+  GetTournamentJuryMembersTournamentsTournamentIdJuryMembersGetErrors,
+  GetTournamentJuryMembersTournamentsTournamentIdJuryMembersGetResponses,
   GetTournamentNotificationsTournamentsTournamentIdNotificationsGetData,
   GetTournamentNotificationsTournamentsTournamentIdNotificationsGetErrors,
   GetTournamentNotificationsTournamentsTournamentIdNotificationsGetResponses,
@@ -267,6 +285,9 @@ import type {
   GetTournamentsTournamentsGetData,
   GetTournamentsTournamentsGetErrors,
   GetTournamentsTournamentsGetResponses,
+  GetTournamentTeamConflictsTournamentsTournamentIdTeamConflictsGetData,
+  GetTournamentTeamConflictsTournamentsTournamentIdTeamConflictsGetErrors,
+  GetTournamentTeamConflictsTournamentsTournamentIdTeamConflictsGetResponses,
   GetTournamentTimeWindowsTournamentsTournamentIdTimeWindowsGetData,
   GetTournamentTimeWindowsTournamentsTournamentIdTimeWindowsGetErrors,
   GetTournamentTimeWindowsTournamentsTournamentIdTimeWindowsGetResponses,
@@ -343,6 +364,12 @@ import type {
   SetScoreLinkValidityTournamentsTournamentIdScoreLinksScoreLinkIdValidityPutData,
   SetScoreLinkValidityTournamentsTournamentIdScoreLinksScoreLinkIdValidityPutErrors,
   SetScoreLinkValidityTournamentsTournamentIdScoreLinksScoreLinkIdValidityPutResponses,
+  SetStageItemLotsTournamentsTournamentIdStageItemsStageItemIdLotsPutData,
+  SetStageItemLotsTournamentsTournamentIdStageItemsStageItemIdLotsPutErrors,
+  SetStageItemLotsTournamentsTournamentIdStageItemsStageItemIdLotsPutResponses,
+  SetTeamConflictsTournamentsTournamentIdTeamsTeamIdConflictsPutData,
+  SetTeamConflictsTournamentsTournamentIdTeamsTeamIdConflictsPutErrors,
+  SetTeamConflictsTournamentsTournamentIdTeamsTeamIdConflictsPutResponses,
   SplitCourtTournamentsTournamentIdCourtsCourtIdSplitPostData,
   SplitCourtTournamentsTournamentIdCourtsCourtIdSplitPostErrors,
   SplitCourtTournamentsTournamentIdCourtsCourtIdSplitPostResponses,
@@ -352,6 +379,9 @@ import type {
   UpdateCategoryTournamentsTournamentIdCategoriesCategoryIdPutData,
   UpdateCategoryTournamentsTournamentIdCategoriesCategoryIdPutErrors,
   UpdateCategoryTournamentsTournamentIdCategoriesCategoryIdPutResponses,
+  UpdateCeremonySettingsTournamentsTournamentIdCeremonySettingsPutData,
+  UpdateCeremonySettingsTournamentsTournamentIdCeremonySettingsPutErrors,
+  UpdateCeremonySettingsTournamentsTournamentIdCeremonySettingsPutResponses,
   UpdateClubClubsClubIdPutData,
   UpdateClubClubsClubIdPutErrors,
   UpdateClubClubsClubIdPutResponses,
@@ -367,6 +397,9 @@ import type {
   UpdateEntryFeesTournamentsTournamentIdEntryFeesPutData,
   UpdateEntryFeesTournamentsTournamentIdEntryFeesPutErrors,
   UpdateEntryFeesTournamentsTournamentIdEntryFeesPutResponses,
+  UpdateJuryMemberTournamentsTournamentIdJuryMembersMemberIdPutData,
+  UpdateJuryMemberTournamentsTournamentIdJuryMembersMemberIdPutErrors,
+  UpdateJuryMemberTournamentsTournamentIdJuryMembersMemberIdPutResponses,
   UpdateMatchByIdTournamentsTournamentIdMatchesMatchIdPutData,
   UpdateMatchByIdTournamentsTournamentIdMatchesMatchIdPutErrors,
   UpdateMatchByIdTournamentsTournamentIdMatchesMatchIdPutResponses,
@@ -1123,6 +1156,39 @@ export const updateCategoryTournamentsTournamentIdCategoriesCategoryIdPut = <
   });
 
 /**
+ * Create Level Split Round
+ *
+ * A new round of groups composed by hand (e.g. by level, "nivådelt"), after the stages of the
+ * class. Nothing is placed from results, so it's also possible when results are hidden.
+ */
+export const createLevelSplitRoundTournamentsTournamentIdCategoriesCategoryIdLevelRoundPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    CreateLevelSplitRoundTournamentsTournamentIdCategoriesCategoryIdLevelRoundPostData,
+    ThrowOnError
+  >,
+): RequestResult<
+  CreateLevelSplitRoundTournamentsTournamentIdCategoriesCategoryIdLevelRoundPostResponses,
+  CreateLevelSplitRoundTournamentsTournamentIdCategoriesCategoryIdLevelRoundPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    CreateLevelSplitRoundTournamentsTournamentIdCategoriesCategoryIdLevelRoundPostResponses,
+    CreateLevelSplitRoundTournamentsTournamentIdCategoriesCategoryIdLevelRoundPostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/categories/{category_id}/level_round',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
  * Update Registration Settings
  */
 export const updateRegistrationSettingsTournamentsTournamentIdCategoriesCategoryIdRegistrationPut =
@@ -1232,6 +1298,36 @@ export const getCategoryWarningsTournamentsTournamentIdCategoryWarningsGet = <
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/tournaments/{tournament_id}/category_warnings',
     ...options,
+  });
+
+/**
+ * Update Ceremony Settings
+ */
+export const updateCeremonySettingsTournamentsTournamentIdCeremonySettingsPut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    UpdateCeremonySettingsTournamentsTournamentIdCeremonySettingsPutData,
+    ThrowOnError
+  >,
+): RequestResult<
+  UpdateCeremonySettingsTournamentsTournamentIdCeremonySettingsPutResponses,
+  UpdateCeremonySettingsTournamentsTournamentIdCeremonySettingsPutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    UpdateCeremonySettingsTournamentsTournamentIdCeremonySettingsPutResponses,
+    UpdateCeremonySettingsTournamentsTournamentIdCeremonySettingsPutErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/ceremony_settings',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 
 /**
@@ -1673,6 +1769,58 @@ export const updateEntryFeesTournamentsTournamentIdEntryFeesPut = <
   });
 
 /**
+ * Get Tournament Final Results
+ *
+ * Per class: the final placings, the prize ceremony time and the medals to hand out.
+ */
+export const getTournamentFinalResultsTournamentsTournamentIdFinalResultsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    GetTournamentFinalResultsTournamentsTournamentIdFinalResultsGetData,
+    ThrowOnError
+  >,
+): RequestResult<
+  GetTournamentFinalResultsTournamentsTournamentIdFinalResultsGetResponses,
+  GetTournamentFinalResultsTournamentsTournamentIdFinalResultsGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetTournamentFinalResultsTournamentsTournamentIdFinalResultsGetResponses,
+    GetTournamentFinalResultsTournamentsTournamentIdFinalResultsGetErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/final_results',
+    ...options,
+  });
+
+/**
+ * Export Final Results
+ *
+ * The final placings of all classes as a spreadsheet.
+ */
+export const exportFinalResultsTournamentsTournamentIdFinalResultsCsvGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ExportFinalResultsTournamentsTournamentIdFinalResultsCsvGetData, ThrowOnError>,
+): RequestResult<
+  ExportFinalResultsTournamentsTournamentIdFinalResultsCsvGetResponses,
+  ExportFinalResultsTournamentsTournamentIdFinalResultsCsvGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    ExportFinalResultsTournamentsTournamentIdFinalResultsCsvGetResponses,
+    ExportFinalResultsTournamentsTournamentIdFinalResultsCsvGetErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/final_results.csv',
+    ...options,
+  });
+
+/**
  * Create Jury Decision
  *
  * Logs a decision of the jury; with a card, it can add or remove suspended matches.
@@ -1725,6 +1873,111 @@ export const deleteJuryDecisionTournamentsTournamentIdJuryDecisionsDecisionIdDel
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/tournaments/{tournament_id}/jury_decisions/{decision_id}',
     ...options,
+  });
+
+/**
+ * Get Tournament Jury Members
+ *
+ * The cup's jury, with warnings for the NFF rules (at least 3, at most one per club).
+ */
+export const getTournamentJuryMembersTournamentsTournamentIdJuryMembersGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetTournamentJuryMembersTournamentsTournamentIdJuryMembersGetData, ThrowOnError>,
+): RequestResult<
+  GetTournamentJuryMembersTournamentsTournamentIdJuryMembersGetResponses,
+  GetTournamentJuryMembersTournamentsTournamentIdJuryMembersGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetTournamentJuryMembersTournamentsTournamentIdJuryMembersGetResponses,
+    GetTournamentJuryMembersTournamentsTournamentIdJuryMembersGetErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/jury_members',
+    ...options,
+  });
+
+/**
+ * Create Jury Member
+ */
+export const createJuryMemberTournamentsTournamentIdJuryMembersPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CreateJuryMemberTournamentsTournamentIdJuryMembersPostData, ThrowOnError>,
+): RequestResult<
+  CreateJuryMemberTournamentsTournamentIdJuryMembersPostResponses,
+  CreateJuryMemberTournamentsTournamentIdJuryMembersPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    CreateJuryMemberTournamentsTournamentIdJuryMembersPostResponses,
+    CreateJuryMemberTournamentsTournamentIdJuryMembersPostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/jury_members',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete Jury Member
+ */
+export const deleteJuryMemberTournamentsTournamentIdJuryMembersMemberIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    DeleteJuryMemberTournamentsTournamentIdJuryMembersMemberIdDeleteData,
+    ThrowOnError
+  >,
+): RequestResult<
+  DeleteJuryMemberTournamentsTournamentIdJuryMembersMemberIdDeleteResponses,
+  DeleteJuryMemberTournamentsTournamentIdJuryMembersMemberIdDeleteErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    DeleteJuryMemberTournamentsTournamentIdJuryMembersMemberIdDeleteResponses,
+    DeleteJuryMemberTournamentsTournamentIdJuryMembersMemberIdDeleteErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/jury_members/{member_id}',
+    ...options,
+  });
+
+/**
+ * Update Jury Member
+ */
+export const updateJuryMemberTournamentsTournamentIdJuryMembersMemberIdPut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<UpdateJuryMemberTournamentsTournamentIdJuryMembersMemberIdPutData, ThrowOnError>,
+): RequestResult<
+  UpdateJuryMemberTournamentsTournamentIdJuryMembersMemberIdPutResponses,
+  UpdateJuryMemberTournamentsTournamentIdJuryMembersMemberIdPutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    UpdateJuryMemberTournamentsTournamentIdJuryMembersMemberIdPutResponses,
+    UpdateJuryMemberTournamentsTournamentIdJuryMembersMemberIdPutErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/jury_members/{member_id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 
 /**
@@ -2438,7 +2691,8 @@ export const deleteClubOfCupTournamentsTournamentIdParticipatingClubsClubIdDelet
 /**
  * Update Club Of Cup
  *
- * Renames the club and sets exactly which teams belong to it.
+ * Renames the club, sets exactly which existing teams belong to it, creates new teams for it
+ * and sets whether its teams may play at the same time.
  */
 export const updateClubOfCupTournamentsTournamentIdParticipatingClubsClubIdPut = <
   ThrowOnError extends boolean = false,
@@ -2777,8 +3031,8 @@ export const updateRankingByIdTournamentsTournamentIdRankingsRankingIdPut = <
 /**
  * Register Team Publicly
  *
- * Public sign-up of a team (only for a public cup, an open class and before the deadline).
- * When the class is full, the team goes to the waitlist.
+ * Public sign-up of a team, or of several teams of a club at once (only for a public cup,
+ * open classes and before the deadline). When a class is full, the team goes to its waitlist.
  */
 export const registerTeamPubliclyTournamentsTournamentIdRegistrationPost = <
   ThrowOnError extends boolean = false,
@@ -3432,6 +3686,38 @@ export const updateStageItemInputTournamentsTournamentIdStageItemsStageItemIdInp
     });
 
 /**
+ * Set Stage Item Lots
+ *
+ * Enters the drawn lots of the group (the LOTS tiebreaker), then updates the table.
+ */
+export const setStageItemLotsTournamentsTournamentIdStageItemsStageItemIdLotsPut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    SetStageItemLotsTournamentsTournamentIdStageItemsStageItemIdLotsPutData,
+    ThrowOnError
+  >,
+): RequestResult<
+  SetStageItemLotsTournamentsTournamentIdStageItemsStageItemIdLotsPutResponses,
+  SetStageItemLotsTournamentsTournamentIdStageItemsStageItemIdLotsPutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    SetStageItemLotsTournamentsTournamentIdStageItemsStageItemIdLotsPutResponses,
+    SetStageItemLotsTournamentsTournamentIdStageItemsStageItemIdLotsPutErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/stage_items/{stage_item_id}/lots',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
  * Start Next Round
  */
 export const startNextRoundTournamentsTournamentIdStageItemsStageItemIdStartNextRoundPost = <
@@ -3644,6 +3930,34 @@ export const drawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPost = <
   });
 
 /**
+ * Get Tournament Team Conflicts
+ *
+ * Pairs of teams that must never play at the same time.
+ */
+export const getTournamentTeamConflictsTournamentsTournamentIdTeamConflictsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    GetTournamentTeamConflictsTournamentsTournamentIdTeamConflictsGetData,
+    ThrowOnError
+  >,
+): RequestResult<
+  GetTournamentTeamConflictsTournamentsTournamentIdTeamConflictsGetResponses,
+  GetTournamentTeamConflictsTournamentsTournamentIdTeamConflictsGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetTournamentTeamConflictsTournamentsTournamentIdTeamConflictsGetResponses,
+    GetTournamentTeamConflictsTournamentsTournamentIdTeamConflictsGetErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/team_conflicts',
+    ...options,
+  });
+
+/**
  * Get Teams
  *
  * Returns the teams of the tournament, optionally only those of one age class (`category_id`).
@@ -3787,6 +4101,38 @@ export const checkInTeamTournamentsTournamentIdTeamsTeamIdCheckInPut = <
     responseType: 'json',
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/tournaments/{tournament_id}/teams/{team_id}/check_in',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Set Team Conflicts
+ *
+ * Sets the teams that can't play at the same time as this one (shared coach or players).
+ */
+export const setTeamConflictsTournamentsTournamentIdTeamsTeamIdConflictsPut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    SetTeamConflictsTournamentsTournamentIdTeamsTeamIdConflictsPutData,
+    ThrowOnError
+  >,
+): RequestResult<
+  SetTeamConflictsTournamentsTournamentIdTeamsTeamIdConflictsPutResponses,
+  SetTeamConflictsTournamentsTournamentIdTeamsTeamIdConflictsPutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    SetTeamConflictsTournamentsTournamentIdTeamsTeamIdConflictsPutResponses,
+    SetTeamConflictsTournamentsTournamentIdTeamsTeamIdConflictsPutErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/teams/{team_id}/conflicts',
     ...options,
     headers: {
       'Content-Type': 'application/json',

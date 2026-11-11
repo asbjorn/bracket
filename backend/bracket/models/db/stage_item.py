@@ -2,11 +2,11 @@ from enum import auto
 from typing import Any, Self
 
 from heliclockter import datetime_utc
-from pydantic import Field, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 from bracket.models.db.shared import BaseModelORM
 from bracket.models.db.stage_item_inputs import StageItemInputCreateBody
-from bracket.utils.id_types import RankingId, StageId, StageItemId
+from bracket.utils.id_types import RankingId, StageId, StageItemId, StageItemInputId
 from bracket.utils.types import EnumAutoStr
 
 
@@ -81,3 +81,15 @@ class StageItemWithInputsCreate(StageItemCreateBody):
         ):
             raise ValueError("team_count doesn't match length of inputs")
         return values
+
+
+class StageItemLot(BaseModel):
+    stage_item_input_id: StageItemInputId
+    # Lower is better; `None` removes the entered lot (the fixed random order is used)
+    lot_number: int | None = Field(default=None, ge=1, le=999)
+
+
+class StageItemLotsBody(BaseModel):
+    """Drawing of lots for teams that are equal on everything else (tiebreaker LOTS)."""
+
+    lots: list[StageItemLot] = Field(max_length=64)

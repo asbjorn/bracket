@@ -14,6 +14,7 @@ from bracket.models.db.official import (
     PublicMatchOfficial,
 )
 from bracket.models.db.stage_item_inputs import StageItemInputFinal
+from bracket.sql.categories import get_all_categories_in_tournament
 from bracket.sql.stages import get_full_tournament_details
 from bracket.utils.id_types import CourtHostId, MatchId, OfficialId, TournamentId
 
@@ -184,6 +185,7 @@ async def get_match_slots(tournament_id: TournamentId) -> dict[MatchId, MatchSlo
     """Every match of the tournament with its time, court and the clubs of its teams."""
     slots = {}
     club_names = await get_club_names(tournament_id)
+    age_of_class = {c.id: c.age for c in await get_all_categories_in_tournament(tournament_id)}
     for stage in await get_full_tournament_details(tournament_id):
         for stage_item in stage.stage_items:
             for round_ in stage_item.rounds:
@@ -200,6 +202,15 @@ async def get_match_slots(tournament_id: TournamentId) -> dict[MatchId, MatchSlo
                         if isinstance(input_, StageItemInputFinal)
                     )
                     slots[match.id] = MatchSlot(
-                        match.id, match.start_time, end, match.court_id, clubs
+                        match.id,
+                        match.start_time,
+                        end,
+                        match.court_id,
+                        clubs,
+                        player_age=(
+                            age_of_class.get(stage.category_id)
+                            if stage.category_id is not None
+                            else None
+                        ),
                     )
     return slots

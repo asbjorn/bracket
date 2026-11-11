@@ -53,7 +53,9 @@ async def sql_update_ranking(
             draw_points = :draw_points,
             loss_points = :loss_points,
             add_score_points = :add_score_points,
-            tiebreakers = :tiebreakers
+            tiebreakers = :tiebreakers,
+            fair_play_yellow_points = :fair_play_yellow_points,
+            fair_play_red_points = :fair_play_red_points
         WHERE rankings.tournament_id = :tournament_id
         AND rankings.id = :ranking_id
         """
@@ -68,6 +70,8 @@ async def sql_update_ranking(
             "add_score_points": ranking_body.add_score_points,
             "position": ranking_body.position,
             "tiebreakers": [str(tiebreaker.value) for tiebreaker in ranking_body.tiebreakers],
+            "fair_play_yellow_points": ranking_body.fair_play_yellow_points,
+            "fair_play_red_points": ranking_body.fair_play_red_points,
         },
     )
     return [Ranking.model_validate(dict(x._mapping)) for x in result]

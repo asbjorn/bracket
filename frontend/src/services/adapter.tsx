@@ -17,7 +17,10 @@ import {
   StageItemInputOptionsResponse,
   StageRankingResponse,
   StagesWithStageItemsResponse,
+  FinalResultsResponse,
   FullTeamWithPlayers,
+  JuryMembersResponse,
+  TeamConflictsResponse,
   ParticipatingClubsResponse,
   TeamsWithPlayersResponse,
   PlanningHoursResponse,
@@ -214,6 +217,18 @@ export function getAllTeams(tournament_id: number): SWRResponse<FullTeamWithPlay
   return useSWR(['all-teams', tournament_id], () =>
     fetchAllTeams(`tournaments/${tournament_id}/teams`),
   );
+}
+
+export function getJuryMembers(tournament_id: number): SWRResponse<JuryMembersResponse> {
+  return useSWR(`tournaments/${tournament_id}/jury_members`, fetcher);
+}
+
+export function getFinalResults(tournament_id: number): SWRResponse<FinalResultsResponse> {
+  return useSWR(`tournaments/${tournament_id}/final_results`, fetcher, { refreshInterval: 30_000 });
+}
+
+export function getTeamConflicts(tournament_id: number): SWRResponse<TeamConflictsResponse> {
+  return useSWR(`tournaments/${tournament_id}/team_conflicts`, fetcher);
 }
 
 export function getTeamsLive(tournament_id: number | null): SWRResponse<TeamsWithPlayersResponse> {

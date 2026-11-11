@@ -94,6 +94,8 @@ class OfficialConflictKind(EnumAutoStr):
     DOUBLE_BOOKED = auto()
     OWN_CLUB = auto()
     INACTIVE = auto()
+    TOO_YOUNG = auto()
+    YOUNGER_THAN_PLAYERS = auto()
 
 
 class OfficialConflict(BaseModel):

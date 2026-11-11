@@ -43,12 +43,13 @@ async def sql_create_category(tournament_id: TournamentId, body: CategoryBody) -
     query = """
         INSERT INTO categories (
             created, tournament_id, name, age, results_public,
-            duration_minutes, margin_minutes, min_rest_minutes, game_format, max_matches_per_day
+            duration_minutes, margin_minutes, min_rest_minutes, game_format, max_matches_per_day,
+            kind, kind_note
         )
         VALUES (
             NOW(), :tournament_id, :name, :age, :results_public,
             :duration_minutes, :margin_minutes, :min_rest_minutes, :game_format,
-            :max_matches_per_day
+            :max_matches_per_day, :kind, :kind_note
         )
         RETURNING *
         """
@@ -59,6 +60,8 @@ async def sql_create_category(tournament_id: TournamentId, body: CategoryBody) -
             "name": body.name,
             "age": body.age,
             "results_public": body.get_results_public(),
+            "kind": body.kind.value if body.kind is not None else None,
+            "kind_note": body.kind_note or None,
             **timing_values(body),
         },
     )
@@ -74,7 +77,7 @@ async def sql_update_category(
         SET name = :name, age = :age, results_public = :results_public,
             duration_minutes = :duration_minutes, margin_minutes = :margin_minutes,
             min_rest_minutes = :min_rest_minutes, game_format = :game_format,
-            max_matches_per_day = :max_matches_per_day
+            max_matches_per_day = :max_matches_per_day, kind = :kind, kind_note = :kind_note
         WHERE categories.tournament_id = :tournament_id
         AND categories.id = :category_id
         RETURNING *
@@ -87,6 +90,8 @@ async def sql_update_category(
             "name": body.name,
             "age": body.age,
             "results_public": body.get_results_public(),
+            "kind": body.kind.value if body.kind is not None else None,
+            "kind_note": body.kind_note or None,
             **timing_values(body),
         },
     )

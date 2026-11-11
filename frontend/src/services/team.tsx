@@ -45,6 +45,7 @@ export async function updateTeam(
   player_ids: string[],
   category_id: number | null,
   club_id: number | null,
+  squad_size: number | null,
 ) {
   return awaitRequestAndHandleError(async (axios) =>
     axios.put(`tournaments/${tournament_id}/teams/${team_id}`, {
@@ -53,7 +54,14 @@ export async function updateTeam(
       player_ids,
       category_id,
       club_id,
+      squad_size,
     }),
+  );
+}
+
+export async function setTeamConflicts(tournament_id: number, team_id: number, team_ids: number[]) {
+  return awaitRequestAndHandleError(async (axios) =>
+    axios.put(`tournaments/${tournament_id}/teams/${team_id}/conflicts`, { team_ids }),
   );
 }
 

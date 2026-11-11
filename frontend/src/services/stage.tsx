@@ -1,4 +1,5 @@
-import { createAxios, handleRequestError } from './adapter';
+import { LevelRoundBody } from '@openapi';
+import { awaitRequestAndHandleError, createAxios, handleRequestError } from './adapter';
 
 export async function createStage(tournament_id: number, category_id: number | null) {
   return createAxios()
@@ -26,4 +27,14 @@ export async function deleteStage(tournament_id: number, stage_id: number) {
   return createAxios()
     .delete(`tournaments/${tournament_id}/stages/${stage_id}`)
     .catch((response: any) => handleRequestError(response));
+}
+
+export async function createLevelRound(
+  tournament_id: number,
+  category_id: number,
+  body: LevelRoundBody,
+) {
+  return awaitRequestAndHandleError(async (axios) =>
+    axios.post(`tournaments/${tournament_id}/categories/${category_id}/level_round`, body),
+  );
 }

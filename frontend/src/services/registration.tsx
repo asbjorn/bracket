@@ -86,3 +86,26 @@ export async function downloadRegistrationsCsv(tournament_id: number, language: 
     handleRequestError(error);
   }
 }
+
+export async function downloadFinalResultsCsv(tournament_id: number, language: string) {
+  try {
+    const response = await createAxios().get(`tournaments/${tournament_id}/final_results.csv`, {
+      params: { language },
+      responseType: 'blob',
+    });
+    const url = URL.createObjectURL(response.data);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = language === 'nb' ? 'resultater.csv' : 'results.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  } catch (error: any) {
+    handleRequestError(error);
+  }
+}
+
+export async function saveCeremonySettings(tournament_id: number, ceremony_offset_minutes: number) {
+  return awaitRequestAndHandleError(async (axios) =>
+    axios.put(`tournaments/${tournament_id}/ceremony_settings`, { ceremony_offset_minutes }),
+  );
+}

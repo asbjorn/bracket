@@ -2,7 +2,7 @@ from decimal import Decimal
 from enum import auto
 
 from heliclockter import datetime_utc
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from bracket.models.db.shared import BaseModelORM
 from bracket.utils.id_types import RankingId, TournamentId
@@ -19,6 +19,11 @@ class Tiebreaker(EnumAutoStr):
     GOALS_SCORED = auto()
     # Points in the matches between the teams that are still tied
     HEAD_TO_HEAD = auto()
+    # Fewest card points (yellow and red cards in the matches of the stage item)
+    FAIR_PLAY = auto()
+    # Drawing of lots: the lot numbers entered by the organiser (lowest first), otherwise a
+    # fixed random order per group
+    LOTS = auto()
 
 
 # Recommended for club cups: head-to-head comes last because it can be circular with 3 teams
@@ -39,6 +44,9 @@ class RankingInsertable(BaseModel):
     add_score_points: bool
     position: int
     tiebreakers: list[Tiebreaker] = DEFAULT_TIEBREAKERS
+    # Card points for the fair play tiebreaker (a second yellow counts as a red card)
+    fair_play_yellow_points: int = 1
+    fair_play_red_points: int = 3
 
 
 class Ranking(BaseModelORM, RankingInsertable):
@@ -54,6 +62,8 @@ class RankingBody(BaseModel):
     position: int
     # Required, so that leaving it out doesn't reset a configured order
     tiebreakers: list[Tiebreaker]
+    fair_play_yellow_points: int = Field(default=1, ge=0, le=100)
+    fair_play_red_points: int = Field(default=3, ge=0, le=100)
 
     _unique_tiebreakers = field_validator("tiebreakers")(check_unique_tiebreakers)
 

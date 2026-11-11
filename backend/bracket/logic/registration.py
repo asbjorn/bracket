@@ -21,16 +21,19 @@ from bracket.models.db.registration import (
     PublicRegistrationResult,
     Registration,
     RegistrationSettingsBody,
+    RegistrationTeam,
     RegistrationUpdateBody,
+    TeamRegistrationResult,
 )
 from bracket.models.db.team import PARTICIPATING_STATUSES, RegistrationStatus
 from bracket.models.db.tournament import TournamentStatus
+from bracket.models.db.user import UserPublic
 from bracket.sql.categories import get_all_categories_in_tournament
 from bracket.sql.stages import get_full_tournament_details
 from bracket.sql.tournaments import sql_get_tournament
 from bracket.sql.users import get_tournament_owner
 from bracket.utils.csv_export import to_csv
-from bracket.utils.id_types import CategoryId, TeamId, TournamentId
+from bracket.utils.id_types import CategoryId, ParticipatingClubId, TeamId, TournamentId
 
 # Teams (any status, also rejected) per tournament: a cap on what the public form can create
 MAX_TEAMS_PER_TOURNAMENT = 500
@@ -105,6 +108,9 @@ async def waitlist_place(category_id: CategoryId, team_id: TeamId) -> int | None
 async def register_team(
     tournament_id: TournamentId, body: PublicRegistrationBody, now: datetime_utc
 ) -> PublicRegistrationResult:
+    """Signs up the teams of the form (one, or several of a club), all or none."""
+    results: list[TeamRegistrationResult] = []
+    team_ids: list[TeamId] = []
     async with database.transaction():
         # One sign-up at a time per tournament (count and insert together), so two teams can't
         # take the last spot or pass the team limit. The tournament first, then the class.
@@ -113,99 +119,130 @@ async def register_team(
         )
         if tournament is None or tournament._mapping["status"] == TournamentStatus.ARCHIVED.value:
             raise bad_request("Registration for this cup is closed")
-        row = await database.fetch_one(
-            "SELECT * FROM categories WHERE id = :id AND tournament_id = :tournament_id FOR UPDATE",
-            values={"id": body.category_id, "tournament_id": tournament_id},
-        )
-        if row is None:
-            raise bad_request("This class doesn't exist")
-        category = Category.model_validate(dict(row._mapping))
-        if not is_open(category, now):
-            raise bad_request("Registration for this class is closed")
-        # The waitlist follows the order of the locks above, not of the requests
-        registered_at = datetime_utc.now()
-
-        team_count = int(
-            await database.fetch_val(
-                "SELECT count(*) FROM teams WHERE tournament_id = :tournament_id",
-                values={"tournament_id": tournament_id},
-            )
-        )
-        if team_count >= MAX_TEAMS_PER_TOURNAMENT:
-            raise bad_request("Too many teams are registered, please contact the organiser")
         # The same limits as when the organiser adds teams: the subscription of the owner
         owner = await get_tournament_owner(tournament_id)
         if owner is None:
             raise bad_request("Registration for this cup is closed")
-        check_requirement([None] * team_count, owner, "max_teams")
-
-        duplicate = await database.fetch_val(
-            """
-            SELECT count(*) FROM teams
-            WHERE category_id = :category_id AND lower(name) = lower(:name)
-            AND registration_status != 'REJECTED'
-            """,
-            values={"category_id": category.id, "name": body.team_name},
-        )
-        if int(duplicate) > 0:
-            raise bad_request("A team with this name is already registered in this class")
-
-        full = (
-            category.max_teams is not None
-            and await participating_count(category.id) >= category.max_teams
-        )
-        registration_status = RegistrationStatus.WAITLIST if full else RegistrationStatus.REGISTERED
         # The free-text club from the form: the cup's club with that name, or a new one
         club_id = (
             await find_or_create_club(tournament_id, body.club_name) if body.club_name else None
         )
-        team_id = await database.fetch_val(
+        for team in body.teams:
+            team_id, result = await register_one_team(
+                tournament_id, team, body, club_id, owner, now
+            )
+            team_ids.append(team_id)
+            results.append(result)
+
+    for team_id, result in zip(team_ids, results, strict=True):
+        await queue_registration_email(tournament_id, team_id, result.waitlist_place)
+    first = results[0]
+    return PublicRegistrationResult(
+        team_name=first.team_name,
+        registration_status=first.registration_status,
+        waitlist_place=first.waitlist_place,
+        teams=results,
+    )
+
+
+async def register_one_team(  # pylint: disable=too-many-arguments
+    tournament_id: TournamentId,
+    team: RegistrationTeam,
+    body: PublicRegistrationBody,
+    club_id: ParticipatingClubId | None,
+    owner: UserPublic,
+    now: datetime_utc,
+) -> tuple[TeamId, TeamRegistrationResult]:
+    """One team of a sign-up, inside its transaction (the tournament row is locked)."""
+    row = await database.fetch_one(
+        "SELECT * FROM categories WHERE id = :id AND tournament_id = :tournament_id FOR UPDATE",
+        values={"id": team.category_id, "tournament_id": tournament_id},
+    )
+    if row is None:
+        raise bad_request("This class doesn't exist")
+    category = Category.model_validate(dict(row._mapping))
+    if not is_open(category, now):
+        raise bad_request("Registration for this class is closed")
+    # The waitlist follows the order of the locks, not of the requests
+    registered_at = datetime_utc.now()
+
+    team_count = int(
+        await database.fetch_val(
+            "SELECT count(*) FROM teams WHERE tournament_id = :tournament_id",
+            values={"tournament_id": tournament_id},
+        )
+    )
+    if team_count >= MAX_TEAMS_PER_TOURNAMENT:
+        raise bad_request("Too many teams are registered, please contact the organiser")
+    check_requirement([None] * team_count, owner, "max_teams")
+
+    duplicate = await database.fetch_val(
+        """
+        SELECT count(*) FROM teams
+        WHERE category_id = :category_id AND lower(name) = lower(:name)
+        AND registration_status != 'REJECTED'
+        """,
+        values={"category_id": category.id, "name": team.team_name},
+    )
+    if int(duplicate) > 0:
+        raise bad_request("A team with this name is already registered in this class")
+
+    full = (
+        category.max_teams is not None
+        and await participating_count(category.id) >= category.max_teams
+    )
+    registration_status = RegistrationStatus.WAITLIST if full else RegistrationStatus.REGISTERED
+    team_id = TeamId(
+        await database.fetch_val(
             """
             INSERT INTO teams (
                 name, created, tournament_id, active, elo_score, swiss_score, wins, draws,
-                losses, category_id, club_id, registration_status
+                losses, category_id, club_id, registration_status, squad_size
             )
             VALUES (
                 :name, :now, :tournament_id, true, 1200, 0, 0, 0, 0, :category_id, :club_id,
-                :registration_status
+                :registration_status, :squad_size
             )
             RETURNING id
             """,
             values={
-                "name": body.team_name,
+                "name": team.team_name,
                 "now": registered_at,
                 "tournament_id": tournament_id,
                 "category_id": category.id,
                 "club_id": club_id,
                 "registration_status": registration_status.value,
+                "squad_size": team.squad_size,
             },
         )
-        await database.execute(
-            """
-            INSERT INTO team_registrations (
-                team_id, tournament_id, contact_name, contact_email, contact_phone, comment,
-                registered_at
-            )
-            VALUES (
-                :team_id, :tournament_id, :contact_name, :contact_email, :contact_phone,
-                :comment, :now
-            )
-            """,
-            values={
-                "team_id": team_id,
-                "tournament_id": tournament_id,
-                "contact_name": body.contact_name,
-                "contact_email": str(body.contact_email),
-                "contact_phone": body.contact_phone,
-                "comment": body.comment or None,
-                "now": registered_at,
-            },
+    )
+    await database.execute(
+        """
+        INSERT INTO team_registrations (
+            team_id, tournament_id, contact_name, contact_email, contact_phone, comment,
+            registered_at
         )
-        place = await waitlist_place(category.id, team_id) if full else None
-
-    await queue_registration_email(tournament_id, TeamId(team_id), place)
-    return PublicRegistrationResult(
-        team_name=body.team_name, registration_status=registration_status, waitlist_place=place
+        VALUES (
+            :team_id, :tournament_id, :contact_name, :contact_email, :contact_phone,
+            :comment, :now
+        )
+        """,
+        values={
+            "team_id": team_id,
+            "tournament_id": tournament_id,
+            "contact_name": body.contact_name,
+            "contact_email": str(body.contact_email),
+            "contact_phone": body.contact_phone,
+            "comment": body.comment or None,
+            "now": registered_at,
+        },
+    )
+    place = await waitlist_place(category.id, team_id) if full else None
+    return team_id, TeamRegistrationResult(
+        team_name=team.team_name,
+        category_id=category.id,
+        registration_status=registration_status,
+        waitlist_place=place,
     )
 
 

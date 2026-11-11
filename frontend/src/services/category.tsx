@@ -1,4 +1,4 @@
-import { GameFormat, SingleCategoryResponse } from '@openapi';
+import { CategoryKind, GameFormat, SingleCategoryResponse } from '@openapi';
 import { awaitRequestAndHandleError } from './adapter';
 
 export interface CategoryValues {
@@ -10,6 +10,8 @@ export interface CategoryValues {
   min_rest_minutes: number | null;
   game_format: GameFormat | null;
   max_matches_per_day: number | null;
+  kind: CategoryKind | null;
+  kind_note: string | null;
 }
 
 export async function createCategory(tournament_id: number, values: CategoryValues) {

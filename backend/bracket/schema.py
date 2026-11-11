@@ -66,6 +66,8 @@ tournaments = Table(
         server_default="OPEN",
         index=True,
     ),
+    # Minutes after a class's last match until its prize ceremony (suggestion)
+    Column("ceremony_offset_minutes", Integer, nullable=False, server_default="15"),
 )
 
 categories = Table(
@@ -97,6 +99,9 @@ categories = Table(
     # NULL: the default for the age (see max_matches_per_day_for_age)
     Column("max_matches_per_day", Integer, nullable=True),
     UniqueConstraint("tournament_id", "name"),
+    # BOYS, GIRLS or MIXED (NULL: not given), with a note, e.g. "girls may play a year down"
+    Column("kind", Text, nullable=True),
+    Column("kind_note", Text, nullable=True),
 )
 
 # The periods in which matches can be played, e.g. one per day; a lunch break is the gap between
@@ -207,6 +212,8 @@ stage_item_inputs = Table(
     # Every row is one kind of input (empty, team, group placing or best placed); a team can be
     # set on top of a placing. Keeps rows from ending up as something no code can read.
     CheckConstraint(STAGE_ITEM_INPUT_KIND_CHECK, name="stage_item_inputs_kind_check"),
+    # Drawing of lots (manual, lower is better) as the last tiebreaker
+    Column("lot_number", Integer, nullable=True),
 )
 
 rounds = Table(
@@ -298,6 +305,8 @@ participating_clubs = Table(
         text("lower(name)"),
         unique=True,
     ),
+    # The club's teams never play at the same time (shared coaches or players)
+    Column("no_overlap", Boolean, nullable=False, server_default="f"),
 )
 
 teams = Table(
@@ -328,6 +337,8 @@ teams = Table(
     Column("checked_in", Boolean, nullable=False, server_default="f"),
     # APPROVED / REGISTERED teams take part; WAITLIST and REJECTED teams don't
     Column("registration_status", Text, nullable=False, index=True, server_default="APPROVED"),
+    # Players in the squad, e.g. for counting medals
+    Column("squad_size", Integer, nullable=True),
 )
 
 # Contact details of a registered team: personal data, only for the organiser
@@ -448,6 +459,9 @@ rankings = Table(
         nullable=False,
         server_default=text("'{GOAL_DIFFERENCE,GOALS_SCORED,HEAD_TO_HEAD}'::text[]"),
     ),
+    # Fair play tiebreaker: penalty points per card (fewer is better)
+    Column("fair_play_yellow_points", Integer, nullable=False, server_default="1"),
+    Column("fair_play_red_points", Integer, nullable=False, server_default="3"),
 )
 
 
@@ -626,6 +640,8 @@ jury_decisions = Table(
     Column("suspension_change", Integer, nullable=False, server_default="0"),
     Column("decided_at", DateTimeTZ, nullable=False, server_default=func.now()),
     Column("decided_by", BigInteger, ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
+    # Jury members who took the decision
+    Column("member_ids", ARRAY(BigInteger), nullable=False, server_default="{}"),
 )
 
 
@@ -680,4 +696,43 @@ notifications_sent = Table(
     Column("claimed_at", DateTimeTZ, nullable=True),
     Column("sent_at", DateTimeTZ, nullable=True),
     UniqueConstraint("tournament_id", "dedupe_key"),
+)
+
+
+# Two teams that must never play at the same time (they share coaches or players)
+team_conflicts = Table(
+    "team_conflicts",
+    metadata,
+    Column("id", BigInteger, primary_key=True, index=True),
+    Column(
+        "tournament_id",
+        BigInteger,
+        ForeignKey("tournaments.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    ),
+    Column("team1_id", BigInteger, ForeignKey("teams.id", ondelete="CASCADE"), nullable=False),
+    Column("team2_id", BigInteger, ForeignKey("teams.id", ondelete="CASCADE"), nullable=False),
+    UniqueConstraint("team1_id", "team2_id"),
+    CheckConstraint("team1_id < team2_id", name="team_conflicts_ordered"),
+)
+
+# The cup's jury (NFF: at least three members, at most one per club)
+jury_members = Table(
+    "jury_members",
+    metadata,
+    Column("id", BigInteger, primary_key=True, index=True),
+    Column(
+        "tournament_id",
+        BigInteger,
+        ForeignKey("tournaments.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    ),
+    Column("name", Text, nullable=False),
+    Column("club_name", Text, nullable=True),
+    Column("phone", Text, nullable=True),
+    # CHAIR or MEMBER
+    Column("role", Text, nullable=False, server_default="MEMBER"),
+    Column("created", DateTimeTZ, nullable=False, server_default=func.now()),
 )

@@ -32,7 +32,14 @@ import {
   nffPreset,
 } from '@components/utils/nff_presets';
 import { TimeField } from '@components/utils/time_fields';
-import { CapacityCourts, CapacityResult, CupSetupClass, GameFormat, PlayoffPreset } from '@openapi';
+import {
+  CapacityCourts,
+  CapacityResult,
+  CategoryKind,
+  CupSetupClass,
+  GameFormat,
+  PlayoffPreset,
+} from '@openapi';
 import { TimeWindowValue } from '@services/planning';
 
 // Shared by the capacity calculator and the cup setup wizard: what is calculated is what gets
@@ -45,10 +52,22 @@ const YOUTH_FOOTBALL_MIN_AGE = 13;
 /** A class as edited: its days/hours are kept as days + times and turned into windows at the end. */
 export type PlanClass = CupSetupClass & { hours: DaysHours };
 
+const KIND_LETTER: Record<CategoryKind, string> = { BOYS: 'G', GIRLS: 'J', MIXED: 'M' };
+const LETTER_KIND: Record<string, CategoryKind> = { G: 'BOYS', J: 'GIRLS', M: 'MIXED' };
+
+/** A name like "G10": the letter of the kind (G boys, J girls, M mixed) and the age. */
+const AUTO_NAME = /^([GJKMgjkm])(\d+)$/;
+
+export function kindOfName(name: string): CategoryKind | null {
+  const match = name.match(AUTO_NAME);
+  return match != null ? (LETTER_KIND[match[1].toUpperCase()] ?? null) : null;
+}
+
 export function newClass(name: string, age: number): PlanClass {
   const preset = nffPreset(age);
   return {
     name,
+    kind: kindOfName(name),
     age,
     team_count: 8,
     group_size: 4,
@@ -177,7 +196,7 @@ function ClassRow({
             // Follow the NFF suggestions for the new age, playoffs included
             const age = Number(input);
             // A name like "G10" follows the age ("G9"); a name of its own is kept
-            const autoName = value.name.match(/^([GJKgjk])(\d+)$/);
+            const autoName = value.name.match(AUTO_NAME);
             const followsAge = autoName != null && Number(autoName[2]) === value.age;
             update({
               name: followsAge ? `${autoName[1]}${age}` : value.name,
@@ -191,6 +210,32 @@ function ClassRow({
           }}
         />
       </Table.Td>
+      {withResultsPublic ? (
+        <Table.Td>
+          <Select
+            data={(['BOYS', 'GIRLS', 'MIXED'] as CategoryKind[]).map((kind) => ({
+              value: kind,
+              label: t(`category_kind_${kind.toLowerCase()}`),
+            }))}
+            value={value.kind}
+            placeholder="–"
+            clearable
+            w="7rem"
+            onChange={(selected) => {
+              const kind = selected as CategoryKind | null;
+              // An automatic name follows the kind: "G10" becomes "J10" for girls
+              const autoName = value.name.match(AUTO_NAME);
+              update({
+                kind,
+                name:
+                  autoName != null && kind != null
+                    ? `${KIND_LETTER[kind]}${autoName[2]}`
+                    : value.name,
+              });
+            }}
+          />
+        </Table.Td>
+      ) : null}
       {withResultsPublic ? (
         <Table.Td>
           <Checkbox
@@ -321,6 +366,7 @@ export function ClassesEditor({
             <Table.Tr>
               <Table.Th>{t('name_input_label')}</Table.Th>
               <Table.Th>{t('category_age_input_label')}</Table.Th>
+              {withResultsPublic ? <Table.Th>{t('category_kind_label')}</Table.Th> : null}
               {withResultsPublic ? <Table.Th>{t('results_public_short_label')}</Table.Th> : null}
               <Table.Th>{t('capacity_teams_header')}</Table.Th>
               <Table.Th>{t('capacity_group_size_header')}</Table.Th>

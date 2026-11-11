@@ -25,6 +25,8 @@ class StageItemInputGeneric(BaseModel):
     goals_against: int = 0
     # Place in the ranking of the stage item (1 = first), after applying the tiebreakers
     position: int | None = None
+    # Drawing of lots, entered by the organiser (lower is better)
+    lot_number: int | None = None
 
     @property
     def elo(self) -> Decimal:

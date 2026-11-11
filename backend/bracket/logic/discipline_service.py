@@ -23,6 +23,7 @@ from bracket.sql.discipline import (
     get_discipline_settings,
     get_jury_decisions,
 )
+from bracket.sql.jury import get_jury_members
 from bracket.sql.stages import get_full_tournament_details
 from bracket.sql.teams import get_team_by_id
 from bracket.utils.id_types import MatchId, TeamId, TournamentId
@@ -137,5 +138,9 @@ async def check_jury_decision(tournament_id: TournamentId, body: JuryDecisionBod
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Could not find the match")
     if body.team_id is not None and await get_team_by_id(body.team_id, tournament_id) is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Could not find the team")
+    if body.member_ids and not set(body.member_ids) <= {
+        member.id for member in await get_jury_members(tournament_id)
+    }:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Could not find the jury member")
     if body.suspension_change != 0 and body.card_id is None:
         raise bad_request("Choose the card whose suspension changes")

@@ -36,6 +36,8 @@ async def test_rankings_endpoint(
                     "loss_points": "0.0",
                     "add_score_points": False,
                     "tiebreakers": ["GOAL_DIFFERENCE", "GOALS_SCORED", "HEAD_TO_HEAD"],
+                    "fair_play_yellow_points": 1,
+                    "fair_play_red_points": 3,
                     "tournament_id": auth_context.tournament.id,
                 }
             ],

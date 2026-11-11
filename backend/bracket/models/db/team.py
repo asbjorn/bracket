@@ -53,6 +53,7 @@ class TeamInsertable(BaseModelORM):
     logo_path: str | None = None
     category_id: CategoryId | None = None
     club_id: ParticipatingClubId | None = None
+    squad_size: int | None = None
     withdrawn: bool = False
     checked_in: bool = False
     registration_status: RegistrationStatus = RegistrationStatus.APPROVED
@@ -74,6 +75,7 @@ class TeamWithPlayers(BaseModel):
     logo_path: str | None = None
     category_id: CategoryId | None = None
     club_id: ParticipatingClubId | None = None
+    squad_size: int | None = None
     withdrawn: bool = False
     checked_in: bool = False
     registration_status: RegistrationStatus = RegistrationStatus.APPROVED
@@ -103,16 +105,41 @@ ClubName = Annotated[
 ]
 
 
+MAX_SQUAD_SIZE = 60
+# Room for a club name (max 50) plus class and number, e.g. "Sandnes IL G9 2"
+MAX_TEAM_NAME_LENGTH = 50
+TeamName = Annotated[
+    str,
+    StringConstraints(min_length=1, max_length=MAX_TEAM_NAME_LENGTH, strip_whitespace=True),
+    SingleLine,
+]
+
+
 class TeamBody(BaseModelORM):
-    name: Annotated[str, StringConstraints(min_length=1, max_length=30), SingleLine]
+    name: TeamName
     active: bool
     player_ids: set[PlayerId]
     category_id: CategoryId | None = None
     # Empty: the draw takes the club from the name without a trailing number ("Brann 2" -> Brann)
     club_id: ParticipatingClubId | None = None
+    # Players in the squad (e.g. for counting medals)
+    squad_size: int | None = Field(default=None, ge=1, le=MAX_SQUAD_SIZE)
 
 
 class TeamMultiBody(BaseModelORM):
     names: str = Field(..., min_length=1)
     active: bool
     category_id: CategoryId | None = None
+
+
+class TeamConflict(BaseModel):
+    """Two teams that must never play at the same time (they share coaches or players)."""
+
+    team1_id: TeamId
+    team2_id: TeamId
+
+
+class TeamConflictsBody(BaseModel):
+    """Exactly the teams that can't play at the same time as this team."""
+
+    team_ids: list[TeamId] = Field(default=[], max_length=50)

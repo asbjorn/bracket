@@ -4,7 +4,11 @@ import pytest
 from heliclockter import datetime_utc
 
 from bracket.logic.ranking.statistics import TeamStatistics
-from bracket.logic.ranking.tiebreakers import head_to_head_points, order_by_ranking
+from bracket.logic.ranking.tiebreakers import (
+    TiebreakerData,
+    head_to_head_points,
+    order_by_ranking,
+)
 from bracket.models.db.match import MatchWithDetailsDefinitive
 from bracket.models.db.ranking import DEFAULT_TIEBREAKERS, Ranking, RankingBody, Tiebreaker
 from bracket.models.db.stage_item_inputs import StageItemInputEmpty
@@ -151,3 +155,33 @@ def test_tiebreakers_must_be_unique() -> None:
             position=0,
             tiebreakers=[Tiebreaker.HEAD_TO_HEAD, Tiebreaker.HEAD_TO_HEAD],
         )
+
+
+def test_fair_play_fewest_card_points_first() -> None:
+    inputs = [StageItemInputId(1), StageItemInputId(2), StageItemInputId(3)]
+    equal = {input_id: stats(3, 2, 2) for input_id in inputs}
+    data = TiebreakerData(card_points={StageItemInputId(1): 4, StageItemInputId(2): 1})
+    order = order_by_ranking(
+        inputs, equal, [], ranking([Tiebreaker.FAIR_PLAY]), use_tiebreakers=True, data=data
+    )
+    # No cards is best, then 1 point, then 4
+    assert order == [StageItemInputId(3), StageItemInputId(2), StageItemInputId(1)]
+
+
+def test_lots_entered_first_then_fixed_random_order() -> None:
+    inputs = [StageItemInputId(i) for i in range(1, 6)]
+    equal = {input_id: stats(3, 2, 2) for input_id in inputs}
+    lots = ranking([Tiebreaker.LOTS])
+
+    def order(data: TiebreakerData) -> list[StageItemInputId]:
+        return order_by_ranking(inputs, equal, [], lots, use_tiebreakers=True, data=data)
+
+    # Without entered lots: random, but the same every time for the same group
+    assert order(TiebreakerData(lots_seed=7)) == order(TiebreakerData(lots_seed=7))
+    assert sorted(order(TiebreakerData(lots_seed=7))) == inputs
+    assert len({tuple(order(TiebreakerData(lots_seed=seed))) for seed in range(20)}) > 1
+    # Entered lots win, lowest first, ahead of the teams without one
+    entered = TiebreakerData(
+        lot_numbers={StageItemInputId(4): 2, StageItemInputId(2): 1}, lots_seed=7
+    )
+    assert order(entered)[:2] == [StageItemInputId(2), StageItemInputId(4)]

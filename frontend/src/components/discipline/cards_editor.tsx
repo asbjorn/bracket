@@ -7,6 +7,7 @@ import {
   Group,
   NumberInput,
   SegmentedControl,
+  SimpleGrid,
   Stack,
   Text,
   TextInput,
@@ -154,11 +155,16 @@ export function CardsEditor({
           style={{ flexGrow: 1 }}
         />
       </Group>
-      <Group grow>
+      <SimpleGrid cols={3} spacing="xs">
         {(['YELLOW', 'YELLOW_RED', 'RED'] as CardType[]).map((cardType) => (
           <Button
             key={cardType}
             size="md"
+            h="auto"
+            py="xs"
+            px="xs"
+            // Labels may wrap on a phone instead of being cut off
+            styles={{ label: { whiteSpace: 'normal', textAlign: 'center', lineHeight: 1.2 } }}
             variant="light"
             color={CARD_COLORS[cardType]}
             leftSection={<CardIcon type={cardType} />}
@@ -169,7 +175,7 @@ export function CardsEditor({
             {t(`card_type_${cardType.toLowerCase()}`)}
           </Button>
         ))}
-      </Group>
+      </SimpleGrid>
       {cards.length < 1 ? (
         <Badge variant="light" color="gray">
           {t('no_cards_badge')}

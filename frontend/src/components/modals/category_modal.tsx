@@ -3,6 +3,7 @@ import {
   Button,
   Fieldset,
   Grid,
+  Group,
   Modal,
   NumberInput,
   Select,
@@ -24,7 +25,7 @@ import {
 } from '@components/scheduling/days_hours_editor';
 import { GAME_FORMATS } from '@components/scheduling/match_plan_panel';
 import { defaultMaxMatchesPerDay } from '@components/utils/nff_presets';
-import { CategoriesResponse, Category, GameFormat } from '@openapi';
+import { CategoriesResponse, Category, CategoryKind, GameFormat } from '@openapi';
 import { getPlanningHours, getTimeWindows, requestSucceeded } from '@services/adapter';
 import { CategoryValues, createCategory, updateCategory } from '@services/category';
 import { saveCategoryHours } from '@services/planning';
@@ -68,6 +69,8 @@ export default function CategoryModal({
     min_rest_minutes: number | string;
     game_format: string | null;
     max_matches_per_day: number | string;
+    kind: string | null;
+    kind_note: string;
   }>({
     initialValues: {
       name: category?.name ?? '',
@@ -78,6 +81,8 @@ export default function CategoryModal({
       min_rest_minutes: category?.min_rest_minutes ?? '',
       game_format: category?.game_format ?? null,
       max_matches_per_day: category?.max_matches_per_day ?? '',
+      kind: category?.kind ?? null,
+      kind_note: category?.kind_note ?? '',
     },
     validate: {
       name: (value) => (value.trim().length > 0 ? null : t('too_short_name_validation')),
@@ -113,6 +118,8 @@ export default function CategoryModal({
             min_rest_minutes: optionalNumber(values.min_rest_minutes),
             game_format: values.game_format as GameFormat | null,
             max_matches_per_day: optionalNumber(values.max_matches_per_day),
+            kind: values.kind as CategoryKind | null,
+            kind_note: values.kind_note.trim() === '' ? null : values.kind_note.trim(),
           };
           const result =
             category == null
@@ -155,6 +162,23 @@ export default function CategoryModal({
             }
           }}
         />
+        <Group mt="md" align="end" grow>
+          <Select
+            label={t('category_kind_label')}
+            data={(['BOYS', 'GIRLS', 'MIXED'] as CategoryKind[]).map((kind) => ({
+              value: kind,
+              label: t(`category_kind_${kind.toLowerCase()}`),
+            }))}
+            clearable
+            {...form.getInputProps('kind')}
+          />
+          <TextInput
+            label={t('category_kind_note_label')}
+            placeholder={t('category_kind_note_placeholder')}
+            maxLength={200}
+            {...form.getInputProps('kind_note')}
+          />
+        </Group>
         <Switch
           mt="lg"
           label={t('results_public_label')}

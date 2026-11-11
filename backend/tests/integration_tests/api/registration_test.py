@@ -342,3 +342,62 @@ async def test_concurrent_sign_ups_are_serialised(
     finally:
         public_sign_ups.hits.clear()
         await delete_cup(auth_context)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_club_signs_up_several_teams(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    """One form, three teams of a club: same contact and club, per-class waitlist; all or none."""
+    tournament_id = auth_context.tournament.id
+    public_sign_ups.hits.clear()
+    try:
+        category_id = await create_class(auth_context, {"registration_open": True, "max_teams": 2})
+        body = sign_up(category_id, "ignored") | {
+            "category_id": None,
+            "team_name": None,
+            "club_name": "Sandviken",
+            "teams": [
+                {"category_id": category_id, "team_name": "Sandviken 1", "squad_size": 9},
+                {"category_id": category_id, "team_name": "Sandviken 2", "squad_size": None},
+                {"category_id": category_id, "team_name": "Sandviken 3", "squad_size": 8},
+            ],
+        }
+        result = (await public_post(tournament_id, body))["data"]
+        assert [
+            (t["team_name"], t["registration_status"], t["waitlist_place"]) for t in result["teams"]
+        ] == [
+            ("Sandviken 1", "REGISTERED", None),
+            ("Sandviken 2", "REGISTERED", None),
+            ("Sandviken 3", "WAITLIST", 1),
+        ]
+        registrations = await send_tournament_request(HTTPMethod.GET, "registrations", auth_context)
+        assert {r["club_name"] for r in registrations["data"]} == {"Sandviken"}
+        assert {r["contact_email"] for r in registrations["data"]} == {EMAIL}
+        teams = await send_tournament_request(HTTPMethod.GET, "teams", auth_context)
+        assert sorted((t["name"], t["squad_size"]) for t in teams["data"]["teams"]) == [
+            ("Sandviken 1", 9),
+            ("Sandviken 2", None),
+        ]
+
+        # All or none: a duplicate name in the form stops the whole sign-up
+        again = body | {
+            "teams": [
+                {"category_id": category_id, "team_name": "Nytt lag", "squad_size": None},
+                {"category_id": category_id, "team_name": "sandviken 1", "squad_size": None},
+            ]
+        }
+        response = await public_post(tournament_id, again)
+        assert response == {"detail": "A team with this name is already registered in this class"}
+        registrations = await send_tournament_request(HTTPMethod.GET, "registrations", auth_context)
+        assert "Nytt lag" not in str(registrations)
+
+        twice = body | {
+            "teams": [
+                {"category_id": category_id, "team_name": "Lyn", "squad_size": None},
+                {"category_id": category_id, "team_name": "LYN", "squad_size": None},
+            ]
+        }
+        assert "same name" in str(await public_post(tournament_id, twice))
+    finally:
+        await delete_cup(auth_context)

@@ -5,6 +5,7 @@ import {
   DisciplineOverviewResponse,
   DisciplineSettingsBody,
   JuryDecisionBody,
+  JuryMemberBody,
   MatchCardBody,
   MatchCardResponse,
   StageWithStageItems,
@@ -83,5 +84,27 @@ export async function createCardAtPitch(token: string, match_id: number, body: M
 export async function deleteCardAtPitch(token: string, card_id: number) {
   return awaitRequestAndHandleError(async (axios) =>
     axios.delete(`score/${token}/cards/${card_id}`),
+  );
+}
+
+export async function createJuryMember(tournament_id: number, body: JuryMemberBody) {
+  return awaitRequestAndHandleError(async (axios) =>
+    axios.post(`tournaments/${tournament_id}/jury_members`, body),
+  );
+}
+
+export async function updateJuryMember(
+  tournament_id: number,
+  member_id: number,
+  body: JuryMemberBody,
+) {
+  return awaitRequestAndHandleError(async (axios) =>
+    axios.put(`tournaments/${tournament_id}/jury_members/${member_id}`, body),
+  );
+}
+
+export async function deleteJuryMember(tournament_id: number, member_id: number) {
+  return awaitRequestAndHandleError(async (axios) =>
+    axios.delete(`tournaments/${tournament_id}/jury_members/${member_id}`),
   );
 }

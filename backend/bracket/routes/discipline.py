@@ -8,10 +8,16 @@ from bracket.logic.discipline_service import (
     get_discipline_overview,
 )
 from bracket.models.db.discipline import DisciplineSettingsBody, JuryDecisionBody, MatchCardBody
+from bracket.models.db.jury import MAX_JURY_MEMBERS, JuryMemberBody, JuryOverview, jury_warnings
 from bracket.models.db.tournament import Tournament
 from bracket.models.db.user import UserPublic
 from bracket.routes.auth import user_authenticated_for_tournament
-from bracket.routes.models import DisciplineOverviewResponse, MatchCardResponse, SuccessResponse
+from bracket.routes.models import (
+    DisciplineOverviewResponse,
+    JuryMembersResponse,
+    MatchCardResponse,
+    SuccessResponse,
+)
 from bracket.routes.util import disallow_archived_tournament
 from bracket.sql.discipline import (
     sql_create_card,
@@ -19,6 +25,12 @@ from bracket.sql.discipline import (
     sql_delete_card,
     sql_delete_jury_decision,
     sql_set_discipline_settings,
+)
+from bracket.sql.jury import (
+    get_jury_members,
+    sql_create_jury_member,
+    sql_delete_jury_member,
+    sql_update_jury_member,
 )
 from bracket.utils.id_types import JuryDecisionId, MatchCardId, MatchId, TournamentId
 
@@ -95,4 +107,54 @@ async def delete_jury_decision(
 ) -> SuccessResponse:
     if not await sql_delete_jury_decision(tournament_id, decision_id):
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Could not find the decision")
+    return SuccessResponse()
+
+
+@router.get("/tournaments/{tournament_id}/jury_members", response_model=JuryMembersResponse)
+async def get_tournament_jury_members(
+    tournament_id: TournamentId,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+) -> JuryMembersResponse:
+    """The cup's jury, with warnings for the NFF rules (at least 3, at most one per club)."""
+    members = await get_jury_members(tournament_id)
+    return JuryMembersResponse(data=JuryOverview(members=members, warnings=jury_warnings(members)))
+
+
+@router.post("/tournaments/{tournament_id}/jury_members", response_model=SuccessResponse)
+async def create_jury_member(
+    tournament_id: TournamentId,
+    body: JuryMemberBody,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+    __: Tournament = Depends(disallow_archived_tournament),
+) -> SuccessResponse:
+    if len(await get_jury_members(tournament_id)) >= MAX_JURY_MEMBERS:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "The jury is full")
+    await sql_create_jury_member(tournament_id, body)
+    return SuccessResponse()
+
+
+@router.put("/tournaments/{tournament_id}/jury_members/{member_id}", response_model=SuccessResponse)
+async def update_jury_member(
+    tournament_id: TournamentId,
+    member_id: int,
+    body: JuryMemberBody,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+    __: Tournament = Depends(disallow_archived_tournament),
+) -> SuccessResponse:
+    if not await sql_update_jury_member(tournament_id, member_id, body):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Could not find the jury member")
+    return SuccessResponse()
+
+
+@router.delete(
+    "/tournaments/{tournament_id}/jury_members/{member_id}", response_model=SuccessResponse
+)
+async def delete_jury_member(
+    tournament_id: TournamentId,
+    member_id: int,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+    __: Tournament = Depends(disallow_archived_tournament),
+) -> SuccessResponse:
+    if not await sql_delete_jury_member(tournament_id, member_id):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Could not find the jury member")
     return SuccessResponse()

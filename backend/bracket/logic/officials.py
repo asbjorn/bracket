@@ -7,6 +7,8 @@ Conflicts (warnings for the organiser, nothing is blocked):
   (a match lasts its duration plus margin).
 - OWN_CLUB: a referee of a match where a team of their own club plays.
 - INACTIVE: an official marked as not active still has matches.
+- TOO_YOUNG: a referee younger than 13 (NFF: club referees from 13 years).
+- YOUNGER_THAN_PLAYERS: a referee younger than the players of the match's class.
 
 An official that also plays in a team can't be detected: officials aren't linked to players.
 """
@@ -25,6 +27,7 @@ from bracket.models.db.official import (
     OfficialConflict,
     OfficialConflictKind,
     OfficialFee,
+    OfficialRole,
 )
 from bracket.utils.csv_export import to_csv
 from bracket.utils.cup_time import cup_day
@@ -40,6 +43,7 @@ class MatchSlot:
     end: datetime_utc | None  # Including the margin
     court_id: CourtId | None
     clubs: frozenset[str]  # Clubs of the known teams
+    player_age: int | None = None  # Age of the match's class
 
 
 @dataclass(frozen=True)
@@ -93,6 +97,32 @@ def double_bookings(official_id: OfficialId, periods: list[Busy]) -> list[Offici
     return conflicts
 
 
+MIN_REFEREE_AGE = 13
+
+
+def age_conflicts(
+    official: Official, own: list[MatchOfficial], slots: dict[MatchId, MatchSlot]
+) -> list[OfficialConflict]:
+    """A referee should be at least 13, and not younger than the players."""
+    assert official.age is not None
+    conflicts = []
+    if official.age < MIN_REFEREE_AGE:
+        conflicts.append(
+            OfficialConflict(official_id=official.id, kind=OfficialConflictKind.TOO_YOUNG)
+        )
+    for assignment in own:
+        slot = slots.get(assignment.match_id)
+        if slot is not None and slot.player_age is not None and official.age < slot.player_age:
+            conflicts.append(
+                OfficialConflict(
+                    official_id=official.id,
+                    kind=OfficialConflictKind.YOUNGER_THAN_PLAYERS,
+                    match_id=assignment.match_id,
+                )
+            )
+    return conflicts
+
+
 def find_conflicts(
     officials: list[Official],
     assignments: list[MatchOfficial],
@@ -114,6 +144,8 @@ def find_conflicts(
                 for assignment in own
                 if (slot := slots.get(assignment.match_id)) is not None and club in slot.clubs
             ]
+        if official.age is not None and official.role is OfficialRole.REFEREE and own:
+            conflicts += age_conflicts(official, own, slots)
         if not official.active and (own or any(h.official_id == official.id for h in hosts)):
             conflicts.append(
                 OfficialConflict(official_id=official.id, kind=OfficialConflictKind.INACTIVE)

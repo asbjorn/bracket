@@ -1,13 +1,16 @@
 import math
 from collections import defaultdict
+from collections.abc import Sequence
 from decimal import Decimal
 
 from bracket.logic.ranking.statistics import START_ELO, TeamStatistics
-from bracket.logic.ranking.tiebreakers import order_by_ranking
+from bracket.logic.ranking.tiebreakers import TiebreakerData, order_by_ranking
+from bracket.models.db.discipline import CardType, MatchCard
 from bracket.models.db.match import MatchWithDetailsDefinitive
 from bracket.models.db.ranking import Ranking
 from bracket.models.db.stage_item import StageType
 from bracket.models.db.util import StageItemWithRounds
+from bracket.sql.discipline import get_cards
 from bracket.sql.rankings import get_ranking_for_stage_item
 from bracket.sql.teams import update_team_stats
 from bracket.utils.id_types import StageItemInputId, TournamentId
@@ -103,9 +106,41 @@ def determine_ranking_for_stage_item(
     return input_x_stats
 
 
+def tiebreaker_data(
+    stage_item: StageItemWithRounds, ranking: Ranking, cards: Sequence[MatchCard]
+) -> TiebreakerData:
+    """Card points (fair play) and entered lots of the teams of the stage item."""
+    match_ids = {match.id for round_ in stage_item.rounds for match in round_.matches}
+    input_of_team = {
+        input_.team_id: input_.id
+        for input_ in stage_item.inputs
+        if getattr(input_, "team_id", None) is not None
+    }
+    card_points: dict[StageItemInputId, int] = {}
+    for card in cards:
+        input_id = input_of_team.get(card.team_id)
+        if card.match_id in match_ids and input_id is not None:
+            points = (
+                ranking.fair_play_yellow_points
+                if card.card_type is CardType.YELLOW
+                else ranking.fair_play_red_points
+            )
+            card_points[input_id] = card_points.get(input_id, 0) + points
+    return TiebreakerData(
+        card_points=card_points,
+        lot_numbers={
+            input_.id: input_.lot_number
+            for input_ in stage_item.inputs
+            if input_.lot_number is not None
+        },
+        lots_seed=stage_item.id,
+    )
+
+
 def determine_team_ranking_for_stage_item(
     stage_item: StageItemWithRounds,
     ranking: Ranking,
+    cards: Sequence[MatchCard] = (),
 ) -> list[tuple[StageItemInputId, TeamStatistics]]:
     """
     The inputs of the stage item from first to last place, with `position` set (1 = first).
@@ -122,6 +157,7 @@ def determine_team_ranking_for_stage_item(
         get_played_matches(stage_item),
         ranking,
         use_tiebreakers=stage_item.type is not StageType.SWISS,
+        data=tiebreaker_data(stage_item, ranking, cards),
     )
     for position, input_id in enumerate(ordered, start=1):
         stats[input_id].position = position
@@ -142,7 +178,9 @@ async def recalculate_ranking_for_stage_item(
         if stage_item_input.team_id is not None
     }
 
-    stats_per_input = dict(determine_team_ranking_for_stage_item(stage_item, ranking))
+    stats_per_input = dict(
+        determine_team_ranking_for_stage_item(stage_item, ranking, await get_cards(tournament_id))
+    )
 
     for stage_item_input_id in team_x_stage_item_input_lookup.values():
         await update_team_stats(

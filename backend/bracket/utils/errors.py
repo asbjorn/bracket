@@ -16,6 +16,7 @@ class UniqueIndex(EnumAutoStr):
     ix_users_email = auto()
     ix_match_officials_one_referee = auto()
     ix_participating_clubs_tournament_id_lower_name = auto()
+    team_conflicts_team1_id_team2_id_key = auto()
     match_officials_match_id_official_id_key = auto()
     notifications_sent_tournament_id_dedupe_key_key = auto()
     score_links_token_hash_key = auto()
@@ -43,6 +44,7 @@ unique_index_violation_error_lookup = {
     UniqueIndex.ix_tournaments_dashboard_endpoint: "This dashboard link is already taken",
     UniqueIndex.ix_users_email: "This email is already taken",
     UniqueIndex.ix_match_officials_one_referee: "This match already has a referee",
+    UniqueIndex.team_conflicts_team1_id_team2_id_key: "These teams are already linked",
     UniqueIndex.ix_participating_clubs_tournament_id_lower_name: (
         "A club with this name already takes part in this cup"
     ),

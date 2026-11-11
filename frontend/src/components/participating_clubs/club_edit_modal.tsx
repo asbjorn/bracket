@@ -1,8 +1,24 @@
-import { Alert, Button, Group, Modal, MultiSelect, Stack, Text, TextInput } from '@mantine/core';
+import {
+  Alert,
+  Button,
+  Group,
+  Modal,
+  MultiSelect,
+  Stack,
+  Switch,
+  Text,
+  TextInput,
+} from '@mantine/core';
 import { IconTrash } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import NewTeamsEditor, {
+  EMPTY_NEW_TEAMS,
+  NewTeamsState,
+  newTeamError,
+  newTeamsOf,
+} from '@components/participating_clubs/new_teams_editor';
 import { capitalize } from '@components/utils/util';
 import { Category, FullTeamWithPlayers, ParticipatingClubWithTeams } from '@openapi';
 import { requestSucceeded } from '@services/adapter';
@@ -27,6 +43,8 @@ export default function ClubEditModal({
   const { t } = useTranslation();
   const [name, setName] = useState(club.name);
   const [teamIds, setTeamIds] = useState(club.teams.map((team) => `${team.id}`));
+  const [noOverlap, setNoOverlap] = useState(club.no_overlap);
+  const [newTeamsState, setNewTeamsState] = useState<NewTeamsState>(EMPTY_NEW_TEAMS);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -40,14 +58,23 @@ export default function ClubEditModal({
       label: [team.name, categoryName(team.category_id)].filter(Boolean).join(' · '),
     }));
 
+  // The club's chosen teams count per class, so new names continue after them
+  const existingPerClass: Record<number, number> = {};
+  for (const id of teamIds) {
+    const categoryId = teams.find((team) => `${team.id}` === id)?.category_id;
+    if (categoryId != null) existingPerClass[categoryId] = (existingPerClass[categoryId] ?? 0) + 1;
+  }
+  const newTeams = newTeamsOf(newTeamsState, name.trim(), categories, existingPerClass);
+  const invalid = name.trim() === '' || newTeams.some((team) => newTeamError(team.name) != null);
+
   async function save() {
     setSaving(true);
-    const response = await updateParticipatingClub(
-      tournamentId,
-      club.id,
-      name.trim(),
-      teamIds.map(Number),
-    );
+    const response = await updateParticipatingClub(tournamentId, club.id, {
+      name: name.trim(),
+      team_ids: teamIds.map(Number),
+      new_teams: newTeams.map((team) => ({ name: team.name.trim(), category_id: team.categoryId })),
+      no_overlap: noOverlap,
+    });
     setSaving(false);
     if (requestSucceeded(response)) {
       await onChanged();
@@ -76,7 +103,27 @@ export default function ClubEditModal({
           hidePickedOptions
           nothingFoundMessage={t('club_select_nothing_found')}
         />
-        <Button color="green" loading={saving} disabled={name.trim() === ''} onClick={save}>
+        {categories.length > 0 ? (
+          <Stack gap={4}>
+            <Text size="sm" fw={500}>
+              {t('club_wizard_new_teams_title')}
+            </Text>
+            <NewTeamsEditor
+              value={newTeamsState}
+              onChange={setNewTeamsState}
+              clubName={name.trim()}
+              categories={categories}
+              existingPerClass={existingPerClass}
+            />
+          </Stack>
+        ) : null}
+        <Switch
+          label={t('club_no_overlap_label')}
+          description={t('club_no_overlap_description')}
+          checked={noOverlap}
+          onChange={(event) => setNoOverlap(event.currentTarget.checked)}
+        />
+        <Button color="green" loading={saving} disabled={invalid} onClick={save}>
           {t('save_button')}
         </Button>
         {confirmDelete ? (

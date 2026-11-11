@@ -96,6 +96,7 @@ async def get_link_matches(
                         start_time=match.start_time,
                         duration_minutes=match.duration_minutes,
                         category_name=category.name if category is not None else None,
+                        results_public=category.results_public if category is not None else True,
                         stage_item_name=stage_item.name,
                         team1_id=team1_id,
                         team1_name=team1_name,

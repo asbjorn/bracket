@@ -15,12 +15,14 @@ from bracket.models.db.district_application import (
     PlayingDay,
     TournamentDetails,
 )
+from bracket.models.db.jury import jury_warnings
 from bracket.models.db.stage_item import StageType
 from bracket.models.db.team import PARTICIPATING_STATUSES
 from bracket.models.db.time_window import TimeWindow
 from bracket.schema import tournament_details
 from bracket.sql.categories import get_all_categories_in_tournament
 from bracket.sql.courts import get_all_courts_in_tournament
+from bracket.sql.jury import get_jury_members
 from bracket.sql.stages import get_full_tournament_details
 from bracket.sql.time_windows import get_time_windows
 from bracket.sql.tournaments import sql_get_tournament
@@ -125,9 +127,19 @@ async def get_district_application(tournament_id: TournamentId) -> DistrictAppli
         for category in categories
     ]
     formats = Counter(court.game_format for court in courts)
+    details = await get_details(tournament_id)
+    if details.organiser_club is None:
+        # Until the organiser fills it in: the club the cup belongs to
+        club = await database.fetch_val(
+            "SELECT name FROM clubs WHERE id = :id", values={"id": tournament.club_id}
+        )
+        details = details.model_copy(update={"organiser_club": club})
+    jury = await get_jury_members(tournament_id)
     return DistrictApplication(
         tournament_name=tournament.name,
-        details=await get_details(tournament_id),
+        details=details,
+        jury_members=jury,
+        jury_warnings=jury_warnings(jury),
         days=playing_days(await get_time_windows(tournament_id)),
         courts=[
             CourtCount(game_format=game_format, count=count)

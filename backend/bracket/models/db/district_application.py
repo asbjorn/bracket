@@ -4,6 +4,7 @@ from typing import Annotated
 from pydantic import BaseModel, StringConstraints
 
 from bracket.models.db.game_format import GameFormat
+from bracket.models.db.jury import JuryMember, JuryWarning
 
 ShortText = Annotated[str, StringConstraints(max_length=200, strip_whitespace=True)]
 LongText = Annotated[str, StringConstraints(max_length=4000, strip_whitespace=True)]
@@ -63,3 +64,6 @@ class DistrictApplication(BaseModel):
     team_count: int
     match_count: int
     rules_text: str | None
+    # The jury (NFF: at least three members, at most one per club)
+    jury_members: list[JuryMember] = []
+    jury_warnings: list[JuryWarning] = []

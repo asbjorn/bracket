@@ -11,6 +11,7 @@ from bracket.database import database
 from bracket.logic.subscriptions import check_requirement
 from bracket.models.db.participating_club import (
     ClubTeam,
+    NewClubTeam,
     ParticipatingClub,
     ParticipatingClubCreateBody,
     ParticipatingClubUpdateBody,
@@ -147,35 +148,44 @@ async def create_participating_club(
             club_id = ParticipatingClubId(
                 await database.fetch_val(
                     """
-                    INSERT INTO participating_clubs (tournament_id, name, created)
-                    VALUES (:tournament_id, :name, NOW())
+                    INSERT INTO participating_clubs (tournament_id, name, created, no_overlap)
+                    VALUES (:tournament_id, :name, NOW(), :no_overlap)
                     RETURNING id
                     """,
-                    values={"tournament_id": tournament_id, "name": body.name},
+                    values={
+                        "tournament_id": tournament_id,
+                        "name": body.name,
+                        "no_overlap": body.no_overlap,
+                    },
                 )
             )
-        for team in body.new_teams:
-            await database.execute(
-                """
-                INSERT INTO teams (
-                    name, created, tournament_id, active, elo_score, swiss_score, wins, draws,
-                    losses, category_id, club_id
-                )
-                VALUES (
-                    :name, :created, :tournament_id, true, 1200, 0, 0, 0, 0, :category_id,
-                    :club_id
-                )
-                """,
-                values={
-                    "name": team.name,
-                    "created": datetime_utc.now(),
-                    "tournament_id": tournament_id,
-                    "category_id": team.category_id,
-                    "club_id": club_id,
-                },
-            )
+        await create_club_teams(tournament_id, club_id, body.new_teams)
         await set_club_of_teams(tournament_id, body.team_ids, club_id)
     return club_id
+
+
+async def create_club_teams(
+    tournament_id: TournamentId, club_id: ParticipatingClubId, new_teams: list[NewClubTeam]
+) -> None:
+    for team in new_teams:
+        await database.execute(
+            """
+            INSERT INTO teams (
+                name, created, tournament_id, active, elo_score, swiss_score, wins, draws,
+                losses, category_id, club_id
+            )
+            VALUES (
+                :name, :created, :tournament_id, true, 1200, 0, 0, 0, 0, :category_id, :club_id
+            )
+            """,
+            values={
+                "name": team.name,
+                "created": datetime_utc.now(),
+                "tournament_id": tournament_id,
+                "category_id": team.category_id,
+                "club_id": club_id,
+            },
+        )
 
 
 async def set_club_of_teams(
@@ -193,19 +203,30 @@ async def set_club_of_teams(
 
 
 async def update_participating_club(
-    tournament_id: TournamentId, club_id: ParticipatingClubId, body: ParticipatingClubUpdateBody
+    tournament_id: TournamentId,
+    club_id: ParticipatingClubId,
+    body: ParticipatingClubUpdateBody,
+    user: UserPublic,
 ) -> None:
+    await check_categories(
+        tournament_id,
+        {team.category_id for team in body.new_teams if team.category_id is not None},
+    )
     async with database.transaction():
         await lock_tournament(tournament_id)
         if await get_participating_club(tournament_id, club_id) is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Could not find the club")
         await check_teams(tournament_id, body.team_ids, allowed_club=club_id)
+        if body.new_teams:
+            existing_teams = await get_teams_with_members(tournament_id)
+            check_requirement(existing_teams, user, "max_teams", additions=len(body.new_teams))
         with check_unique_constraint_violation(
             {UniqueIndex.ix_participating_clubs_tournament_id_lower_name}
         ):
             await database.execute(
-                "UPDATE participating_clubs SET name = :name WHERE id = :id",
-                values={"name": body.name, "id": club_id},
+                "UPDATE participating_clubs SET name = :name, no_overlap = :no_overlap "
+                "WHERE id = :id",
+                values={"name": body.name, "no_overlap": body.no_overlap, "id": club_id},
             )
         # Exactly these teams: the others leave the club
         await database.execute(
@@ -216,6 +237,7 @@ async def update_participating_club(
             values={"club_id": club_id, "tournament_id": tournament_id, "ids": body.team_ids},
         )
         await set_club_of_teams(tournament_id, body.team_ids, club_id)
+        await create_club_teams(tournament_id, club_id, body.new_teams)
 
 
 async def delete_participating_club(

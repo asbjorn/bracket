@@ -1,18 +1,15 @@
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Self
 
 from heliclockter import datetime_utc
-from pydantic import BaseModel, EmailStr, Field, StringConstraints
+from pydantic import BaseModel, EmailStr, Field, StringConstraints, model_validator
 
-from bracket.models.db.team import ClubName, RegistrationStatus
+from bracket.models.db.team import MAX_SQUAD_SIZE, ClubName, RegistrationStatus, TeamName
 from bracket.utils.id_types import CategoryId, TeamId
 from bracket.utils.text import SingleLine
 
 MAX_TEAMS_PER_CLASS = 256
 MAX_ENTRY_FEE = 100_000
 
-TeamName = Annotated[
-    str, StringConstraints(min_length=1, max_length=30, strip_whitespace=True), SingleLine
-]
 PersonName = Annotated[
     str, StringConstraints(min_length=1, max_length=100, strip_whitespace=True), SingleLine
 ]
@@ -51,9 +48,24 @@ class PublicRegistrationClass(BaseModel):
     spots_left: int | None
 
 
-class PublicRegistrationBody(BaseModel):
+MAX_TEAMS_PER_SIGN_UP = 10
+
+
+class RegistrationTeam(BaseModel):
     category_id: CategoryId
     team_name: TeamName
+    squad_size: int | None = Field(default=None, ge=1, le=MAX_SQUAD_SIZE)
+
+
+class PublicRegistrationBody(BaseModel):
+    """
+    A sign-up: one team (`category_id`, `team_name`), or several teams of one club in one go
+    (`teams`, possibly in different classes) with the same contact person.
+    """
+
+    category_id: CategoryId | None = None
+    team_name: TeamName | None = None
+    teams: list[RegistrationTeam] = Field(default=[], max_length=MAX_TEAMS_PER_SIGN_UP)
     club_name: ClubName | None = None
     contact_name: PersonName
     contact_email: Annotated[EmailStr, Field(max_length=254)]
@@ -64,11 +76,36 @@ class PublicRegistrationBody(BaseModel):
     # Honeypot: hidden in the form, so only bots fill it in
     website: Annotated[str, Field(max_length=200)] = ""
 
+    @model_validator(mode="after")
+    def check_teams(self) -> Self:
+        if not self.teams:
+            if self.category_id is None or self.team_name is None:
+                raise ValueError("Choose a class and a team name")
+            self.teams = [
+                RegistrationTeam(
+                    category_id=self.category_id, team_name=self.team_name, squad_size=None
+                )
+            ]
+        names = [(team.category_id, team.team_name.casefold()) for team in self.teams]
+        if len(names) != len(set(names)):
+            raise ValueError("Two teams in the same class have the same name")
+        return self
+
+
+class TeamRegistrationResult(BaseModel):
+    team_name: str
+    category_id: CategoryId
+    registration_status: RegistrationStatus
+    waitlist_place: int | None
+
 
 class PublicRegistrationResult(BaseModel):
+    """The first team (for one-team sign-ups) and all teams of the sign-up."""
+
     team_name: str
     registration_status: RegistrationStatus
     waitlist_place: int | None
+    teams: list[TeamRegistrationResult]
 
 
 class Registration(BaseModel):

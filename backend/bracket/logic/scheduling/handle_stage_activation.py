@@ -16,6 +16,7 @@ from bracket.models.db.stage_item_inputs import (
 )
 from bracket.models.db.team import Team
 from bracket.models.db.util import StageWithStageItems
+from bracket.sql.discipline import get_cards
 from bracket.sql.matches import clear_scores_for_matches_in_stage_item
 from bracket.sql.rankings import get_ranking_for_stage_item
 from bracket.sql.stage_item_inputs import (
@@ -116,10 +117,12 @@ async def get_team_rankings_lookup_for_tournament(
     stage_items = {
         stage_item.id: stage_item for stage in stages for stage_item in stage.stage_items
     }
+    cards = await get_cards(tournament_id)
     return {
         stage_item_id: determine_team_ranking_for_stage_item(
             stage_item,
             assert_some(await get_ranking_for_stage_item(tournament_id, stage_item.id)),
+            cards,
         )
         for stage_item_id, stage_item in stage_items.items()
     }

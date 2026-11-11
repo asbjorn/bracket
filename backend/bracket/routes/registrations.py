@@ -20,6 +20,7 @@ from bracket.models.db.registration import (
     PublicRegistrationResult,
     RegistrationSettingsBody,
     RegistrationUpdateBody,
+    TeamRegistrationResult,
 )
 from bracket.models.db.team import RegistrationStatus
 from bracket.models.db.tournament import Tournament
@@ -68,18 +69,28 @@ async def register_team_publicly(
     __: Tournament = Depends(disallow_archived_tournament),
 ) -> PublicRegistrationResponse:
     """
-    Public sign-up of a team (only for a public cup, an open class and before the deadline).
-    When the class is full, the team goes to the waitlist.
+    Public sign-up of a team, or of several teams of a club at once (only for a public cup,
+    open classes and before the deadline). When a class is full, the team goes to its waitlist.
     """
     client = request.client.host if request.client is not None else "unknown"
     public_sign_ups.check(f"{tournament_id}:{client}")
     if body.website != "":
         # A bot filled in the hidden field: pretend it worked, store nothing
-        return PublicRegistrationResponse(
-            data=PublicRegistrationResult(
-                team_name=body.team_name,
+        fake = [
+            TeamRegistrationResult(
+                team_name=team.team_name,
+                category_id=team.category_id,
                 registration_status=RegistrationStatus.REGISTERED,
                 waitlist_place=None,
+            )
+            for team in body.teams
+        ]
+        return PublicRegistrationResponse(
+            data=PublicRegistrationResult(
+                team_name=fake[0].team_name,
+                registration_status=RegistrationStatus.REGISTERED,
+                waitlist_place=None,
+                teams=fake,
             )
         )
     return PublicRegistrationResponse(

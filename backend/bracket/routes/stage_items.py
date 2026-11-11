@@ -26,6 +26,7 @@ from bracket.models.db.round import RoundInsertable
 from bracket.models.db.stage_item import (
     StageItemActivateNextBody,
     StageItemCreateBody,
+    StageItemLotsBody,
     StageItemUpdateBody,
     StageType,
 )
@@ -251,4 +252,44 @@ async def start_next_round(
 
     await set_round_active_or_draft(draft_round.id, tournament_id, is_draft=False)
     await handle_conflicts(await get_full_tournament_details(tournament_id))
+    return SuccessResponse()
+
+
+@router.put(
+    "/tournaments/{tournament_id}/stage_items/{stage_item_id}/lots",
+    response_model=SuccessResponse,
+)
+async def set_stage_item_lots(
+    tournament_id: TournamentId,
+    body: StageItemLotsBody,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+    __: Tournament = Depends(disallow_archived_tournament),
+    stage_item: StageItemWithRounds = Depends(stage_item_dependency),
+) -> SuccessResponse:
+    """Enters the drawn lots of the group (the LOTS tiebreaker), then updates the table."""
+    input_ids = {input_.id for input_ in stage_item.inputs}
+    if any(lot.stage_item_input_id not in input_ids for lot in body.lots):
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, "Some of the places don't belong to this group"
+        )
+    async with database.transaction():
+        for lot in body.lots:
+            await database.execute(
+                """
+                UPDATE stage_item_inputs SET lot_number = :lot_number
+                WHERE id = :id AND tournament_id = :tournament_id
+                """,
+                values={
+                    "lot_number": lot.lot_number,
+                    "id": lot.stage_item_input_id,
+                    "tournament_id": tournament_id,
+                },
+            )
+    [updated] = [
+        item
+        for stage in await get_full_tournament_details(tournament_id)
+        for item in stage.stage_items
+        if item.id == stage_item.id
+    ]
+    await recalculate_ranking_for_stage_item(tournament_id, updated)
     return SuccessResponse()

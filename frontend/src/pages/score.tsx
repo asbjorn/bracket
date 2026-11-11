@@ -203,6 +203,8 @@ function ResultForm({
   const [penalties1, setPenalties1] = useState(match.penalties1 ?? 0);
   const [penalties2, setPenalties2] = useState(match.penalties2 ?? 0);
   const [saving, setSaving] = useState(false);
+  // A walkover needs a second tap, naming the winner: it can't be saved by accident
+  const [walkoverWinner, setWalkoverWinner] = useState<number | null>(null);
   const team1 = match.team1_name ?? '?';
   const team2 = match.team2_name ?? '?';
 
@@ -213,7 +215,30 @@ function ResultForm({
     setResultType(match.result_type);
     setPenalties1(match.penalties1 ?? 0);
     setPenalties2(match.penalties2 ?? 0);
+    setWalkoverWinner(null);
   }, [match.id, match.score1, match.score2, match.result_type]);
+
+  async function markPlayed(played: boolean) {
+    setSaving(true);
+    const response = await enterResult(token, match.id, {
+      score1: 0,
+      score2: 0,
+      result_type: 'NORMAL',
+      penalties1: null,
+      penalties2: null,
+      played,
+    });
+    setSaving(false);
+    if (requestSucceeded(response)) {
+      showNotification({
+        color: 'green',
+        icon: <IconCheck />,
+        title: t('score_saved_title'),
+        message: played ? t('score_marked_played') : t('score_marked_not_played'),
+      });
+      await onSaved();
+    }
+  }
 
   let problem: string | null = null;
   if (resultType === 'PENALTIES' && score1 !== score2) problem = t('score_problem_penalties_equal');
@@ -233,6 +258,41 @@ function ResultForm({
     />
   );
 
+  // Children's football: no score is kept for the public, the pitch only marks the match played
+  if (!match.results_public && resultType !== 'WALKOVER') {
+    return (
+      <Stack>
+        <Text size="sm" c="dimmed">
+          {t('score_hidden_results_description')}
+        </Text>
+        {match.played ? (
+          <>
+            <Alert color="green" icon={<IconCheck />}>
+              {t('score_marked_played')}
+            </Alert>
+            <Button variant="default" loading={saving} onClick={() => markPlayed(false)}>
+              {t('score_not_played_button')}
+            </Button>
+          </>
+        ) : (
+          <Button
+            size="xl"
+            color="green"
+            fullWidth
+            loading={saving}
+            leftSection={<IconCheck size={26} />}
+            onClick={() => markPlayed(true)}
+          >
+            {t('score_played_button')}
+          </Button>
+        )}
+        <Button variant="subtle" color="gray" onClick={() => setResultType('WALKOVER')}>
+          {t('score_walkover_link')}
+        </Button>
+      </Stack>
+    );
+  }
+
   if (resultType === 'WALKOVER') {
     // The team that showed up wins by the tournament's walkover score
     return (
@@ -249,10 +309,14 @@ function ResultForm({
             key={winner.id}
             size="lg"
             color="green"
-            variant="light"
+            variant={walkoverWinner === winner.id ? 'filled' : 'light'}
             fullWidth
             loading={saving}
             onClick={async () => {
+              if (walkoverWinner !== winner.id) {
+                setWalkoverWinner(winner.id);
+                return;
+              }
               setSaving(true);
               const response = await enterWalkover(token, match.id, winner.id as number);
               setSaving(false);
@@ -267,9 +331,16 @@ function ResultForm({
               }
             }}
           >
-            {t('score_walkover_winner_button', { team: winner.name })}
+            {walkoverWinner === winner.id
+              ? t('score_walkover_confirm_button', { team: winner.name })
+              : t('score_walkover_winner_button', { team: winner.name })}
           </Button>
         ))}
+        {!match.results_public ? (
+          <Button variant="subtle" color="gray" onClick={() => setResultType('NORMAL')}>
+            {t('cancel_button')}
+          </Button>
+        ) : null}
       </Stack>
     );
   }
@@ -490,7 +561,9 @@ export default function ScoreEntryPage() {
               {view.tournament_name}
             </Text>
           </Stack>
+          {/* A full button on wider screens, a large icon on phones (no clipped text) */}
           <Button
+            visibleFrom="xs"
             variant="light"
             color="orange"
             leftSection={<IconClockPause size={20} />}
@@ -498,6 +571,16 @@ export default function ScoreEntryPage() {
           >
             {t('report_delay_button')}
           </Button>
+          <ActionIcon
+            hiddenFrom="xs"
+            size="xl"
+            variant="light"
+            color="orange"
+            aria-label={t('report_delay_button')}
+            onClick={() => setDelayOpened(true)}
+          >
+            <IconClockPause size={24} />
+          </ActionIcon>
         </Group>
 
         {selected != null ? (

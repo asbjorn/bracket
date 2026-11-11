@@ -1,5 +1,4 @@
 import {
-  ActionIcon,
   Alert,
   Badge,
   Button,
@@ -7,48 +6,30 @@ import {
   Group,
   List,
   Modal,
-  NumberInput,
   ScrollArea,
-  Select,
   Stack,
   Stepper,
+  Switch,
   Text,
   TextInput,
   Title,
 } from '@mantine/core';
-import { IconInfoCircle, IconPlus, IconTrash } from '@tabler/icons-react';
+import { IconInfoCircle } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import NewTeamsEditor, {
+  EMPTY_NEW_TEAMS,
+  NewTeamsState,
+  looksLikeClubTeam,
+  newTeamError,
+  newTeamsOf,
+} from '@components/participating_clubs/new_teams_editor';
 import { Category, FullTeamWithPlayers, ParticipatingClubWithTeams } from '@openapi';
 import { requestSucceeded } from '@services/adapter';
 import { createParticipatingClub } from '@services/participating_clubs';
 
-const MAX_TEAM_NAME = 30;
-
-interface NewTeam {
-  name: string;
-  categoryId: number | null;
-}
-
-/** "Brann" and "Brann 2" belong to the club Brann; "Brannfjell" doesn't. */
-export function looksLikeClubTeam(teamName: string, clubName: string) {
-  const team = teamName.trim().toLowerCase();
-  const club = clubName.trim().toLowerCase();
-  return club !== '' && (team === club || team.startsWith(`${club} `));
-}
-
-/**
- * Names for `count` new teams of a club in a class, continuing after the teams it already has
- * there: one team is just "Brann", more are "Brann 1", "Brann 2", ...
- */
-export function suggestTeamNames(clubName: string, count: number, alreadyInClass: number) {
-  const club = clubName.trim();
-  if (alreadyInClass === 0 && count === 1) return [club];
-  return Array.from({ length: count }, (_, index) => `${club} ${alreadyInClass + index + 1}`);
-}
-
-function CategoryBadge({
+export function CategoryBadge({
   categoryId,
   categories,
 }: {
@@ -82,13 +63,9 @@ export default function ClubWizard({
   const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
-  const [newTeams, setNewTeams] = useState<NewTeam[]>([]);
+  const [newTeamsState, setNewTeamsState] = useState<NewTeamsState>(EMPTY_NEW_TEAMS);
   const [linkedIds, setLinkedIds] = useState<number[]>([]);
-  // New teams go to the first class unless chosen otherwise
-  const [addCategory, setAddCategory] = useState<string | null>(
-    categories.length > 0 ? `${categories[0].id}` : null,
-  );
-  const [addCount, setAddCount] = useState<number | string>(1);
+  const [noOverlap, setNoOverlap] = useState(false);
   const [search, setSearch] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -102,27 +79,23 @@ export default function ClubWizard({
     team.name.toLowerCase().includes(search.trim().toLowerCase()),
   );
   const teamName = (id: number) => teams.find((team) => team.id === id);
-  const invalidNewTeam = newTeams.some(
-    (team) => team.name.trim() === '' || team.name.trim().length > MAX_TEAM_NAME,
-  );
+  // Linked teams count as the club's teams in their class (new names continue after them)
+  const existingPerClass: Record<number, number> = {};
+  for (const id of linkedIds) {
+    const categoryId = teamName(id)?.category_id;
+    if (categoryId != null) existingPerClass[categoryId] = (existingPerClass[categoryId] ?? 0) + 1;
+  }
+  const newTeams = newTeamsOf(newTeamsState, trimmed, categories, existingPerClass);
+  const invalidNewTeam = newTeams.some((team) => newTeamError(team.name) != null);
 
   function toTeamsStep() {
     // Suggest the teams that already carry the club's name
-    if (linkedIds.length === 0 && newTeams.length === 0) {
+    if (linkedIds.length === 0 && newTeams.length === 0 && teams.length > 0) {
       setLinkedIds(
         withoutClub.filter((team) => looksLikeClubTeam(team.name, trimmed)).map((team) => team.id),
       );
     }
     setStep(1);
-  }
-
-  function addNewTeams() {
-    const categoryId = addCategory != null ? Number(addCategory) : null;
-    const inClass =
-      newTeams.filter((team) => team.categoryId === categoryId).length +
-      linkedIds.filter((id) => teamName(id)?.category_id === categoryId).length;
-    const names = suggestTeamNames(trimmed, Number(addCount) || 1, inClass);
-    setNewTeams([...newTeams, ...names.map((teamName_) => ({ name: teamName_, categoryId }))]);
   }
 
   async function create() {
@@ -131,6 +104,7 @@ export default function ClubWizard({
       name: trimmed,
       new_teams: newTeams.map((team) => ({ name: team.name.trim(), category_id: team.categoryId })),
       team_ids: linkedIds,
+      no_overlap: noOverlap,
     });
     setSaving(false);
     if (requestSucceeded(response)) {
@@ -169,66 +143,28 @@ export default function ClubWizard({
         <Stepper.Step label={t('club_wizard_step_teams')}>
           <Stack mt="md">
             <Title order={5}>{t('club_wizard_new_teams_title')}</Title>
-            <Group align="end">
-              <Select
-                label={t('category_select_label')}
-                placeholder={t('no_category_label')}
-                data={categories.map((c) => ({ value: `${c.id}`, label: c.name }))}
-                value={addCategory}
-                onChange={setAddCategory}
-                clearable
-                w="12rem"
+            {categories.length > 0 ? (
+              <NewTeamsEditor
+                value={newTeamsState}
+                onChange={setNewTeamsState}
+                clubName={trimmed}
+                categories={categories}
+                existingPerClass={existingPerClass}
               />
-              <NumberInput
-                label={t('club_wizard_count_label')}
-                value={addCount}
-                onChange={setAddCount}
-                min={1}
-                max={20}
-                w="8rem"
-              />
-              <Button variant="light" leftSection={<IconPlus size={18} />} onClick={addNewTeams}>
-                {t('club_wizard_add_teams_button')}
-              </Button>
-            </Group>
-            {newTeams.map((team, index) => (
-              <Group key={index} wrap="nowrap">
-                <TextInput
-                  style={{ flex: 1 }}
-                  value={team.name}
-                  aria-label={t('name_input_label')}
-                  error={
-                    team.name.trim() === ''
-                      ? t('too_short_name_validation')
-                      : team.name.trim().length > MAX_TEAM_NAME
-                        ? t('club_wizard_name_too_long', { max: MAX_TEAM_NAME })
-                        : null
-                  }
-                  onChange={(event) => {
-                    const value = event.currentTarget.value;
-                    setNewTeams(
-                      newTeams.map((t2, i) => (i === index ? { ...t2, name: value } : t2)),
-                    );
-                  }}
-                />
-                <CategoryBadge categoryId={team.categoryId} categories={categories} />
-                <ActionIcon
-                  variant="subtle"
-                  color="red"
-                  aria-label={t('delete_team_button')}
-                  onClick={() => setNewTeams(newTeams.filter((_, i) => i !== index))}
-                >
-                  <IconTrash size={18} />
-                </ActionIcon>
-              </Group>
-            ))}
+            ) : (
+              <Text size="sm" c="dimmed">
+                {t('club_wizard_no_classes')}
+              </Text>
+            )}
 
             <Title order={5} mt="sm">
               {t('club_wizard_existing_title')}
             </Title>
             {withoutClub.length < 1 ? (
               <Text size="sm" c="dimmed">
-                {t('club_wizard_no_teams_without_club')}
+                {teams.length < 1
+                  ? t('club_wizard_no_teams_in_cup')
+                  : t('club_wizard_no_teams_without_club')}
               </Text>
             ) : (
               <>
@@ -261,6 +197,13 @@ export default function ClubWizard({
                 </ScrollArea.Autosize>
               </>
             )}
+            <Switch
+              mt="sm"
+              label={t('club_no_overlap_label')}
+              description={t('club_no_overlap_description')}
+              checked={noOverlap}
+              onChange={(event) => setNoOverlap(event.currentTarget.checked)}
+            />
             <Group justify="space-between">
               <Button variant="default" onClick={() => setStep(0)}>
                 {t('club_wizard_back_button')}

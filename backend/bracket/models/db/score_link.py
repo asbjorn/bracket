@@ -79,6 +79,8 @@ class ScoreEntryMatch(BaseModel):
     start_time: datetime_utc | None
     duration_minutes: int
     category_name: str | None
+    # Children's football (results hidden): the pitch only marks the match as played
+    results_public: bool = True
     stage_item_name: str
     team1_id: TeamId | None
     team1_name: str | None

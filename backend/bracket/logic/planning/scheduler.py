@@ -303,6 +303,12 @@ def merge_overlapping(windows: list[Window]) -> list[Window]:
     return merged
 
 
+# Keys in `MatchToPlan.teams` with this prefix are shared people (a coach or players of several
+# teams) rather than a team: they can't be in two matches at once and need their rest, but they
+# don't count towards a team's matches per day.
+SHARED_PREFIX = "shared:"
+
+
 class DayCounts:
     """How many matches each team (slot) plays per day, for the per-day limit of a class."""
 
@@ -312,7 +318,8 @@ class DayCounts:
     def add(self, match: MatchToPlan, start: datetime_utc) -> None:
         day = cup_day(start)
         for team in match.teams:
-            self.counts[(team, day)] = self.counts.get((team, day), 0) + 1
+            if not team.startswith(SHARED_PREFIX):
+                self.counts[(team, day)] = self.counts.get((team, day), 0) + 1
 
     def is_full(self, match: MatchToPlan, start: datetime_utc) -> bool:
         if match.max_per_day is None:

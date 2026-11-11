@@ -20,7 +20,7 @@ from bracket.logic.scheduling.create_playoffs import create_playoffs
 from bracket.logic.scheduling.cup_structure import PLAYOFF_NAMES, split_into_groups
 from bracket.logic.scheduling.elimination import MIN_TEAMS_THIRD_PLACE_MATCH
 from bracket.logic.subscriptions import check_requirement
-from bracket.models.db.category import CategoryBody, default_results_public
+from bracket.models.db.category import CategoryBody, CategoryKind, default_results_public
 from bracket.models.db.court import CourtsMultiBody
 from bracket.models.db.playoffs import PlayoffBody, PlayoffsCreateBody
 from bracket.models.db.stage_item import StageItemCreateBody, StageType
@@ -46,6 +46,7 @@ Name = Annotated[
 class CupSetupClass(CapacityClass):
     # `None`: hidden for children's football (12 and younger), public otherwise (NFF)
     results_public: bool | None = None
+    kind: CategoryKind | None = None
 
     def get_results_public(self) -> bool:
         if self.results_public is not None:
@@ -140,6 +141,7 @@ async def create_class(
             min_rest_minutes=cup_class.min_rest_minutes,
             game_format=cup_class.game_format,
             max_matches_per_day=cup_class.max_matches_per_day,
+            kind=cup_class.kind,
         ),
     )
     if len(cup_class.time_windows) > 0:

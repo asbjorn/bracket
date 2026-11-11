@@ -26,6 +26,8 @@ class TournamentInsertable(BaseModelORM):
     min_rest_minutes: int = Field(default=0, ge=0)
     stage_buffer_minutes: int = Field(default=10, ge=0)
     walkover_goals: int = Field(default=3, ge=1)
+    # Minutes from a class's last match to its prize ceremony (suggestion)
+    ceremony_offset_minutes: int = Field(default=15, ge=0)
     dashboard_public: bool
     dashboard_endpoint: str | None = None
     logo_path: str | None = None
