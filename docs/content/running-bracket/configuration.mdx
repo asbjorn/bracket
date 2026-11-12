@@ -40,6 +40,11 @@ Copy `ci.env` to `prod.env` and fill in the values:
   can then still copy the addresses into their own email program. `SMTP_STARTTLS` (default
   true) upgrades a plain connection; set `SMTP_SSL=true` (and usually `SMTP_PORT=465`) for
   implicit TLS. Queued emails are sent every 15 seconds, at most 20 at a time.
+- `TRUSTED_PROXIES`: Comma separated IP addresses or networks of your reverse proxies (e.g.
+  `127.0.0.1,10.0.0.0/8`). Only requests from these addresses may set the client address through
+  `X-Forwarded-For`; the right-most address that isn't a trusted proxy is taken as the client.
+  Empty (default): the direct peer is the client. Rate limits per client depend on this, so set it
+  when Bracket runs behind nginx, Traefik, Caddy or a cloud load balancer.
 
 ### Backend: Example configuration file
 

@@ -303,3 +303,17 @@ After Phase 6, a three-way review (requirements fit for Norwegian cups, an end-t
 
 - How many teams and pitches are expected for the first real cup? This sets how much the scheduler needs to handle.
 - Self-hosted for one club, or hosted for several clubs?
+
+## Production requirements
+
+Before a real cup, the deployment must meet the requirements in
+`docs/content/deployment/index.mdx` ("Production requirements"). In short:
+- HTTPS everywhere.
+- `TRUSTED_PROXIES` set when running behind a reverse proxy, so rate limits see real clients.
+- SMTP configured (`SMTP_HOST`, `SMTP_FROM`, credentials) and tested; without it no email reaches
+  team contacts.
+- Migrations run on every upgrade, after a backup.
+- Daily backups, hourly during the cup weekend, with a tested restore.
+- A random `JWT_SECRET` and a changed admin password.
+- The proxy must not log full `/score/<token>` URLs.
+

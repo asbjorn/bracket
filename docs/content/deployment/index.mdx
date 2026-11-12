@@ -45,3 +45,33 @@ Optional:
 There's a few ways to run Bracket (frontend and backend) in production, such as via docker-compose
 and Nomad. The frontend can also be deployed to a cloud service like Vercel. See the other pages in
 this category for more details per platform.
+
+## Production requirements (krav ved drift)
+
+Check these before running a real cup:
+
+- **HTTPS.** Serve the frontend and the API over HTTPS only. Result links (`/score/<token>`) and
+  logins must never travel over plain HTTP.
+- **Reverse proxy and client addresses.** Behind a proxy or load balancer, set `TRUSTED_PROXIES`
+  to its address(es). Without it every visitor looks like the proxy, so all clients share one
+  rate limit; with a wrong value a client could choose its own address.
+- **Several workers are fine.** Rate limits (result links, public sign-up, bulk emails) are
+  counted in the database table `rate_limit_hits`, so they hold across processes and servers.
+- **Email (SMTP).** Set `SMTP_HOST` and `SMTP_FROM` (and usually `SMTP_USERNAME`,
+  `SMTP_PASSWORD`, `SMTP_PORT`, `SMTP_STARTTLS` or `SMTP_SSL`). Without them no emails are sent:
+  sign-up confirmations, waitlist places, announcements and new match times are not delivered,
+  and organisers can only copy the addresses into their own email program. Send a test
+  announcement to yourself before the cup.
+- **Background jobs.** The backend runs these itself, in every process: sending queued emails
+  (every 15 seconds, only when SMTP is set), deleting old rate limit counters (hourly) and, in
+  production, deleting expired demo accounts. Nothing has to be scheduled outside Bracket.
+- **Database migrations.** Run `uv run alembic upgrade head` (or keep `AUTO_RUN_MIGRATIONS=true`)
+  on every upgrade, before the new version takes traffic. Take a backup first.
+- **Backups.** Back up PostgreSQL daily, and right before and during the cup weekend (e.g.
+  `pg_dump` every hour while matches are played). Test a restore once.
+- **Secrets.** A random `JWT_SECRET` (`openssl rand -hex 32`); it also keys the hashes of rate
+  limit counters. Change the admin password from the default.
+- **Logs.** Result-link tokens are redacted from the access log, Bracket's own logs and Sentry,
+  and pages with result links send no `Referer`. Make sure the reverse proxy doesn't log full
+  URLs of `/score/...` requests, or redact them there too.
+- **Monitoring (optional).** `SENTRY_DSN` for error reports; `/metrics` for Prometheus.
