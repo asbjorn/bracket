@@ -1,4 +1,4 @@
-import { Alert, Button, Checkbox, Group, Stack, Stepper, Text, Title } from '@mantine/core';
+import { Alert, Button, Checkbox, Group, Stack, Stepper, Text } from '@mantine/core';
 import { IconInfoCircle, IconWand } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +19,7 @@ import {
   toApiClass,
   toTimeWindows,
 } from '@components/planning/cup_plan_editor';
+import { PageTitle } from '@components/help/help_button';
 import { ProposalReport } from '@components/scheduling/match_plan_panel';
 import { capitalize, getTournamentIdFromRouter } from '@components/utils/util';
 import { CapacityCourts, CapacityResult } from '@openapi';
@@ -107,7 +108,7 @@ export default function CupSetupPage() {
   return (
     <TournamentLayout tournament_id={tournamentData.id}>
       <Stack>
-        <Title>{t('setup_title')}</Title>
+        <PageTitle help="setup">{t('setup_title')}</PageTitle>
         <Alert color="gray" icon={<IconInfoCircle />}>
           {t('setup_description')}
         </Alert>

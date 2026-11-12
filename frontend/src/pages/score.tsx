@@ -35,6 +35,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
 
+import { HelpButton } from '@components/help/help_button';
 import { CardsEditor, SuspendedAlert } from '@components/discipline/cards_editor';
 import { Time } from '@components/utils/datetime';
 import { capitalize } from '@components/utils/util';
@@ -580,26 +581,29 @@ export default function ScoreEntryPage() {
               {view.tournament_name}
             </Text>
           </Stack>
-          {/* A full button on wider screens, a large icon on phones (no clipped text) */}
-          <Button
-            visibleFrom="xs"
-            variant="light"
-            color="orange"
-            leftSection={<IconClockPause size={20} />}
-            onClick={() => setDelayOpened(true)}
-          >
-            {t('report_delay_button')}
-          </Button>
-          <ActionIcon
-            hiddenFrom="xs"
-            size="xl"
-            variant="light"
-            color="orange"
-            aria-label={t('report_delay_button')}
-            onClick={() => setDelayOpened(true)}
-          >
-            <IconClockPause size={24} />
-          </ActionIcon>
+          <Group gap="xs" wrap="nowrap">
+            <HelpButton page="pitch" />
+            {/* A full button on wider screens, a large icon on phones (no clipped text) */}
+            <Button
+              visibleFrom="xs"
+              variant="light"
+              color="orange"
+              leftSection={<IconClockPause size={20} />}
+              onClick={() => setDelayOpened(true)}
+            >
+              {t('report_delay_button')}
+            </Button>
+            <ActionIcon
+              hiddenFrom="xs"
+              size="xl"
+              variant="light"
+              color="orange"
+              aria-label={t('report_delay_button')}
+              onClick={() => setDelayOpened(true)}
+            >
+              <IconClockPause size={24} />
+            </ActionIcon>
+          </Group>
         </Group>
 
         {selected != null ? (

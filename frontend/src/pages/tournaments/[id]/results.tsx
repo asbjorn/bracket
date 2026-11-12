@@ -8,7 +8,6 @@ import {
   Group,
   Stack,
   Text,
-  Title,
   UnstyledButton,
 } from '@mantine/core';
 import { AiOutlineHourglass } from '@react-icons/all-files/ai/AiOutlineHourglass';
@@ -16,6 +15,7 @@ import { IconAlertCircle } from '@tabler/icons-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { PageTitle } from '@components/help/help_button';
 import MatchModal from '@components/modals/match_modal';
 import { NoContent } from '@components/no_content/empty_table_info';
 import { Time, compareDateTime, spansMultipleDays } from '@components/utils/datetime';
@@ -273,7 +273,7 @@ export default function ResultsPage() {
         setOpened={modalSetOpenedAndUpdateMatch}
         round={null}
       />
-      <Title>{t('results_title')}</Title>
+      <PageTitle help="results">{t('results_title')}</PageTitle>
       <Center mt="1rem">
         <Schedule
           t={t}

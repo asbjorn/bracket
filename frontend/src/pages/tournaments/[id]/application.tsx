@@ -19,6 +19,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import useSWR from 'swr';
 
+import { PageTitle } from '@components/help/help_button';
 import { PrintButton } from '@components/print/print_button';
 import { getTournamentIdFromRouter } from '@components/utils/util';
 import { contentLanguage } from '@components/utils/language';
@@ -221,7 +222,7 @@ export default function DistrictApplicationPage() {
       <Stack>
         <Group justify="space-between" className="no-print">
           <div>
-            <Title>{t('application_title')}</Title>
+            <PageTitle help="application">{t('application_title')}</PageTitle>
             <Text c="dimmed">{t('application_description')}</Text>
           </div>
           <Group>

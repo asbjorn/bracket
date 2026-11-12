@@ -1,7 +1,8 @@
-import { Grid, Select, Title } from '@mantine/core';
+import { Grid, Select } from '@mantine/core';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { PageTitle } from '@components/help/help_button';
 import TeamCreateModal from '@components/modals/team_create_modal';
 import { getTableState, tableStateToPagination } from '@components/tables/table';
 import TeamsTable from '@components/tables/teams';
@@ -74,7 +75,7 @@ export default function TeamsPage() {
     <TournamentLayout tournament_id={tournamentData.id}>
       <Grid justify="space-between" mb="1rem">
         <Grid.Col span="auto">
-          <Title>{capitalize(t('teams_title'))}</Title>
+          <PageTitle help="teams">{capitalize(t('teams_title'))}</PageTitle>
         </Grid.Col>
         <Grid.Col span={{ base: 12, md: 'content' }}>
           <Grid align="flex-end">

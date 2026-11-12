@@ -17,6 +17,7 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SWRResponse } from 'swr';
 
+import { TitleWithHelp } from '@components/help/help_button';
 import DeleteButton from '@components/buttons/delete';
 import { CardsEditor, SuspendedAlert } from '@components/discipline/cards_editor';
 import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
@@ -463,7 +464,11 @@ export default function MatchModal({
 
   return (
     <>
-      <Modal opened={opened} onClose={() => setOpened(false)} title={t('edit_match_modal_title')}>
+      <Modal
+        opened={opened}
+        onClose={() => setOpened(false)}
+        title={<TitleWithHelp help="match_edit">{t('edit_match_modal_title')}</TitleWithHelp>}
+      >
         {/* Keyed by match: hooks and form state start fresh for every match */}
         {match != null ? (
           <MatchModalForm

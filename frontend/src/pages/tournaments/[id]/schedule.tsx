@@ -23,6 +23,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SWRResponse } from 'swr';
 
+import { PageTitle } from '@components/help/help_button';
 import CourtModal from '@components/modals/create_court_modal';
 import MatchModal from '@components/modals/match_modal';
 import MatchPlanPanel from '@components/scheduling/match_plan_panel';
@@ -432,7 +433,9 @@ export default function SchedulePage() {
             round={null}
           />
         ) : null}
-        <Title mb="md">{t('planning_title')}</Title>
+        <PageTitle help="schedule" mb="md">
+          {t('planning_title')}
+        </PageTitle>
         <NoticesAlert
           tournamentId={tournamentData.id}
           courts={swrCourtsResponse.data?.data ?? []}

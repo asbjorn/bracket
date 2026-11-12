@@ -14,6 +14,7 @@ import { useForm } from '@mantine/form';
 import { useTranslation } from 'react-i18next';
 import { SWRResponse } from 'swr';
 
+import { PageTitle } from '@components/help/help_button';
 import DeleteButton from '@components/buttons/delete';
 import { EmptyTableInfo } from '@components/no_content/empty_table_info';
 import RequestErrorAlert from '@components/utils/error_alert';
@@ -239,6 +240,9 @@ export default function RankingsPage() {
   return (
     <TournamentLayout tournament_id={tournamentData.id}>
       <Container maw="50rem">
+        <PageTitle help="rankings" mb="md">
+          {t('rankings_title')}
+        </PageTitle>
         <RankingForm
           t={t}
           tournament={tournamentDataFull}

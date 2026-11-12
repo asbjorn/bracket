@@ -19,6 +19,7 @@ import { IconInfoCircle, IconTrash } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { PageTitle } from '@components/help/help_button';
 import { CardIcon } from '@components/discipline/cards_editor';
 import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
 import { getTournamentIdFromRouter } from '@components/utils/util';
@@ -257,7 +258,7 @@ export default function DisciplinePage() {
   return (
     <TournamentLayout tournament_id={tournamentId}>
       <Stack>
-        <Title>{t('discipline_title')}</Title>
+        <PageTitle help="discipline">{t('discipline_title')}</PageTitle>
         <Alert color="gray" icon={<IconInfoCircle />}>
           {t('discipline_description')}
         </Alert>

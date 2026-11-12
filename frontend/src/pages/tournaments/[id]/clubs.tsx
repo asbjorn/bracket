@@ -15,6 +15,7 @@ import { IconBuildingCommunity, IconInfoCircle, IconPlus, IconSearch } from '@ta
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { PageTitle } from '@components/help/help_button';
 import ClubEditModal from '@components/participating_clubs/club_edit_modal';
 import ClubWizard from '@components/participating_clubs/club_wizard';
 import { getTournamentIdFromRouter } from '@components/utils/util';
@@ -81,7 +82,7 @@ export default function ParticipatingClubsPage() {
 
       <Stack>
         <Group justify="space-between">
-          <Title>{t('participating_clubs_title')}</Title>
+          <PageTitle help="clubs">{t('participating_clubs_title')}</PageTitle>
           {clubs.length > 0 ? addButton('md') : null}
         </Group>
         <Text c="dimmed">{t('participating_clubs_description')}</Text>

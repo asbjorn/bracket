@@ -16,6 +16,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SWRResponse } from 'swr';
 
+import { TitleWithHelp } from '@components/help/help_button';
 import { Translator } from '@components/utils/types';
 import {
   StageItemInputOptionsResponse,
@@ -209,7 +210,7 @@ export function CreateStageItemModal({
       <Modal
         opened={opened}
         onClose={() => setOpened(false)}
-        title={t('add_stage_item_modal_title')}
+        title={<TitleWithHelp help="stage_item">{t('add_stage_item_modal_title')}</TitleWithHelp>}
         size="60rem"
       >
         <form

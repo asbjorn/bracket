@@ -1,9 +1,10 @@
-import { Alert, Badge, Button, Group, List, Stack, Table, Title } from '@mantine/core';
+import { Alert, Badge, Button, Group, List, Stack, Table } from '@mantine/core';
 import { GoPlus } from '@react-icons/all-files/go/GoPlus';
 import { IconAlertTriangle, IconInfoCircle, IconPencil } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { PageTitle } from '@components/help/help_button';
 import DeleteButton from '@components/buttons/delete';
 import { CategoryWarningMessage } from '@components/info/category_warnings';
 import CategoryModal from '@components/modals/category_modal';
@@ -120,7 +121,7 @@ export default function CategoriesPage() {
       ) : null}
       <Stack>
         <Group justify="space-between">
-          <Title>{capitalize(t('categories_title'))}</Title>
+          <PageTitle help="categories">{capitalize(t('categories_title'))}</PageTitle>
           <Button
             variant="outline"
             color="green"

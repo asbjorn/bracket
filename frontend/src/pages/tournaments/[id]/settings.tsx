@@ -23,6 +23,7 @@ import { MdArchive } from 'react-icons/md';
 import { useNavigate } from 'react-router';
 import { SWRResponse } from 'swr';
 
+import { PageTitle } from '@components/help/help_button';
 import { assert_not_none } from '@components/utils/assert';
 import { DropzoneButton } from '@components/utils/file_upload';
 import { GenericSkeletonThreeRows } from '@components/utils/skeletons';
@@ -380,6 +381,7 @@ function GeneralTournamentForm({
 }
 
 export default function SettingsPage() {
+  const { t } = useTranslation();
   const { tournamentData } = getTournamentIdFromRouter();
   const swrClubsResponse = getClubs();
   const swrTournamentResponse = getTournamentById(tournamentData.id);
@@ -397,6 +399,9 @@ export default function SettingsPage() {
   if (tournamentDataFull != null) {
     content = (
       <>
+        <PageTitle help="settings" mb="md">
+          {t('tournament_setting_title')}
+        </PageTitle>
         <GeneralTournamentForm
           tournament={tournamentDataFull}
           swrTournamentResponse={swrTournamentResponse}

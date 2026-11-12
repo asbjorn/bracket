@@ -34,6 +34,7 @@ import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { PageTitle } from '@components/help/help_button';
 import { NoContent } from '@components/no_content/empty_table_info';
 import { getBaseURL, getTournamentIdFromRouter } from '@components/utils/util';
 import { contentLanguage } from '@components/utils/language';
@@ -488,7 +489,7 @@ export default function RegistrationsPage() {
     <TournamentLayout tournament_id={tournamentData.id}>
       <Stack>
         <Group justify="space-between">
-          <Title>{t('registrations_title')}</Title>
+          <PageTitle help="registrations">{t('registrations_title')}</PageTitle>
           <Button
             variant="default"
             leftSection={<IconDownload size={18} />}

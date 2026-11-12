@@ -17,6 +17,7 @@ import {
   toApiClass,
   toTimeWindows,
 } from '@components/planning/cup_plan_editor';
+import { PageTitle } from '@components/help/help_button';
 import { ProposalReport } from '@components/scheduling/match_plan_panel';
 import { capitalize } from '@components/utils/util';
 import { CapacityCourts, CapacityResult } from '@openapi';
@@ -40,7 +41,7 @@ export default function CapacityPage() {
   return (
     <Layout>
       <Stack>
-        <Title>{t('capacity_title')}</Title>
+        <PageTitle help="capacity">{t('capacity_title')}</PageTitle>
         <Alert color="gray" icon={<IconInfoCircle />}>
           {t('capacity_description')}
         </Alert>

@@ -29,6 +29,8 @@ import { Category, FullTeamWithPlayers, ParticipatingClubWithTeams } from '@open
 import { requestSucceeded } from '@services/adapter';
 import { createParticipatingClub } from '@services/participating_clubs';
 
+import { TitleWithHelp } from '@components/help/help_button';
+
 export function CategoryBadge({
   categoryId,
   categories,
@@ -116,7 +118,12 @@ export default function ClubWizard({
   const teamCount = newTeams.length + linkedIds.length;
 
   return (
-    <Modal opened onClose={onClose} title={t('club_wizard_title')} size="44rem">
+    <Modal
+      opened
+      onClose={onClose}
+      title={<TitleWithHelp help="club_wizard">{t('club_wizard_title')}</TitleWithHelp>}
+      size="44rem"
+    >
       <Stepper active={step} onStepClick={setStep} allowNextStepsSelect={false} size="sm">
         <Stepper.Step label={t('club_wizard_step_name')}>
           <Stack mt="md">

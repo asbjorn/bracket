@@ -1,6 +1,7 @@
-import { Group, Stack, Title } from '@mantine/core';
+import { Group, Stack } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
 
+import { PageTitle } from '@components/help/help_button';
 import UserForm from '@components/forms/user';
 import RequestErrorAlert from '@components/utils/error_alert';
 import { TableSkeletonSingleColumn } from '@components/utils/skeletons';
@@ -26,7 +27,7 @@ export default function UserPage() {
 
   return (
     <Layout>
-      <Title>{t('edit_profile_title')}</Title>
+      <PageTitle help="user">{t('edit_profile_title')}</PageTitle>
       {swrUserResponse.error && <RequestErrorAlert error={swrUserResponse.error} />}
       <Stack style={{ maxWidth: '40rem' }}>{content}</Stack>
     </Layout>

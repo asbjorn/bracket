@@ -13,6 +13,8 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
 
 import { PublicNoticesBanner } from '@components/dashboard/public_notices';
+import { HelpButton } from '@components/help/help_button';
+import { HelpPageId } from '@components/help/help_content';
 import PreloadLink from '@components/utils/link';
 import { getOpenClasses } from '@services/registration';
 import { getBaseURL } from '@components/utils/util';
@@ -78,6 +80,18 @@ export function TournamentTitle({ tournamentDataFull }: { tournamentDataFull: To
   );
 }
 
+/** The help that fits the tab of the public cup page that is open. */
+function publicHelpPage(pathName: string, base: string): HelpPageId {
+  const rest = pathName.slice(base.length);
+  if (rest.startsWith('/register')) return 'public_register';
+  if (/^\/teams\/[^/]+/.test(rest)) return 'public_team';
+  if (rest.startsWith('/teams')) return 'public_teams';
+  if (rest.startsWith('/courts')) return 'public_courts';
+  if (rest.startsWith('/standings')) return 'public_standings';
+  if (rest.startsWith('/rules')) return 'public_rules';
+  return 'public_matches';
+}
+
 export function DoubleHeader({ tournamentData }: { tournamentData: Tournament }) {
   const { t } = useTranslation();
   const navigate = useLocation();
@@ -115,11 +129,14 @@ export function DoubleHeader({ tournamentData }: { tournamentData: Tournament })
     <>
       <header className={classes.header}>
         <Container className={classes.inner}>
-          <UnstyledButton component={PreloadLink} href={base}>
-            <Title size="lg" lineClamp={1}>
-              {tournamentData.name}
-            </Title>
-          </UnstyledButton>
+          <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
+            <UnstyledButton component={PreloadLink} href={base} style={{ minWidth: 0 }}>
+              <Title size="lg" lineClamp={1}>
+                {tournamentData.name}
+              </Title>
+            </UnstyledButton>
+            <HelpButton page={publicHelpPage(pathName, base)} />
+          </Group>
           <ScrollArea type="never" className={classes.links}>
             <Group gap={0} wrap="nowrap" className={classes.mainLinks}>
               {mainItems}

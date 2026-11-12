@@ -19,7 +19,6 @@ import {
   Tabs,
   Text,
   TextInput,
-  Title,
 } from '@mantine/core';
 import {
   IconAlertTriangle,
@@ -33,6 +32,7 @@ import dayjs from 'dayjs';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { PageTitle } from '@components/help/help_button';
 import { NoContent } from '@components/no_content/empty_table_info';
 import { Time, formatDayTime } from '@components/utils/datetime';
 import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
@@ -774,7 +774,7 @@ export default function OfficialsPage() {
       <TournamentLayout tournament_id={tournamentId}>
         <Stack>
           <Group justify="space-between">
-            <Title>{t('officials_title')}</Title>
+            <PageTitle help="officials">{t('officials_title')}</PageTitle>
             {overview != null ? (
               <Badge size="lg" variant="light" leftSection={<IconUserCheck size={14} />}>
                 {t('official_coverage_badge', {

@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SWRResponse } from 'swr';
 
+import { TitleWithHelp } from '@components/help/help_button';
 import { CategoryInput, categoryIdToValue, valueToCategoryId } from '@components/utils/category';
 import { DropzoneButton } from '@components/utils/file_upload';
 import { ClubSelect } from '@components/utils/club_select';
@@ -89,7 +90,11 @@ export default function TeamUpdateModal({
 
   return (
     <>
-      <Modal opened onClose={onClose} title={t('edit_team_title')}>
+      <Modal
+        opened
+        onClose={onClose}
+        title={<TitleWithHelp help="team_edit">{t('edit_team_title')}</TitleWithHelp>}
+      >
         <form
           onSubmit={form.onSubmit(async (values) => {
             const result = await updateTeam(

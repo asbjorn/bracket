@@ -1,8 +1,9 @@
-import { Button, Group, Stack, Title } from '@mantine/core';
+import { Button, Group, Stack } from '@mantine/core';
 import { IconWand } from '@tabler/icons-react';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { PageTitle } from '@components/help/help_button';
 import Builder from '@components/builder/builder';
 import { CreateStageButtonLarge } from '@components/buttons/create_stage';
 import { CategoryWarnings } from '@components/info/category_warnings';
@@ -170,7 +171,9 @@ export default function StagesPage() {
 
   return (
     <TournamentLayout tournament_id={tournamentData.id}>
-      <Title mb="sm">{capitalize(t('stage_title'))}</Title>
+      <PageTitle help="stages" mb="sm">
+        {capitalize(t('stage_title'))}
+      </PageTitle>
       {content}
     </TournamentLayout>
   );

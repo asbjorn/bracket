@@ -15,6 +15,7 @@ import { IconDownload, IconInfoCircle, IconMedal } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { PageTitle } from '@components/help/help_button';
 import { PrintButton } from '@components/print/print_button';
 import { DayAndTime } from '@components/utils/datetime';
 import { contentLanguage } from '@components/utils/language';
@@ -139,7 +140,7 @@ export default function CeremonyPage() {
     <TournamentLayout tournament_id={tournamentData.id}>
       <Stack>
         <Group justify="space-between" className="no-print">
-          <Title>{t('ceremony_title')}</Title>
+          <PageTitle help="ceremony">{t('ceremony_title')}</PageTitle>
           <Group>
             <Button
               variant="default"

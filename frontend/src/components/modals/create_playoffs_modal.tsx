@@ -20,6 +20,8 @@ import { PlayoffBody, StageWithStageItems, StagesWithStageItemsResponse } from '
 import { requestSucceeded } from '@services/adapter';
 import { createPlayoffs } from '@services/playoffs';
 
+import { TitleWithHelp } from '@components/help/help_button';
+
 const PLAYOFF_NAMES = ['A', 'B', 'C', 'D'];
 
 /**
@@ -82,7 +84,7 @@ export default function CreatePlayoffsModal({
       <Modal
         opened={opened}
         onClose={() => setOpened(false)}
-        title={t('create_playoffs_title')}
+        title={<TitleWithHelp help="playoffs">{t('create_playoffs_title')}</TitleWithHelp>}
         size="40rem"
       >
         <Stack>

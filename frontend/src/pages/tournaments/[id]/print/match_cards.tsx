@@ -1,8 +1,9 @@
-import { Badge, Box, Group, Select, SimpleGrid, Stack, Text, Title } from '@mantine/core';
+import { Badge, Box, Group, Select, SimpleGrid, Stack, Text } from '@mantine/core';
 import dayjs from 'dayjs';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { PageTitle } from '@components/help/help_button';
 import { PrintButton } from '@components/print/print_button';
 import {
   CategoryFilterSelect,
@@ -152,7 +153,7 @@ export default function MatchCardsPage() {
     <TournamentLayout tournament_id={tournamentData.id}>
       <Stack>
         <Group justify="space-between" className="no-print">
-          <Title>{t('match_cards_title')}</Title>
+          <PageTitle help="match_cards">{t('match_cards_title')}</PageTitle>
           <PrintButton label={t('print_match_cards_button', { count: selected.length })} />
         </Group>
         <Group className="no-print" align="end">

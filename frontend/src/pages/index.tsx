@@ -1,7 +1,8 @@
-import { Grid, Select, Title } from '@mantine/core';
+import { Grid, Select } from '@mantine/core';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { PageTitle } from '@components/help/help_button';
 import TournamentsCardTable from '@components/card_tables/tournaments';
 import TournamentModal from '@components/modals/tournament_modal';
 import { TournamentFilter } from '@components/utils/tournament';
@@ -21,7 +22,7 @@ export default function HomePage() {
     <Layout>
       <Grid>
         <Grid.Col span="auto">
-          <Title>{capitalize(t('tournaments_title'))}</Title>
+          <PageTitle help="tournaments">{capitalize(t('tournaments_title'))}</PageTitle>
         </Grid.Col>
         <Grid.Col span="content" className={classes.fullWithMobile}>
           <Select

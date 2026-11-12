@@ -17,6 +17,7 @@ import { IconArrowsShuffle, IconInfoCircle, IconMaximize } from '@tabler/icons-r
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { PageTitle } from '@components/help/help_button';
 import { getTournamentIdFromRouter } from '@components/utils/util';
 import { DrawPlacement, StageWithStageItems } from '@openapi';
 import TournamentLayout from '@pages/tournaments/_tournament_layout';
@@ -155,7 +156,7 @@ export default function DrawPage() {
   return (
     <TournamentLayout tournament_id={tournamentData.id}>
       <Stack>
-        <Title>{t('draw_title')}</Title>
+        <PageTitle help="draw">{t('draw_title')}</PageTitle>
         <Alert color="gray" icon={<IconInfoCircle />}>
           {t('draw_description')}
         </Alert>

@@ -1,6 +1,7 @@
-import { Grid, Group, Title } from '@mantine/core';
+import { Grid, Group } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
 
+import { PageTitle } from '@components/help/help_button';
 import PlayerCreateModal from '@components/modals/player_create_modal';
 import PlayerImportModal from '@components/modals/player_import_modal';
 import PlayersTable from '@components/tables/players';
@@ -22,7 +23,7 @@ export default function PlayersPage() {
     <TournamentLayout tournament_id={tournamentData.id}>
       <Grid justify="space-between">
         <Grid.Col span="auto">
-          <Title>{capitalize(t('players_title'))}</Title>
+          <PageTitle help="players">{capitalize(t('players_title'))}</PageTitle>
         </Grid.Col>
         <Grid.Col span="content">
           <Group>
