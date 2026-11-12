@@ -53,6 +53,7 @@ from bracket.utils.alembic import alembic_run_migrations
 from bracket.utils.asyncio import AsyncioTasksManager
 from bracket.utils.db_init import init_db_when_empty
 from bracket.utils.error_codes import ERROR_CODE_HEADER, error_code_headers
+from bracket.utils.frontend_cache import REVALIDATE, cache_control_for
 from bracket.utils.logging import logger
 from bracket.utils.redact import install_log_redaction
 
@@ -220,6 +221,8 @@ if config.serve_frontend:
             and str(path) in allowed_paths
             and frontend_root in path.parents
         ):
-            return FileResponse(path)
+            return FileResponse(path, headers={"Cache-Control": cache_control_for(full_path)})
 
-        return FileResponse(frontend_root / Path("index.html"))
+        return FileResponse(
+            frontend_root / Path("index.html"), headers={"Cache-Control": REVALIDATE}
+        )

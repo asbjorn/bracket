@@ -29,6 +29,8 @@ i18n
       'nn',
     ],
     nonExplicitSupportedLngs: true,
+    // The build version in the URL: after a deploy browsers load the new texts, not a cached copy
+    backend: { loadPath: `/locales/{{lng}}/{{ns}}.json?v=${__BUILD_VERSION__}` },
     load: 'languageOnly',
     defaultNS: 'common',
     interpolation: {
