@@ -1,13 +1,12 @@
-import { Alert, Button, Group, List, NumberInput, Select, Stack, Text } from '@mantine/core';
-import { IconAlertTriangle, IconClockPlus } from '@tabler/icons-react';
-import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
+import { Alert, List, Text } from '@mantine/core';
+import { IconAlertTriangle } from '@tabler/icons-react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SWRResponse } from 'swr';
 
 import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
-import { Court, PlanIssueOut, StagesWithStageItemsResponse } from '@openapi';
-import { getPlanIssues, requestSucceeded } from '@services/adapter';
+import { PlanIssueOut, StagesWithStageItemsResponse } from '@openapi';
+import { getPlanIssues } from '@services/adapter';
 
 const MAX_ISSUES_SHOWN = 10;
 
