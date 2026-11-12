@@ -646,6 +646,7 @@
     "official_age_label": "Alder",
     "official_age_short": "{{age}} år",
     "official_club_description": "Gir varsel når de dømmer et lag fra egen klubb",
+    "official_club_unknown": "Ingen klubb i cupen har dette navnet. Varsel om egen klubb virker bare når navnet stemmer med lagenes klubb.",
     "official_contact_private_note": "Telefon og e-post vises bare for arrangøren.",
     "official_fee_per_match_label": "Honorar per kamp",
     "official_fee_per_day_label": "Honorar per dag",

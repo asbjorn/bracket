@@ -646,6 +646,7 @@
     "official_age_label": "Age",
     "official_age_short": "{{age}} yrs",
     "official_club_description": "Warns when they referee a team of their own club",
+    "official_club_unknown": "No club in the cup has this name. The own-club warning only works when it matches the club of the teams.",
     "official_contact_private_note": "Phone and email are only visible to organisers.",
     "official_fee_per_match_label": "Fee per match",
     "official_fee_per_day_label": "Fee per day",

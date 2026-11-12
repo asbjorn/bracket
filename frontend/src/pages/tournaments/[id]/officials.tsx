@@ -111,7 +111,13 @@ function OfficialModal({
   );
   const [saving, setSaving] = useState(false);
   const update = (changes: Partial<OfficialBody>) => setValue({ ...value, ...changes });
-  const clubNames = (getParticipatingClubs(tournamentId).data?.data ?? []).map((c) => c.name);
+  const clubs = getParticipatingClubs(tournamentId).data?.data;
+  const clubNames = (clubs ?? []).map((c) => c.name);
+  // The own-club warning compares names ignoring case, so a spelling that matches no club silently
+  // never warns. Teams without a club count under their own name, hence a hint and not an error.
+  const typedClub = value.club_name?.trim().toLowerCase();
+  const unknownClub =
+    clubs != null && !!typedClub && !clubNames.some((n) => n.trim().toLowerCase() === typedClub);
 
   return (
     <Modal
@@ -168,7 +174,15 @@ function OfficialModal({
           </Group>
           <Autocomplete
             label={t('club_name_input_label')}
-            description={t('official_club_description')}
+            description={
+              unknownClub ? (
+                <Text span size="xs" c="orange">
+                  {t('official_club_unknown')}
+                </Text>
+              ) : (
+                t('official_club_description')
+              )
+            }
             data={clubNames}
             value={value.club_name ?? ''}
             onChange={(club) => update({ club_name: emptyToNull(club) })}
