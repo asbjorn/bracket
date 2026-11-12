@@ -32,6 +32,8 @@ i18n
     // The build version in the URL: after a deploy browsers load the new texts, not a cached copy
     backend: { loadPath: `/locales/{{lng}}/{{ns}}.json?v=${__BUILD_VERSION__}` },
     load: 'languageOnly',
+    // Only the namespace that exists: no request for i18next's default "translation"
+    ns: ['common'],
     defaultNS: 'common',
     interpolation: {
       escapeValue: false,
