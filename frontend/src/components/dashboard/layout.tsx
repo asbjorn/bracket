@@ -81,6 +81,14 @@ export function TournamentTitle({ tournamentDataFull }: { tournamentDataFull: To
 }
 
 /** The help that fits the tab of the public cup page that is open. */
+function safeDecode(path: string): string {
+  try {
+    return decodeURIComponent(path);
+  } catch {
+    return path;
+  }
+}
+
 function publicHelpPage(pathName: string, base: string): HelpPageId {
   const rest = pathName.slice(base.length);
   if (rest.startsWith('/register')) return 'public_register';
@@ -96,7 +104,8 @@ export function DoubleHeader({ tournamentData }: { tournamentData: Tournament })
   const { t } = useTranslation();
   const navigate = useLocation();
   const endpoint = tournamentData.dashboard_endpoint || '';
-  const pathName = navigate.pathname.replace('[id]', endpoint).replace(/\/+$/, '');
+  // The browser encodes the address (spaces, æøå, ...), the cup's address is stored decoded
+  const pathName = safeDecode(navigate.pathname).replace('[id]', endpoint).replace(/\/+$/, '');
 
   const base = `/tournaments/${endpoint}/dashboard`;
   const openClasses = getOpenClasses(tournamentData.id);
