@@ -37,13 +37,14 @@ from bracket.routes.models import (
 )
 from bracket.routes.util import disallow_archived_tournament
 from bracket.sql.categories import get_all_categories_in_tournament
+from bracket.utils.client_ip import client_ip
 from bracket.utils.id_types import CategoryId, TeamId, TournamentId
-from bracket.utils.rate_limit import SlidingWindowLimiter
+from bracket.utils.rate_limit import RateLimiter
 
 router = APIRouter(prefix=config.api_prefix)
 
 # Per client: a club signs up a handful of teams, a bot many
-public_sign_ups = SlidingWindowLimiter(limit=10, window_seconds=3600)
+public_sign_ups = RateLimiter("public_sign_ups", limit=10, window_seconds=3600)
 
 
 @router.get(
@@ -72,8 +73,7 @@ async def register_team_publicly(
     Public sign-up of a team, or of several teams of a club at once (only for a public cup,
     open classes and before the deadline). When a class is full, the team goes to its waitlist.
     """
-    client = request.client.host if request.client is not None else "unknown"
-    public_sign_ups.check(f"{tournament_id}:{client}")
+    await public_sign_ups.check(f"{tournament_id}:{client_ip(request)}")
     if body.website != "":
         # A bot filled in the hidden field: pretend it worked, store nothing
         fake = [

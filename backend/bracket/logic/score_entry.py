@@ -29,27 +29,28 @@ from bracket.sql.officials import get_public_match_officials
 from bracket.sql.score_links import get_valid_score_link
 from bracket.sql.stages import get_full_tournament_details
 from bracket.sql.tournaments import sql_get_tournament
+from bracket.utils.client_ip import client_ip
 from bracket.utils.id_types import MatchCardId, MatchId, TeamId
-from bracket.utils.rate_limit import SlidingWindowLimiter
+from bracket.utils.rate_limit import RateLimiter
 
 # Per link and client: reading (the page refreshes) and writing (results, check-ins, notices).
 # Keys are only made for valid links; wrong tokens are limited per client, so guessing is slow.
-score_link_reads = SlidingWindowLimiter(limit=300, window_seconds=60)
-score_link_writes = SlidingWindowLimiter(limit=60, window_seconds=60)
-invalid_link_attempts = SlidingWindowLimiter(limit=20, window_seconds=60)
+score_link_reads = RateLimiter("score_link_reads", limit=300, window_seconds=60)
+score_link_writes = RateLimiter("score_link_writes", limit=60, window_seconds=60)
+invalid_link_attempts = RateLimiter("invalid_link_attempts", limit=20, window_seconds=60)
 
 
 async def score_link_dependency(token: str, request: Request) -> ScoreLink:
-    client = request.client.host if request.client is not None else "unknown"
+    client = client_ip(request)
     link = await get_valid_score_link(token)
     if link is None:
-        invalid_link_attempts.check(client)
+        await invalid_link_attempts.check(client)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="This link is not valid (any more). Ask the organiser for a new one.",
         )
     limiter = score_link_reads if request.method == "GET" else score_link_writes
-    limiter.check(f"{link.id}:{client}")
+    await limiter.check(f"{link.id}:{client}")
     if request.method != "GET":
         # Every change through a link (results, cards, check-in, notices): not when archived
         tournament = await sql_get_tournament(link.tournament_id)

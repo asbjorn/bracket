@@ -54,8 +54,8 @@ async def add_contacts(auth_context: AuthContext, team_ids: dict[str, TeamId]) -
 async def clean_up(auth_context: AuthContext) -> None:
     tournament_id = auth_context.tournament.id
     set_email_sender(None)
-    bulk_sends.hits.clear()
-    bulk_sends_per_user.hits.clear()
+    await bulk_sends.clear()
+    await bulk_sends_per_user.clear()
     await database.execute(
         notifications_sent.delete().where(notifications_sent.c.tournament_id == tournament_id)
     )

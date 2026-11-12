@@ -64,7 +64,7 @@ async def test_sign_up_waitlist_and_promote(
     startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
 ) -> None:
     tournament_id = auth_context.tournament.id
-    public_sign_ups.hits.clear()
+    await public_sign_ups.clear()
     try:
         category_id = await create_class(
             auth_context, {"registration_open": True, "max_teams": 2, "entry_fee": 1500}
@@ -181,7 +181,7 @@ async def test_sign_up_closed_deadline_and_abuse(
     startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
 ) -> None:
     tournament_id = auth_context.tournament.id
-    public_sign_ups.hits.clear()
+    await public_sign_ups.clear()
     try:
         yesterday = (datetime_utc.now() - timedelta(days=1)).isoformat()
         category_id = await create_class(
@@ -218,13 +218,13 @@ async def test_sign_up_closed_deadline_and_abuse(
         assert limited == {"detail": "Too many requests, please wait a moment and try again"}
 
         # Not for cups that aren't public
-        public_sign_ups.hits.clear()
+        await public_sign_ups.clear()
         await set_dashboard_public(tournament_id, False)
         hidden = await public_post(tournament_id, sign_up(category_id, "Lyn"))
         assert "not publicly available" in str(hidden)
     finally:
         await set_dashboard_public(tournament_id, True)
-        public_sign_ups.hits.clear()
+        await public_sign_ups.clear()
         await delete_cup(auth_context)
 
 
@@ -233,7 +233,7 @@ async def test_registrations_csv(
     startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
 ) -> None:
     tournament_id = auth_context.tournament.id
-    public_sign_ups.hits.clear()
+    await public_sign_ups.clear()
     try:
         category_id = await create_class(auth_context, {"registration_open": True})
         result = await public_post(
@@ -256,7 +256,7 @@ async def test_registrations_csv(
         assert ';"\'@SUM(A1)";' in text
         assert text.endswith('"Nei";"Nei";"Nei"\r\n')
     finally:
-        public_sign_ups.hits.clear()
+        await public_sign_ups.clear()
         await delete_cup(auth_context)
 
 
@@ -266,7 +266,7 @@ async def test_sign_up_respects_archive_and_subscription(
 ) -> None:
     tournament_id = auth_context.tournament.id
     user_id = auth_context.user.id
-    public_sign_ups.hits.clear()
+    await public_sign_ups.clear()
     try:
         category_id = await create_class(auth_context, {"registration_open": True})
 
@@ -310,7 +310,7 @@ async def test_sign_up_respects_archive_and_subscription(
             tournaments.update().where(tournaments.c.id == tournament_id),
             values={"status": "OPEN"},
         )
-        public_sign_ups.hits.clear()
+        await public_sign_ups.clear()
         await delete_cup(auth_context)
 
 
@@ -320,7 +320,7 @@ async def test_concurrent_sign_ups_are_serialised(
 ) -> None:
     """Five teams at once for two spots: exactly two get in, the rest queue in order."""
     tournament_id = auth_context.tournament.id
-    public_sign_ups.hits.clear()
+    await public_sign_ups.clear()
     try:
         category_id = await create_class(auth_context, {"registration_open": True, "max_teams": 2})
         results = await asyncio.gather(
@@ -340,7 +340,7 @@ async def test_concurrent_sign_ups_are_serialised(
             ("WAITLIST", 3),
         ]
     finally:
-        public_sign_ups.hits.clear()
+        await public_sign_ups.clear()
         await delete_cup(auth_context)
 
 
@@ -350,7 +350,7 @@ async def test_club_signs_up_several_teams(
 ) -> None:
     """One form, three teams of a club: same contact and club, per-class waitlist; all or none."""
     tournament_id = auth_context.tournament.id
-    public_sign_ups.hits.clear()
+    await public_sign_ups.clear()
     try:
         category_id = await create_class(auth_context, {"registration_open": True, "max_teams": 2})
         body = sign_up(category_id, "ignored") | {

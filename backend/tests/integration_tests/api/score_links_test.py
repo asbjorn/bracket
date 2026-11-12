@@ -190,7 +190,7 @@ async def test_score_link_rate_limit(
     limits = [limiter.limit for limiter in limiters]
     for limiter in limiters:
         limiter.limit = 2
-        limiter.hits.clear()  # Other tests used wrong tokens too
+        await limiter.clear()  # Other tests used wrong tokens too
     try:
         body = {"delay_minutes": 5}
         responses = [
@@ -219,7 +219,7 @@ async def test_score_link_rate_limit(
     finally:
         for limiter, limit in zip(limiters, limits, strict=True):
             limiter.limit = limit
-            limiter.hits.clear()
+            await limiter.clear()
         await database.execute(
             match_day_notices.delete().where(
                 match_day_notices.c.tournament_id == auth_context.tournament.id

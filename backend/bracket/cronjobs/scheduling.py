@@ -8,6 +8,7 @@ from bracket.models.db.account import UserAccountType
 from bracket.sql.users import delete_user_and_owned_clubs, get_expired_demo_users
 from bracket.utils.asyncio import AsyncioTasksManager
 from bracket.utils.logging import logger
+from bracket.utils.rate_limit import delete_old_rate_limit_hits
 
 CronjobT = Callable[[], Awaitable[None]]
 
@@ -49,3 +50,8 @@ def start_email_cronjob() -> None:
     AsyncioTasksManager.add_coroutine(
         run_cronjob(send_pending_notifications, timedelta(seconds=15))
     )
+
+
+def start_maintenance_cronjob() -> None:
+    """Deletes old rate limit counters every hour (in every environment but CI)."""
+    AsyncioTasksManager.add_coroutine(run_cronjob(delete_old_rate_limit_hits, timedelta(hours=1)))

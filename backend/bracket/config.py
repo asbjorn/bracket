@@ -54,6 +54,10 @@ class Config(BaseSettings):
     smtp_starttls: bool = True
     smtp_ssl: bool = False
 
+    # Reverse proxies whose X-Forwarded-For header is trusted, as a comma separated list of
+    # IP addresses or networks (e.g. "10.0.0.0/8,127.0.0.1"). Empty: the direct peer is the client.
+    trusted_proxies: str = ""
+
     def is_email_enabled(self) -> bool:
         return bool(self.smtp_host and self.smtp_from)
 

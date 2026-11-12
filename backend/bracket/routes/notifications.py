@@ -23,22 +23,22 @@ from bracket.routes.models import (
 from bracket.routes.util import disallow_archived_tournament
 from bracket.utils.email import get_email_sender
 from bracket.utils.id_types import TournamentId
-from bracket.utils.rate_limit import SlidingWindowLimiter
+from bracket.utils.rate_limit import RateLimiter
 
 router = APIRouter(prefix=config.api_prefix)
 
 # Sending to all teams at once: at most 20 times an hour per tournament, 50 a day per user
-bulk_sends = SlidingWindowLimiter(limit=20, window_seconds=3600)
-bulk_sends_per_user = SlidingWindowLimiter(limit=50, window_seconds=24 * 3600)
+bulk_sends = RateLimiter("bulk_sends", limit=20, window_seconds=3600)
+bulk_sends_per_user = RateLimiter("bulk_sends_per_user", limit=50, window_seconds=24 * 3600)
 
 
-def check_can_send(tournament_id: TournamentId, user: UserPublic) -> None:
+async def check_can_send(tournament_id: TournamentId, user: UserPublic) -> None:
     if get_email_sender() is None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Email is not set up on this server")
     if user.account_type == UserAccountType.DEMO:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Demo accounts can't send emails")
-    bulk_sends.check(str(tournament_id))
-    bulk_sends_per_user.check(str(user.id))
+    await bulk_sends.check(str(tournament_id))
+    await bulk_sends_per_user.check(str(user.id))
 
 
 @router.get("/tournaments/{tournament_id}/notifications", response_model=NotificationStatusResponse)
@@ -74,7 +74,7 @@ async def email_announcement(
     announcement = await get_announcement(tournament_id)
     if announcement is None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "There is no announcement to send")
-    check_can_send(tournament_id, user)
+    await check_can_send(tournament_id, user)
     return NotificationsQueuedResponse(
         data=await queue_announcement(tournament_id, announcement.text)
     )
@@ -94,5 +94,5 @@ async def email_schedule_changes(
     notice. `dry_run` only counts them.
     """
     if not dry_run:
-        check_can_send(tournament_id, user)
+        await check_can_send(tournament_id, user)
     return ScheduleNoticeResponse(data=await queue_schedule_notices(tournament_id, dry_run=dry_run))

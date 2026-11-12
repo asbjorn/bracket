@@ -158,7 +158,7 @@ async def test_sign_up_finds_or_creates_the_club(
     startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
 ) -> None:
     tournament_id = auth_context.tournament.id
-    public_sign_ups.hits.clear()
+    await public_sign_ups.clear()
     try:
         await database.execute(
             tournaments.update().where(tournaments.c.id == tournament_id),
@@ -176,7 +176,7 @@ async def test_sign_up_finds_or_creates_the_club(
         clubs = {r["team_name"]: r["club_name"] for r in registrations["data"]}
         assert clubs == {"Brann 1": "Brann", "Brann 2": "Brann", "Lyn": None}
     finally:
-        public_sign_ups.hits.clear()
+        await public_sign_ups.clear()
         await delete_cup(auth_context)
 
 

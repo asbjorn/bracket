@@ -736,3 +736,13 @@ jury_members = Table(
     Column("role", Text, nullable=False, server_default="MEMBER"),
     Column("created", DateTimeTZ, nullable=False, server_default=func.now()),
 )
+
+# Hits of the rate limiters (bracket.utils.rate_limit), shared by all server processes
+rate_limit_hits = Table(
+    "rate_limit_hits",
+    metadata,
+    Column("bucket", Text, primary_key=True),
+    Column("key_hash", Text, primary_key=True),
+    Column("window_start", DateTimeTZ, primary_key=True),
+    Column("count", Integer, nullable=False),
+)
