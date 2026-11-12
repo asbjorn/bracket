@@ -4,6 +4,12 @@ from starlette import status
 
 from bracket.config import config
 from bracket.database import database
+from bracket.logic.court_splits import (
+    descendant_ids,
+    get_matches_on_courts,
+    part_suffixes,
+    undo_split,
+)
 from bracket.logic.subscriptions import check_requirement
 from bracket.models.db.court import (
     Court,
@@ -21,6 +27,7 @@ from bracket.routes.auth import (
 )
 from bracket.routes.models import (
     CourtsResponse,
+    MatchesOnCourtsResponse,
     PlanningHoursResponse,
     SingleCourtResponse,
     SuccessResponse,
@@ -90,12 +97,10 @@ async def delete_court(
     __: Tournament = Depends(disallow_archived_tournament),
 ) -> SuccessResponse:
     stages = await get_full_tournament_details(tournament_id, no_draft_rounds=False)
-    # Deleting a full pitch deletes its parts as well
-    court_ids = {court_id} | {
-        court.id
-        for court in await get_all_courts_in_tournament(tournament_id)
-        if court.parent_court_id == court_id
-    }
+    # Deleting a pitch deletes its parts as well (at any depth)
+    court_ids = {court_id} | set(
+        descendant_ids(court_id, await get_all_courts_in_tournament(tournament_id))
+    )
     used_in_matches_count = 0
     for stage in stages:
         for stage_item in stage.stage_items:
@@ -201,22 +206,21 @@ async def split_court(
     _: Tournament = Depends(disallow_archived_tournament),
 ) -> CourtsResponse:
     """
-    Splits a full pitch into 2-4 parts named after it ("Bane 1A", "Bane 1B", ...). A match on
-    the full pitch blocks its parts and a match on a part blocks the full pitch.
+    Splits a pitch into 2-4 parts named after it ("Bane 1A", "Bane 1B", ...; parts of a part get
+    digits: "Bane 1A1"). A part can be split again. A match on a pitch blocks everything above
+    and below it, but not other parts of the same pitch.
     """
     existing_courts = await get_all_courts_in_tournament(tournament_id)
     court = await get_court_of_tournament(tournament_id, court_id)
-    if court.parent_court_id is not None:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "A part of a pitch can't be split again")
     if any(other.parent_court_id == court_id for other in existing_courts):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "This pitch is already split")
     check_requirement(existing_courts, user, "max_courts", additions=body.parts)
     async with database.transaction():
-        for letter in "ABCD"[: body.parts]:
+        for suffix in part_suffixes(court.name, body.parts):
             await database.execute(
                 query=courts.insert(),
                 values=CourtToInsert(
-                    name=f"{court.name}{letter}",
+                    name=f"{court.name}{suffix}",
                     game_format=body.game_format,
                     created=datetime_utc.now(),
                     tournament_id=tournament_id,
@@ -268,3 +272,44 @@ async def replace_category_time_windows(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Could not find the class")
     await sql_replace_time_windows(tournament_id, body.time_windows, category_id=category_id)
     return SuccessResponse()
+
+
+@router.get(
+    "/tournaments/{tournament_id}/courts/{court_id}/split",
+    response_model=MatchesOnCourtsResponse,
+)
+async def get_split_matches(
+    tournament_id: TournamentId,
+    court_id: CourtId,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+) -> MatchesOnCourtsResponse:
+    """The matches planned on the parts of a split pitch (removed when the split is undone)."""
+    existing_courts = await get_all_courts_in_tournament(tournament_id)
+    await get_court_of_tournament(tournament_id, court_id)
+    parts = descendant_ids(court_id, existing_courts)
+    return MatchesOnCourtsResponse(
+        data=await get_matches_on_courts(tournament_id, parts, existing_courts)
+    )
+
+
+@router.delete(
+    "/tournaments/{tournament_id}/courts/{court_id}/split", response_model=CourtsResponse
+)
+async def undo_court_split(
+    tournament_id: TournamentId,
+    court_id: CourtId,
+    unschedule_matches: bool = False,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+    __: Tournament = Depends(disallow_archived_tournament),
+) -> CourtsResponse:
+    """
+    Undoes a split: removes all parts below the pitch. Matches planned on the parts are taken
+    off their pitch and time with `unschedule_matches=true` (otherwise 409); played or started
+    matches on the parts block it.
+    """
+    existing_courts = await get_all_courts_in_tournament(tournament_id)
+    await get_court_of_tournament(tournament_id, court_id)
+    await undo_split(
+        tournament_id, court_id, existing_courts, unschedule_matches=unschedule_matches
+    )
+    return CourtsResponse(data=await get_all_courts_in_tournament(tournament_id))

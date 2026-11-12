@@ -33,6 +33,7 @@ async def test_archived_tournament_can_not_be_changed(
                 {"stage_id": stage.id, "type": "ROUND_ROBIN", "team_count": 4},
             ),
             (HTTPMethod.DELETE, f"stage_items/{group.id}", None),
+            (HTTPMethod.DELETE, "courts/1/split?unschedule_matches=true", None),
         ]
         for method, endpoint, body in changes:
             response = await send_tournament_request(method, endpoint, auth_context, json=body)

@@ -1022,5 +1022,17 @@
     "registration_done_title_other": "You're signed up!",
     "duration_minutes_only": "{{minutes}} min",
     "official_conflict_too_young": "{{name}} is younger than 13 (NFF: club referees from 13 years)",
-    "official_conflict_younger_than_players": "{{name}} is younger than the players: {{match}}"
+    "official_conflict_younger_than_players": "{{name}} is younger than the players: {{match}}",
+    "court_undo_split_button": "Remove split",
+    "court_undo_split_title": "Remove the split of {{court}}",
+    "court_undo_split_parts": "These parts are removed: {{parts}}.",
+    "court_undo_split_matches_one": "{{count}} match is planned on the parts. It is taken off its pitch and time, so plan it again afterwards.",
+    "court_undo_split_matches_other": "{{count}} matches are planned on the parts. They are taken off their pitch and time, so plan them again afterwards.",
+    "court_undo_split_blocked_one": "{{count}} match on the parts is played or started, so the split can't be removed.",
+    "court_undo_split_blocked_other": "{{count}} matches on the parts are played or started, so the split can't be removed.",
+    "court_undo_split_more": "…and {{count}} more",
+    "court_undo_split_unschedule_button": "Take the matches off and remove the split",
+    "match_played_label": "played",
+    "match_started_short": "started",
+    "court_split_short_button": "Split"
 }

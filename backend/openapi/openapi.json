@@ -3563,6 +3563,51 @@
         "title": "MatchOfficialsBody",
         "type": "object"
       },
+      "MatchOnCourt": {
+        "properties": {
+          "court_id": {
+            "title": "Court Id",
+            "type": "integer"
+          },
+          "court_name": {
+            "title": "Court Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "played": {
+            "title": "Played",
+            "type": "boolean"
+          },
+          "start_time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Time"
+          },
+          "started": {
+            "title": "Started",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "court_id",
+          "court_name",
+          "start_time",
+          "played",
+          "started"
+        ],
+        "title": "MatchOnCourt",
+        "type": "object"
+      },
       "MatchRescheduleBody": {
         "properties": {
           "new_court_id": {
@@ -4184,6 +4229,22 @@
           "court"
         ],
         "title": "MatchWithDetailsDefinitive",
+        "type": "object"
+      },
+      "MatchesOnCourtsResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MatchOnCourt"
+            },
+            "title": "Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "MatchesOnCourtsResponse",
         "type": "object"
       },
       "MatchesOnDay": {
@@ -11889,8 +11950,128 @@
       }
     },
     "/tournaments/{tournament_id}/courts/{court_id}/split": {
+      "delete": {
+        "description": "Undoes a split: removes all parts below the pitch. Matches planned on the parts are taken\noff their pitch and time with `unschedule_matches=true` (otherwise 409); played or started\nmatches on the parts block it.",
+        "operationId": "undo_court_split_tournaments__tournament_id__courts__court_id__split_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "court_id",
+            "required": true,
+            "schema": {
+              "title": "Court Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unschedule_matches",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Unschedule Matches",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourtsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Undo Court Split",
+        "tags": [
+          "Courts"
+        ]
+      },
+      "get": {
+        "description": "The matches planned on the parts of a split pitch (removed when the split is undone).",
+        "operationId": "get_split_matches_tournaments__tournament_id__courts__court_id__split_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "court_id",
+            "required": true,
+            "schema": {
+              "title": "Court Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchesOnCourtsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Split Matches",
+        "tags": [
+          "Courts"
+        ]
+      },
       "post": {
-        "description": "Splits a full pitch into 2-4 parts named after it (\"Bane 1A\", \"Bane 1B\", ...). A match on\nthe full pitch blocks its parts and a match on a part blocks the full pitch.",
+        "description": "Splits a pitch into 2-4 parts named after it (\"Bane 1A\", \"Bane 1B\", ...; parts of a part get\ndigits: \"Bane 1A1\"). A part can be split again. A match on a pitch blocks everything above\nand below it, but not other parts of the same pitch.",
         "operationId": "split_court_tournaments__tournament_id__courts__court_id__split_post",
         "parameters": [
           {

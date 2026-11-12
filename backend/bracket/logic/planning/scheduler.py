@@ -114,9 +114,37 @@ def court_fits(court: CourtToPlan, match: MatchToPlan) -> bool:
     return court.game_format is None or court.game_format == match.game_format
 
 
-def courts_share_ground(court1: CourtToPlan, court2: CourtToPlan) -> bool:
-    """A full pitch and one of its parts can't be used at the same time (two parts can)."""
-    return court1.parent_id == court2.id or court2.parent_id == court1.id
+def shared_ground(courts: list[CourtToPlan]) -> dict[CourtId, frozenset[CourtId]]:
+    """
+    Per pitch, the other pitches on the same ground: everything it is a part of (ancestors) and
+    all its parts, at any depth (descendants). A match blocks those; parts of the same pitch
+    (siblings, cousins) don't block each other. E.g. 11er › 7er › 5er › 3er.
+    """
+    parent_of = {court.id: court.parent_id for court in courts}
+    children: dict[CourtId, list[CourtId]] = {}
+    for court in courts:
+        if court.parent_id is not None:
+            children.setdefault(court.parent_id, []).append(court.id)
+
+    def ancestors(court_id: CourtId) -> set[CourtId]:
+        result: set[CourtId] = set()
+        parent = parent_of.get(court_id)
+        while parent is not None and parent not in result:  # A cycle can't happen; never loop
+            result.add(parent)
+            parent = parent_of.get(parent)
+        return result
+
+    def descendants(court_id: CourtId) -> set[CourtId]:
+        result: set[CourtId] = set()
+        todo = list(children.get(court_id, []))
+        while todo:
+            child = todo.pop()
+            if child not in result:
+                result.add(child)
+                todo += children.get(child, [])
+        return result
+
+    return {court.id: frozenset(ancestors(court.id) | descendants(court.id)) for court in courts}
 
 
 def intersect_windows(first: list[Window], second: list[Window]) -> list[Window]:
@@ -334,11 +362,7 @@ def schedule_matches(
     windows = merge_overlapping(windows)
     result = ScheduleResult()
     booked = {court.id: CourtBookings() for court in courts}
-    court_by_id = {court.id: court for court in courts}
-    parts: dict[CourtId, list[CourtId]] = {}
-    for court in courts:
-        if court.parent_id is not None:
-            parts.setdefault(court.parent_id, []).append(court.id)
+    ground = shared_ground(courts)
     team_ready: dict[str, datetime_utc] = {}
     day_counts = DayCounts()
     match_by_id = {match.id: match for match in matches}
@@ -346,11 +370,8 @@ def schedule_matches(
     def book(match: MatchToPlan, assignment: Assignment) -> None:
         result.assignments[match.id] = assignment
         end = assignment.end(match)
-        court = court_by_id.get(assignment.court_id)
-        # The full pitch and its parts share the ground (the parts don't block each other)
-        blocked = [assignment.court_id, *parts.get(assignment.court_id, [])]
-        if court is not None and court.parent_id is not None:
-            blocked.append(court.parent_id)
+        # A pitch shares the ground with what it's part of and with its parts (any depth)
+        blocked = [assignment.court_id, *ground.get(assignment.court_id, ())]
         for court_id in blocked:
             booked.setdefault(court_id, CourtBookings()).add(assignment.start, end)
         if match.fixed_start is not None:
@@ -587,7 +608,7 @@ def pair_issues(
     earlier: MatchToPlan,
     later: MatchToPlan,
     assignments: dict[MatchId, Assignment],
-    court_by_id: dict[CourtId, CourtToPlan],
+    ground: dict[CourtId, frozenset[CourtId]],
 ) -> list[PlanIssue]:
     """Overlaps on a (split) pitch and of teams, and rest of teams, for two matches by start."""
     issues: list[PlanIssue] = []
@@ -598,11 +619,7 @@ def pair_issues(
     if later_start < earlier_end:
         if earlier_court == later_court:
             issues.append(PlanIssue(later.id, IssueKind.COURT_OVERLAP, earlier.id))
-        elif (
-            earlier_court in court_by_id
-            and later_court in court_by_id
-            and courts_share_ground(court_by_id[earlier_court], court_by_id[later_court])
-        ):
+        elif later_court in ground.get(earlier_court, ()):
             issues.append(PlanIssue(later.id, IssueKind.SPLIT_PITCH_OVERLAP, earlier.id))
     if earlier.teams & later.teams:
         # Like the scheduler: a team rests after a match for the rest of that match
@@ -625,6 +642,7 @@ def find_plan_issues(
     """
     match_by_id = {match.id: match for match in matches}
     court_by_id = {court.id: court for court in courts}
+    ground = shared_ground(courts)
     planned = sorted(
         (match for match in matches if match.id in assignments),
         key=lambda m: assignments[m.id].start,
@@ -636,7 +654,7 @@ def find_plan_issues(
     ]
     for index, earlier in enumerate(planned):
         for later in planned[index + 1 :]:
-            issues += pair_issues(earlier, later, assignments, court_by_id)
+            issues += pair_issues(earlier, later, assignments, ground)
     day_counts = DayCounts()
     for match in planned:
         start = assignments[match.id].start

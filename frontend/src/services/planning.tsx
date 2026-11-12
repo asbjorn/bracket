@@ -1,6 +1,7 @@
 import {
   CourtsResponse,
   GameFormat,
+  MatchesOnCourtsResponse,
   ReplanBody,
   ReplanPreviewResponse,
   ScheduleProposalResponse,
@@ -103,5 +104,23 @@ export async function saveCategoryHours(
 export async function setMatchStarted(tournament_id: number, match_id: number, started: boolean) {
   return awaitRequestAndHandleError(async (axios) =>
     axios.put(`tournaments/${tournament_id}/matches/${match_id}/started`, { started }),
+  );
+}
+
+export async function getSplitMatches(tournament_id: number, court_id: number) {
+  return awaitRequestAndHandleError(async (axios) =>
+    axios.get<MatchesOnCourtsResponse>(`tournaments/${tournament_id}/courts/${court_id}/split`),
+  );
+}
+
+export async function undoCourtSplit(
+  tournament_id: number,
+  court_id: number,
+  unschedule_matches: boolean,
+) {
+  return awaitRequestAndHandleError(async (axios) =>
+    axios.delete<CourtsResponse>(`tournaments/${tournament_id}/courts/${court_id}/split`, {
+      params: { unschedule_matches },
+    }),
   );
 }

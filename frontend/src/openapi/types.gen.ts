@@ -1773,6 +1773,36 @@ export type MatchOfficialsBody = {
 };
 
 /**
+ * MatchOnCourt
+ */
+export type MatchOnCourt = {
+  /**
+   * Court Id
+   */
+  court_id: number;
+  /**
+   * Court Name
+   */
+  court_name: string;
+  /**
+   * Id
+   */
+  id: number;
+  /**
+   * Played
+   */
+  played: boolean;
+  /**
+   * Start Time
+   */
+  start_time: string | null;
+  /**
+   * Started
+   */
+  started: boolean;
+};
+
+/**
  * MatchRescheduleBody
  */
 export type MatchRescheduleBody = {
@@ -2053,6 +2083,16 @@ export type MatchWithDetailsDefinitive = {
    * Started At
    */
   started_at: string | null;
+};
+
+/**
+ * MatchesOnCourtsResponse
+ */
+export type MatchesOnCourtsResponse = {
+  /**
+   * Data
+   */
+  data: Array<MatchOnCourt>;
 };
 
 /**
@@ -6523,6 +6563,83 @@ export type UpdateCourtByIdTournamentsTournamentIdCourtsCourtIdPutResponses = {
 
 export type UpdateCourtByIdTournamentsTournamentIdCourtsCourtIdPutResponse =
   UpdateCourtByIdTournamentsTournamentIdCourtsCourtIdPutResponses[keyof UpdateCourtByIdTournamentsTournamentIdCourtsCourtIdPutResponses];
+
+export type UndoCourtSplitTournamentsTournamentIdCourtsCourtIdSplitDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+    /**
+     * Court Id
+     */
+    court_id: number;
+  };
+  query?: {
+    /**
+     * Unschedule Matches
+     */
+    unschedule_matches?: boolean;
+  };
+  url: '/tournaments/{tournament_id}/courts/{court_id}/split';
+};
+
+export type UndoCourtSplitTournamentsTournamentIdCourtsCourtIdSplitDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UndoCourtSplitTournamentsTournamentIdCourtsCourtIdSplitDeleteError =
+  UndoCourtSplitTournamentsTournamentIdCourtsCourtIdSplitDeleteErrors[keyof UndoCourtSplitTournamentsTournamentIdCourtsCourtIdSplitDeleteErrors];
+
+export type UndoCourtSplitTournamentsTournamentIdCourtsCourtIdSplitDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  200: CourtsResponse;
+};
+
+export type UndoCourtSplitTournamentsTournamentIdCourtsCourtIdSplitDeleteResponse =
+  UndoCourtSplitTournamentsTournamentIdCourtsCourtIdSplitDeleteResponses[keyof UndoCourtSplitTournamentsTournamentIdCourtsCourtIdSplitDeleteResponses];
+
+export type GetSplitMatchesTournamentsTournamentIdCourtsCourtIdSplitGetData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+    /**
+     * Court Id
+     */
+    court_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/courts/{court_id}/split';
+};
+
+export type GetSplitMatchesTournamentsTournamentIdCourtsCourtIdSplitGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetSplitMatchesTournamentsTournamentIdCourtsCourtIdSplitGetError =
+  GetSplitMatchesTournamentsTournamentIdCourtsCourtIdSplitGetErrors[keyof GetSplitMatchesTournamentsTournamentIdCourtsCourtIdSplitGetErrors];
+
+export type GetSplitMatchesTournamentsTournamentIdCourtsCourtIdSplitGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: MatchesOnCourtsResponse;
+};
+
+export type GetSplitMatchesTournamentsTournamentIdCourtsCourtIdSplitGetResponse =
+  GetSplitMatchesTournamentsTournamentIdCourtsCourtIdSplitGetResponses[keyof GetSplitMatchesTournamentsTournamentIdCourtsCourtIdSplitGetResponses];
 
 export type SplitCourtTournamentsTournamentIdCourtsCourtIdSplitPostData = {
   body: CourtSplitBody;

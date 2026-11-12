@@ -1022,5 +1022,17 @@
     "registration_done_title_other": "Lagene er påmeldt!",
     "duration_minutes_only": "{{minutes}} min",
     "official_conflict_too_young": "{{name}} er under 13 år (NFF: klubbdommere fra 13 år)",
-    "official_conflict_younger_than_players": "{{name}} er yngre enn spillerne: {{match}}"
+    "official_conflict_younger_than_players": "{{name}} er yngre enn spillerne: {{match}}",
+    "court_undo_split_button": "Fjern deling",
+    "court_undo_split_title": "Fjern delingen av {{court}}",
+    "court_undo_split_parts": "Disse delene fjernes: {{parts}}.",
+    "court_undo_split_matches_one": "{{count}} kamp er satt opp på delene. Den tas av bane og tid, så sett opp kampene på nytt etterpå.",
+    "court_undo_split_matches_other": "{{count}} kamper er satt opp på delene. De tas av bane og tid, så sett opp kampene på nytt etterpå.",
+    "court_undo_split_blocked_one": "{{count}} kamp på delene er spilt eller startet, så delingen kan ikke fjernes.",
+    "court_undo_split_blocked_other": "{{count}} kamper på delene er spilt eller startet, så delingen kan ikke fjernes.",
+    "court_undo_split_more": "…og {{count}} til",
+    "court_undo_split_unschedule_button": "Fjern kampene fra banene og fjern delingen",
+    "match_played_label": "spilt",
+    "match_started_short": "startet",
+    "court_split_short_button": "Del opp"
 }

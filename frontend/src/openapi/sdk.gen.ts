@@ -240,6 +240,9 @@ import type {
   GetScoreEntryScoreTokenGetData,
   GetScoreEntryScoreTokenGetErrors,
   GetScoreEntryScoreTokenGetResponses,
+  GetSplitMatchesTournamentsTournamentIdCourtsCourtIdSplitGetData,
+  GetSplitMatchesTournamentsTournamentIdCourtsCourtIdSplitGetErrors,
+  GetSplitMatchesTournamentsTournamentIdCourtsCourtIdSplitGetResponses,
   GetStagesTournamentsTournamentIdStagesGetData,
   GetStagesTournamentsTournamentIdStagesGetErrors,
   GetStagesTournamentsTournamentIdStagesGetResponses,
@@ -376,6 +379,9 @@ import type {
   StartNextRoundTournamentsTournamentIdStageItemsStageItemIdStartNextRoundPostData,
   StartNextRoundTournamentsTournamentIdStageItemsStageItemIdStartNextRoundPostErrors,
   StartNextRoundTournamentsTournamentIdStageItemsStageItemIdStartNextRoundPostResponses,
+  UndoCourtSplitTournamentsTournamentIdCourtsCourtIdSplitDeleteData,
+  UndoCourtSplitTournamentsTournamentIdCourtsCourtIdSplitDeleteErrors,
+  UndoCourtSplitTournamentsTournamentIdCourtsCourtIdSplitDeleteResponses,
   UpdateCategoryTournamentsTournamentIdCategoriesCategoryIdPutData,
   UpdateCategoryTournamentsTournamentIdCategoriesCategoryIdPutErrors,
   UpdateCategoryTournamentsTournamentIdCategoriesCategoryIdPutResponses,
@@ -1510,10 +1516,63 @@ export const updateCourtByIdTournamentsTournamentIdCourtsCourtIdPut = <
   });
 
 /**
+ * Undo Court Split
+ *
+ * Undoes a split: removes all parts below the pitch. Matches planned on the parts are taken
+ * off their pitch and time with `unschedule_matches=true` (otherwise 409); played or started
+ * matches on the parts block it.
+ */
+export const undoCourtSplitTournamentsTournamentIdCourtsCourtIdSplitDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<UndoCourtSplitTournamentsTournamentIdCourtsCourtIdSplitDeleteData, ThrowOnError>,
+): RequestResult<
+  UndoCourtSplitTournamentsTournamentIdCourtsCourtIdSplitDeleteResponses,
+  UndoCourtSplitTournamentsTournamentIdCourtsCourtIdSplitDeleteErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    UndoCourtSplitTournamentsTournamentIdCourtsCourtIdSplitDeleteResponses,
+    UndoCourtSplitTournamentsTournamentIdCourtsCourtIdSplitDeleteErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/courts/{court_id}/split',
+    ...options,
+  });
+
+/**
+ * Get Split Matches
+ *
+ * The matches planned on the parts of a split pitch (removed when the split is undone).
+ */
+export const getSplitMatchesTournamentsTournamentIdCourtsCourtIdSplitGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetSplitMatchesTournamentsTournamentIdCourtsCourtIdSplitGetData, ThrowOnError>,
+): RequestResult<
+  GetSplitMatchesTournamentsTournamentIdCourtsCourtIdSplitGetResponses,
+  GetSplitMatchesTournamentsTournamentIdCourtsCourtIdSplitGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetSplitMatchesTournamentsTournamentIdCourtsCourtIdSplitGetResponses,
+    GetSplitMatchesTournamentsTournamentIdCourtsCourtIdSplitGetErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/courts/{court_id}/split',
+    ...options,
+  });
+
+/**
  * Split Court
  *
- * Splits a full pitch into 2-4 parts named after it ("Bane 1A", "Bane 1B", ...). A match on
- * the full pitch blocks its parts and a match on a part blocks the full pitch.
+ * Splits a pitch into 2-4 parts named after it ("Bane 1A", "Bane 1B", ...; parts of a part get
+ * digits: "Bane 1A1"). A part can be split again. A match on a pitch blocks everything above
+ * and below it, but not other parts of the same pitch.
  */
 export const splitCourtTournamentsTournamentIdCourtsCourtIdSplitPost = <
   ThrowOnError extends boolean = false,

@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 from bracket.logic.category_warnings import CategoryWarning
+from bracket.logic.court_splits import MatchOnCourt
 from bracket.logic.final_results import ClassFinalResults
 from bracket.logic.notifications import NotificationStatus, ScheduleNoticeResult
 from bracket.logic.planning.capacity import CapacityResult
@@ -158,6 +159,10 @@ class OfficialsOverviewResponse(DataResponse[OfficialsOverview]):
 
 
 class PublicMatchOfficialsResponse(DataResponse[list[PublicMatchOfficial]]):
+    pass
+
+
+class MatchesOnCourtsResponse(DataResponse[list[MatchOnCourt]]):
     pass
 
 

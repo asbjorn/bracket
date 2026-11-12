@@ -15,6 +15,7 @@ from bracket.logic.planning.scheduler import (
     find_plan_issues,
     intersect_windows,
     schedule_matches,
+    shared_ground,
 )
 from bracket.models.db.game_format import GameFormat
 from bracket.utils.id_types import CourtId, MatchId
@@ -274,3 +275,84 @@ def test_replanning_around_fixed_matches_passes_checker() -> None:
         result = schedule_matches(replanned, courts, cup)
         assert not find_plan_issues(replanned, courts, cup, result.assignments)
         assert all(result.assignments[i] == first.assignments[i] for i in fixed_ids)
+
+
+FIVE = GameFormat("5v5")
+
+
+def test_nested_split_blocks_ancestors_and_descendants_only() -> None:
+    """11er › 7er A/B › 5er A1/A2: a 5er match blocks 7er A and the 11er, not 7er B or 5er A2."""
+    full = CourtToPlan(CourtId(1), ELEVEN)
+    seven_a = CourtToPlan(CourtId(2), SEVEN, parent_id=CourtId(1))
+    seven_b = CourtToPlan(CourtId(3), SEVEN, parent_id=CourtId(1))
+    five_a1 = CourtToPlan(CourtId(4), FIVE, parent_id=CourtId(2))
+    five_a2 = CourtToPlan(CourtId(5), FIVE, parent_id=CourtId(2))
+    courts = [full, seven_a, seven_b, five_a1, five_a2]
+    ground = shared_ground(courts)
+    assert ground[CourtId(4)] == {CourtId(2), CourtId(1)}
+    assert ground[CourtId(1)] == {CourtId(2), CourtId(3), CourtId(4), CourtId(5)}
+    assert ground[CourtId(3)] == {CourtId(1)}
+
+    windows = [Window(at(9), at(12))]
+    matches = [
+        match(1, "a b", FIVE, only_court_id=CourtId(4)),  # 5er A1 09:00
+        match(2, "c d", FIVE, only_court_id=CourtId(5)),  # 5er A2 at the same time (cousin)
+        match(3, "e f", SEVEN, only_court_id=CourtId(3)),  # 7er B at the same time (other half)
+        match(4, "g h", SEVEN, only_court_id=CourtId(2)),  # 7er A waits for its 5er parts
+        match(5, "i j", ELEVEN),  # The full pitch waits for everything
+    ]
+    result = schedule_matches(matches, courts, windows)
+    starts = {m: a.start for m, a in result.assignments.items()}
+    assert starts[MatchId(1)] == starts[MatchId(2)] == starts[MatchId(3)] == at(9)
+    assert starts[MatchId(4)] == at(9, 20)
+    assert starts[MatchId(5)] == at(9, 40)
+    assert not find_plan_issues(matches, courts, windows, result.assignments)
+
+    # The checker sees a grandchild/grandparent overlap
+    clash = {
+        MatchId(1): Assignment(MatchId(1), CourtId(4), at(9)),
+        MatchId(5): Assignment(MatchId(5), CourtId(1), at(9, 10)),
+    }
+    issues = find_plan_issues([matches[0], matches[4]], courts, windows, clash)
+    assert issues == [PlanIssue(MatchId(5), IssueKind.SPLIT_PITCH_OVERLAP, MatchId(1))]
+
+
+def random_court_tree(rng: random.Random) -> list[CourtToPlan]:
+    """A few full pitches, each split up to three levels deep in random ways."""
+    courts: list[CourtToPlan] = []
+    formats = [ELEVEN, SEVEN, FIVE, None]
+
+    def add(parent: CourtId | None, depth: int) -> None:
+        court_id = CourtId(len(courts) + 1)
+        courts.append(CourtToPlan(court_id, formats[min(depth, 3)], parent_id=parent))
+        if depth < 3 and rng.random() < 0.6:
+            for _ in range(rng.randint(2, 3)):
+                add(court_id, depth + 1)
+
+    for _ in range(rng.randint(1, 3)):
+        add(None, 0)
+    return courts
+
+
+def test_scheduler_output_passes_checker_on_random_pitch_trees() -> None:
+    rng = random.Random(23)
+    for _ in range(80):
+        courts = random_court_tree(rng)
+        windows = [Window(at(9), at(13)), Window(at(14), at(18))]
+        matches = [
+            replace(
+                m,
+                game_format=rng.choice([ELEVEN, SEVEN, FIVE]),
+                rest_minutes=rng.choice([0, 10]),
+            )
+            for group_index in range(rng.randint(1, 3))
+            for m in group_matches(
+                "ABC"[group_index],
+                rng.randint(3, 5),
+                100 * (group_index + 1),
+                duration=rng.choice([10, 15, 20]),
+                margin=rng.choice([0, 5]),
+            )
+        ]
+        result = schedule_matches(matches, courts, windows)
+        assert not find_plan_issues(matches, courts, windows, result.assignments)
