@@ -1,4 +1,4 @@
-import { Container, Group, Paper, Stack, Text, Title } from '@mantine/core';
+import { Container, Group, Paper, Stack, Title } from '@mantine/core';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -6,6 +6,7 @@ import { DashboardFooter } from '@components/dashboard/footer';
 import { DoubleHeader, getTournamentHeadTitle } from '@components/dashboard/layout';
 import { NoContent } from '@components/no_content/empty_table_info';
 import { PrintButton } from '@components/print/print_button';
+import { MarkdownView } from '@components/utils/markdown';
 import { TableSkeletonTwoColumns } from '@components/utils/skeletons';
 import { setTitle } from '@components/utils/util';
 import { getTournamentResponseByEndpointName } from '@services/dashboard';
@@ -34,8 +35,8 @@ export default function DashboardRulesPage() {
           {text === '' ? (
             <NoContent title={t('no_rules_title')} description="" />
           ) : (
-            <Paper withBorder p="lg" radius="md">
-              <Text style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{text}</Text>
+            <Paper withBorder p="lg" radius="md" className="markdown-rules">
+              <MarkdownView text={text} />
             </Paper>
           )}
         </Stack>

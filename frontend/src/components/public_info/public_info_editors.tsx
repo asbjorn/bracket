@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   Anchor,
   Badge,
   Button,
@@ -6,19 +7,31 @@ import {
   Fieldset,
   Group,
   List,
+  Paper,
   SegmentedControl,
   Stack,
+  Tabs,
   Text,
   Textarea,
+  Tooltip,
 } from '@mantine/core';
-import { IconArrowRight } from '@tabler/icons-react';
+import {
+  IconArrowRight,
+  IconBold,
+  IconEye,
+  IconHeading,
+  IconLink,
+  IconList,
+  IconPencil,
+} from '@tabler/icons-react';
 import { showNotification } from '@mantine/notifications';
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
 import { NotificationsSettings } from '@components/notifications/notifications_panel';
+import { MarkdownView } from '@components/utils/markdown';
 import { getBaseURL } from '@components/utils/util';
 import { DateTimeField } from '@components/utils/time_fields';
 import { AnnouncementLevel, Tournament } from '@openapi';
@@ -149,24 +162,139 @@ export function AnnouncementEditor({ tournamentId }: { tournamentId: number }) {
   );
 }
 
+type MarkdownAction = 'heading' | 'bold' | 'list' | 'link';
+
+/** Wraps the selection (or inserts at the cursor) with the Markdown for `action`. */
+function applyMarkdown(
+  text: string,
+  start: number,
+  end: number,
+  action: MarkdownAction,
+  placeholder: string,
+): { text: string; selectionStart: number; selectionEnd: number } {
+  const selected = text.slice(start, end) || placeholder;
+  const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+  let before = text.slice(0, start);
+  let insert: string;
+  let selectFrom: number;
+  if (action === 'heading' || action === 'list') {
+    // Line prefixes go at the start of the line (of every selected line for lists)
+    const prefix = action === 'heading' ? '## ' : '- ';
+    before = text.slice(0, lineStart);
+    const lines = text.slice(lineStart, end) || placeholder;
+    insert = lines
+      .split('\n')
+      .map((line) => (line.startsWith(prefix) ? line : prefix + line))
+      .join('\n');
+    // Select the text after the prefix, so typing replaces only the placeholder
+    selectFrom = before.length + prefix.length;
+  } else if (action === 'bold') {
+    insert = `**${selected}**`;
+    selectFrom = before.length + 2;
+  } else {
+    insert = `[${selected}](https://)`;
+    selectFrom = before.length + selected.length + 3;
+  }
+  const after = text.slice(end);
+  const result = before + insert + after;
+  const selectTo =
+    action === 'link'
+      ? selectFrom + 'https://'.length
+      : action === 'bold'
+        ? selectFrom + selected.length
+        : before.length + insert.length;
+  return { text: result, selectionStart: selectFrom, selectionEnd: selectTo };
+}
+
 export function RulesEditor({ tournamentId }: { tournamentId: number }) {
   const { t } = useTranslation();
   const swrRules = getRules(tournamentId);
   const [text, setText] = useState('');
+  const [tab, setTab] = useState<string | null>('write');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => setText(swrRules.data?.data.text ?? ''), [swrRules.data]);
+
+  function format(action: MarkdownAction) {
+    const area = textareaRef.current;
+    if (area == null) return;
+    const result = applyMarkdown(
+      text,
+      area.selectionStart,
+      area.selectionEnd,
+      action,
+      t(`markdown_placeholder_${action}`),
+    );
+    setText(result.text);
+    // Keep the cursor in the text after React has rendered the new value
+    requestAnimationFrame(() => {
+      area.focus();
+      area.setSelectionRange(result.selectionStart, result.selectionEnd);
+    });
+  }
+
+  const tools: { action: MarkdownAction; icon: React.ReactNode }[] = [
+    { action: 'heading', icon: <IconHeading size={18} /> },
+    { action: 'bold', icon: <IconBold size={18} /> },
+    { action: 'list', icon: <IconList size={18} /> },
+    { action: 'link', icon: <IconLink size={18} /> },
+  ];
 
   return (
     <Stack>
-      <Textarea
-        description={t('rules_description')}
-        placeholder={t('rules_placeholder')}
-        value={text}
-        maxLength={20000}
-        autosize
-        minRows={6}
-        maxRows={24}
-        onChange={(event) => setText(event.currentTarget.value)}
-      />
+      <Text size="sm" c="dimmed">
+        {t('rules_description')}
+      </Text>
+      <Tabs value={tab} onChange={setTab} keepMounted={false}>
+        <Tabs.List>
+          <Tabs.Tab value="write" leftSection={<IconPencil size={16} />}>
+            {t('markdown_write_tab')}
+          </Tabs.Tab>
+          <Tabs.Tab value="preview" leftSection={<IconEye size={16} />}>
+            {t('markdown_preview_tab')}
+          </Tabs.Tab>
+        </Tabs.List>
+        <Tabs.Panel value="write" pt="sm">
+          <Stack gap="xs">
+            <Group gap={4}>
+              {tools.map((tool) => (
+                <Tooltip key={tool.action} label={t(`markdown_tool_${tool.action}`)}>
+                  <ActionIcon
+                    variant="default"
+                    size="lg"
+                    aria-label={t(`markdown_tool_${tool.action}`)}
+                    onClick={() => format(tool.action)}
+                  >
+                    {tool.icon}
+                  </ActionIcon>
+                </Tooltip>
+              ))}
+            </Group>
+            <Textarea
+              ref={textareaRef}
+              placeholder={t('rules_placeholder')}
+              value={text}
+              maxLength={20000}
+              autosize
+              minRows={8}
+              maxRows={24}
+              styles={{ input: { fontFamily: 'var(--mantine-font-family-monospace)' } }}
+              onChange={(event) => setText(event.currentTarget.value)}
+            />
+            <Text size="xs" c="dimmed">
+              {t('markdown_syntax_help')}
+            </Text>
+          </Stack>
+        </Tabs.Panel>
+        <Tabs.Panel value="preview" pt="sm">
+          <Paper withBorder p="lg" radius="md">
+            {text.trim() === '' ? (
+              <Text c="dimmed">{t('markdown_preview_empty')}</Text>
+            ) : (
+              <MarkdownView text={text} />
+            )}
+          </Paper>
+        </Tabs.Panel>
+      </Tabs>
       <Group>
         <Button
           onClick={async () => {

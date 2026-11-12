@@ -23,6 +23,7 @@ import { PageTitle } from '@components/help/help_button';
 import { PrintButton } from '@components/print/print_button';
 import { getTournamentIdFromRouter } from '@components/utils/util';
 import { contentLanguage } from '@components/utils/language';
+import { markdownToPlainText } from '@components/utils/markdown';
 import { DistrictApplication, DistrictApplicationResponse, TournamentDetails } from '@openapi';
 import TournamentLayout from '@pages/tournaments/_tournament_layout';
 import { createAxios, requestSucceeded } from '@services/adapter';
@@ -168,7 +169,8 @@ function applicationText(application: DistrictApplication, t: TFunction, languag
       matches: application.match_count,
     }),
   );
-  const rules = details.rules_summary || application.rules_text;
+  // FIKS takes plain text: the rules are written in Markdown, so drop its symbols
+  const rules = details.rules_summary || markdownToPlainText(application.rules_text ?? '');
   lines.push('', `${t('application_text_rules')}:`, rules ? rules : dash);
   if (details.notes) lines.push('', `${t('application_field_notes')}:`, details.notes);
   return lines.join('\n');

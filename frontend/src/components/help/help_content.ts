@@ -259,7 +259,7 @@ export const HELP: Record<HelpPageId, HelpPage> = {
   },
   settings: {
     steps: 0,
-    fields: ['start', 'timing', 'buffer', 'wo', 'address', 'public'],
+    fields: ['start', 'timing', 'buffer', 'wo', 'address', 'public', 'rules'],
     actions: ['save', 'archive', 'delete'],
     tips: 0,
     links: [
