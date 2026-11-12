@@ -2693,6 +2693,67 @@ export type PlayerBody = {
 };
 
 /**
+ * PlayerImportBody
+ */
+export type PlayerImportBody = {
+  /**
+   * Active
+   */
+  active: boolean;
+  /**
+   * Rows
+   */
+  rows: Array<PlayerImportRow>;
+};
+
+/**
+ * PlayerImportResponse
+ */
+export type PlayerImportResponse = {
+  data: PlayerImportResult;
+};
+
+/**
+ * PlayerImportResult
+ */
+export type PlayerImportResult = {
+  /**
+   * Added To Team
+   */
+  added_to_team: number;
+  /**
+   * Created
+   */
+  created: number;
+  /**
+   * Not Added To Team
+   */
+  not_added_to_team: Array<string>;
+  /**
+   * Skipped
+   */
+  skipped: Array<string>;
+};
+
+/**
+ * PlayerImportRow
+ */
+export type PlayerImportRow = {
+  /**
+   * Active
+   */
+  active: boolean | null;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Team Id
+   */
+  team_id: number | null;
+};
+
+/**
  * PlayerMultiBody
  */
 export type PlayerMultiBody = {
@@ -8332,6 +8393,38 @@ export type UpdatePlayerByIdTournamentsTournamentIdPlayersPlayerIdPutResponses =
 
 export type UpdatePlayerByIdTournamentsTournamentIdPlayersPlayerIdPutResponse =
   UpdatePlayerByIdTournamentsTournamentIdPlayersPlayerIdPutResponses[keyof UpdatePlayerByIdTournamentsTournamentIdPlayersPlayerIdPutResponses];
+
+export type ImportPlayersFromFileTournamentsTournamentIdPlayersImportPostData = {
+  body: PlayerImportBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/players_import';
+};
+
+export type ImportPlayersFromFileTournamentsTournamentIdPlayersImportPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ImportPlayersFromFileTournamentsTournamentIdPlayersImportPostError =
+  ImportPlayersFromFileTournamentsTournamentIdPlayersImportPostErrors[keyof ImportPlayersFromFileTournamentsTournamentIdPlayersImportPostErrors];
+
+export type ImportPlayersFromFileTournamentsTournamentIdPlayersImportPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: PlayerImportResponse;
+};
+
+export type ImportPlayersFromFileTournamentsTournamentIdPlayersImportPostResponse =
+  ImportPlayersFromFileTournamentsTournamentIdPlayersImportPostResponses[keyof ImportPlayersFromFileTournamentsTournamentIdPlayersImportPostResponses];
 
 export type CreateMultiplePlayersTournamentsTournamentIdPlayersMultiPostData = {
   body: PlayerMultiBody;

@@ -6,6 +6,7 @@ from bracket.logic.final_results import ClassFinalResults
 from bracket.logic.notifications import NotificationStatus, ScheduleNoticeResult
 from bracket.logic.planning.capacity import CapacityResult
 from bracket.logic.planning.propose import PlanIssueOut, ReplanPreview, ScheduleProposal
+from bracket.logic.player_import import PlayerImportResult
 from bracket.logic.scheduling.handle_stage_activation import StageItemInputUpdate
 from bracket.logic.scheduling.stage_draw import DrawPlacement
 from bracket.models.db.category import Category
@@ -163,6 +164,10 @@ class PublicMatchOfficialsResponse(DataResponse[list[PublicMatchOfficial]]):
 
 
 class MatchesOnCourtsResponse(DataResponse[list[MatchOnCourt]]):
+    pass
+
+
+class PlayerImportResponse(DataResponse[PlayerImportResult]):
     pass
 
 

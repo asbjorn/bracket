@@ -11,6 +11,7 @@ import {
   CategoryWarningsResponse,
   ClubsResponse,
   CourtsResponse,
+  Player,
   PlayersResponse,
   RankingsResponse,
   RoundWithMatches,
@@ -198,6 +199,20 @@ async function fetchAllTeams(url: string): Promise<FullTeamWithPlayers[]> {
     teams.push(...page.data.teams);
     if (offset + 100 >= page.data.count) return teams;
   }
+}
+
+/** All players of the tournament (a page has at most 100). */
+export function getAllPlayers(tournament_id: number): SWRResponse<Player[]> {
+  return useSWR(['all-players', tournament_id], async () => {
+    const players: Player[] = [];
+    for (let offset = 0; ; offset += 100) {
+      const page: PlayersResponse = await fetcher(
+        `tournaments/${tournament_id}/players?limit=100&offset=${offset}`,
+      );
+      players.push(...page.data.players);
+      if (offset + 100 >= page.data.count) return players;
+    }
+  });
 }
 
 /** All teams of a class. */

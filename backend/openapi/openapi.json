@@ -3135,7 +3135,7 @@
             "title": "Player Id"
           },
           "player_name": {
-            "maxLength": 60,
+            "maxLength": 100,
             "minLength": 1,
             "title": "Player Name",
             "type": "string"
@@ -3206,7 +3206,7 @@
             "title": "Player Id"
           },
           "player_name": {
-            "maxLength": 60,
+            "maxLength": 100,
             "minLength": 1,
             "title": "Player Name",
             "type": "string"
@@ -4552,7 +4552,7 @@
             "title": "Level"
           },
           "name": {
-            "maxLength": 50,
+            "maxLength": 100,
             "minLength": 1,
             "title": "Name",
             "type": "string"
@@ -4670,7 +4670,7 @@
             "title": "Level"
           },
           "name": {
-            "maxLength": 50,
+            "maxLength": 100,
             "minLength": 1,
             "title": "Name",
             "type": "string"
@@ -5272,7 +5272,7 @@
             "type": "boolean"
           },
           "name": {
-            "maxLength": 30,
+            "maxLength": 100,
             "minLength": 1,
             "title": "Name",
             "type": "string"
@@ -5283,6 +5283,116 @@
           "active"
         ],
         "title": "PlayerBody",
+        "type": "object"
+      },
+      "PlayerImportBody": {
+        "properties": {
+          "active": {
+            "default": true,
+            "title": "Active",
+            "type": "boolean"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/PlayerImportRow"
+            },
+            "maxItems": 2000,
+            "minItems": 1,
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows",
+          "active"
+        ],
+        "title": "PlayerImportBody",
+        "type": "object"
+      },
+      "PlayerImportResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PlayerImportResult"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "PlayerImportResponse",
+        "type": "object"
+      },
+      "PlayerImportResult": {
+        "properties": {
+          "added_to_team": {
+            "title": "Added To Team",
+            "type": "integer"
+          },
+          "created": {
+            "title": "Created",
+            "type": "integer"
+          },
+          "not_added_to_team": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Not Added To Team",
+            "type": "array"
+          },
+          "skipped": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Skipped",
+            "type": "array"
+          }
+        },
+        "required": [
+          "created",
+          "added_to_team",
+          "skipped",
+          "not_added_to_team"
+        ],
+        "title": "PlayerImportResult",
+        "type": "object"
+      },
+      "PlayerImportRow": {
+        "properties": {
+          "active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "team_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team Id"
+          }
+        },
+        "required": [
+          "name",
+          "team_id",
+          "active"
+        ],
+        "title": "PlayerImportRow",
         "type": "object"
       },
       "PlayerMultiBody": {
@@ -14908,6 +15018,64 @@
           }
         ],
         "summary": "Update Player By Id",
+        "tags": [
+          "Players"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/players_import": {
+      "post": {
+        "description": "Creates players from rows of a file (parsed by the frontend), at most 2000 at once, and\nputs them on a team when given. Names that already exist (ignoring case and spaces) are\nskipped, but such players are still put on the team.",
+        "operationId": "import_players_from_file_tournaments__tournament_id__players_import_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlayerImportBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlayerImportResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Import Players From File",
         "tags": [
           "Players"
         ]

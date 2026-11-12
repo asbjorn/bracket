@@ -1,4 +1,5 @@
-import { createAxios, handleRequestError } from './adapter';
+import { PlayerImportResponse } from '@openapi';
+import { awaitRequestAndHandleError, createAxios, handleRequestError } from './adapter';
 
 export async function createPlayer(tournament_id: number, name: string, active: boolean) {
   return createAxios()
@@ -32,4 +33,23 @@ export async function updatePlayer(
       team_id,
     })
     .catch((response: any) => handleRequestError(response));
+}
+
+export interface PlayerImportRowValue {
+  name: string;
+  team_id: number | null;
+  active: boolean | null;
+}
+
+export async function importPlayers(
+  tournament_id: number,
+  rows: PlayerImportRowValue[],
+  active: boolean,
+) {
+  return awaitRequestAndHandleError(async (axios) =>
+    axios.post<PlayerImportResponse>(`tournaments/${tournament_id}/players_import`, {
+      rows,
+      active,
+    }),
+  );
 }

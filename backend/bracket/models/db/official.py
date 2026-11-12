@@ -9,6 +9,8 @@ from bracket.utils.id_types import CourtHostId, CourtId, MatchId, OfficialId, To
 from bracket.utils.types import EnumAutoStr
 
 Text50 = Annotated[str, StringConstraints(min_length=1, max_length=50, strip_whitespace=True)]
+# Full names can be long (several first and last names)
+PersonName = Annotated[str, StringConstraints(min_length=1, max_length=100, strip_whitespace=True)]
 Phone = Annotated[str, StringConstraints(min_length=1, max_length=30, strip_whitespace=True)]
 MAX_FEE = 100_000
 
@@ -24,7 +26,7 @@ class MatchOfficialRole(EnumAutoStr):
 
 
 class OfficialBody(BaseModelORM):
-    name: Text50
+    name: PersonName
     age: int | None = Field(None, ge=8, le=99)
     # E.g. "Rekrutteringsdommer", "Klubbdommer", "Kretsdommer"
     level: Text50 | None = None

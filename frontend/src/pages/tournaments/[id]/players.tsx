@@ -1,7 +1,8 @@
-import { Grid, Title } from '@mantine/core';
+import { Grid, Group, Title } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
 
 import PlayerCreateModal from '@components/modals/player_create_modal';
+import PlayerImportModal from '@components/modals/player_import_modal';
 import PlayersTable from '@components/tables/players';
 import { getTableState, tableStateToPagination } from '@components/tables/table';
 import { capitalize, getTournamentIdFromRouter } from '@components/utils/util';
@@ -24,10 +25,16 @@ export default function PlayersPage() {
           <Title>{capitalize(t('players_title'))}</Title>
         </Grid.Col>
         <Grid.Col span="content">
-          <PlayerCreateModal
-            swrPlayersResponse={swrPlayersResponse}
-            tournament_id={tournamentData.id}
-          />
+          <Group>
+            <PlayerImportModal
+              tournamentId={tournamentData.id}
+              swrPlayersResponse={swrPlayersResponse}
+            />
+            <PlayerCreateModal
+              swrPlayersResponse={swrPlayersResponse}
+              tournament_id={tournamentData.id}
+            />
+          </Group>
         </Grid.Col>
       </Grid>
       <PlayersTable

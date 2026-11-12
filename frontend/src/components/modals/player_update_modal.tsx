@@ -37,7 +37,12 @@ export default function PlayerUpdateModal({
       active: player == null ? true : player.active,
     },
     validate: {
-      name: (value) => (value.length > 0 ? null : t('too_short_name_validation')),
+      name: (value) =>
+        value.trim().length < 1
+          ? t('too_short_name_validation')
+          : value.trim().length > 100
+            ? t('player_name_too_long_validation')
+            : null,
     },
   });
 

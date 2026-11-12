@@ -16,7 +16,7 @@ from bracket.utils.id_types import (
 )
 from bracket.utils.types import EnumAutoStr
 
-PlayerName = Annotated[str, StringConstraints(min_length=1, max_length=60, strip_whitespace=True)]
+PlayerName = Annotated[str, StringConstraints(min_length=1, max_length=100, strip_whitespace=True)]
 
 
 class CardType(EnumAutoStr):

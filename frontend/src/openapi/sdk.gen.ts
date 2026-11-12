@@ -302,6 +302,9 @@ import type {
   GiveWalkoverTournamentsTournamentIdMatchesMatchIdWalkoverPostData,
   GiveWalkoverTournamentsTournamentIdMatchesMatchIdWalkoverPostErrors,
   GiveWalkoverTournamentsTournamentIdMatchesMatchIdWalkoverPostResponses,
+  ImportPlayersFromFileTournamentsTournamentIdPlayersImportPostData,
+  ImportPlayersFromFileTournamentsTournamentIdPlayersImportPostErrors,
+  ImportPlayersFromFileTournamentsTournamentIdPlayersImportPostResponses,
   LoginForAccessTokenTokenPostData,
   LoginForAccessTokenTokenPostErrors,
   LoginForAccessTokenTokenPostResponses,
@@ -2896,6 +2899,37 @@ export const updatePlayerByIdTournamentsTournamentIdPlayersPlayerIdPut = <
     responseType: 'json',
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/tournaments/{tournament_id}/players/{player_id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Import Players From File
+ *
+ * Creates players from rows of a file (parsed by the frontend), at most 2000 at once, and
+ * puts them on a team when given. Names that already exist (ignoring case and spaces) are
+ * skipped, but such players are still put on the team.
+ */
+export const importPlayersFromFileTournamentsTournamentIdPlayersImportPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ImportPlayersFromFileTournamentsTournamentIdPlayersImportPostData, ThrowOnError>,
+): RequestResult<
+  ImportPlayersFromFileTournamentsTournamentIdPlayersImportPostResponses,
+  ImportPlayersFromFileTournamentsTournamentIdPlayersImportPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    ImportPlayersFromFileTournamentsTournamentIdPlayersImportPostResponses,
+    ImportPlayersFromFileTournamentsTournamentIdPlayersImportPostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/players_import',
     ...options,
     headers: {
       'Content-Type': 'application/json',

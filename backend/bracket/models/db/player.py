@@ -1,10 +1,19 @@
 from decimal import Decimal
+from typing import Annotated
 
 from heliclockter import datetime_utc
-from pydantic import Field
+from pydantic import Field, StringConstraints
 
 from bracket.models.db.shared import BaseModelORM
 from bracket.utils.id_types import PlayerId, TournamentId
+from bracket.utils.text import SingleLine
+
+MAX_PLAYER_NAME_LENGTH = 100
+PlayerName = Annotated[
+    str,
+    StringConstraints(min_length=1, max_length=MAX_PLAYER_NAME_LENGTH, strip_whitespace=True),
+    SingleLine,
+]
 
 
 class PlayerInsertable(BaseModelORM):
@@ -27,7 +36,7 @@ class Player(PlayerInsertable):
 
 
 class PlayerBody(BaseModelORM):
-    name: str = Field(..., min_length=1, max_length=30)
+    name: PlayerName
     active: bool
 
 

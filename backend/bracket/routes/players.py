@@ -1,14 +1,17 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from starlette import status
 
 from bracket.config import config
 from bracket.database import database
+from bracket.logic.player_import import PlayerImportBody, import_players
 from bracket.logic.subscriptions import check_requirement
-from bracket.models.db.player import Player, PlayerBody, PlayerMultiBody
+from bracket.models.db.player import MAX_PLAYER_NAME_LENGTH, Player, PlayerBody, PlayerMultiBody
 from bracket.models.db.tournament import Tournament
 from bracket.models.db.user import UserPublic
 from bracket.routes.auth import user_authenticated_for_tournament
 from bracket.routes.models import (
     PaginatedPlayers,
+    PlayerImportResponse,
     PlayersResponse,
     SinglePlayerResponse,
     SuccessResponse,
@@ -104,7 +107,13 @@ async def create_multiple_players(
     user: UserPublic = Depends(user_authenticated_for_tournament),
     _: Tournament = Depends(disallow_archived_tournament),
 ) -> SuccessResponse:
-    player_names = [player.strip() for player in player_body.names.split("\n") if len(player) > 0]
+    player_names = [player.strip() for player in player_body.names.split("\n") if player.strip()]
+    too_long = [name for name in player_names if len(name) > MAX_PLAYER_NAME_LENGTH]
+    if too_long:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            f"Names can have at most {MAX_PLAYER_NAME_LENGTH} characters: {too_long[0][:40]}…",
+        )
     existing_players = await get_all_players_in_tournament(tournament_id)
     check_requirement(existing_players, user, "max_players", additions=len(player_names))
 
@@ -112,3 +121,18 @@ async def create_multiple_players(
         await insert_player(PlayerBody(name=player_name, active=player_body.active), tournament_id)
 
     return SuccessResponse()
+
+
+@router.post("/tournaments/{tournament_id}/players_import", response_model=PlayerImportResponse)
+async def import_players_from_file(
+    body: PlayerImportBody,
+    tournament_id: TournamentId,
+    user: UserPublic = Depends(user_authenticated_for_tournament),
+    _: Tournament = Depends(disallow_archived_tournament),
+) -> PlayerImportResponse:
+    """
+    Creates players from rows of a file (parsed by the frontend), at most 2000 at once, and
+    puts them on a team when given. Names that already exist (ignoring case and spaces) are
+    skipped, but such players are still put on the team.
+    """
+    return PlayerImportResponse(data=await import_players(tournament_id, body, user))
