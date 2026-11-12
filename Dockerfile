@@ -1,5 +1,7 @@
 # Build static frontend files
 FROM node:26-alpine AS builder
+# Where the frontend finds the API; "/api" when the backend serves the frontend itself
+ARG VITE_API_BASE_URL=http://localhost:8400/api
 
 WORKDIR /app
 
@@ -9,7 +11,7 @@ COPY frontend .
 
 RUN apk add pnpm && \
     CI=true pnpm install && \
-    VITE_API_BASE_URL=http://localhost:8400/api pnpm build
+    VITE_API_BASE_URL=${VITE_API_BASE_URL} pnpm build
 
 # Build backend image that also serves frontend (stored in `/app/frontend-dist`)
 FROM python:3.14-alpine3.22

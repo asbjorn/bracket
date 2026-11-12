@@ -1,0 +1,63 @@
+# Bracket (Norwegian cup fork) for Dokploy: built from this repository on every deploy.
+#
+# Dokploy settings: source "Git", this repository and branch, compose path
+# ./deploy/dokploy/docker-compose.yml. Environment variables (set in Dokploy):
+#   POSTGRES_PASSWORD, JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD, BRACKET_URL (e.g. https://cup.example.org)
+#   Optional email: SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM (see docs: deployment)
+#
+# The app is published on 127.0.0.1:7777 only, for a cloudflared tunnel running on the host. The tunnel
+# reaches the container through the Docker network gateway, so the private ranges are trusted proxies
+# and the visitor's address is taken from X-Forwarded-For (set by cloudflared).
+# Database migrations run automatically when the app starts (AUTO_RUN_MIGRATIONS).
+
+services:
+  bracket:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        # The backend serves the frontend, so the API is on the same origin
+        VITE_API_BASE_URL: /api
+    image: bracket-norway:latest
+    depends_on:
+      postgres:
+        condition: service_started
+    environment:
+      ENVIRONMENT: PRODUCTION
+      PG_DSN: postgresql://bracket:${POSTGRES_PASSWORD}@postgres:5432/bracket
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      CORS_ORIGINS: ${BRACKET_URL}
+      BASE_URL: ${BRACKET_URL}
+      ALLOW_USER_REGISTRATION: "false"
+      AUTO_RUN_MIGRATIONS: "true"
+      SERVE_FRONTEND: "true"
+      API_PREFIX: /api
+      TRUSTED_PROXIES: 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.1
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+    ports:
+      - 127.0.0.1:7777:8400
+    restart: unless-stopped
+    volumes:
+      - bracket_static_data:/app/static
+
+  postgres:
+    # Pinned to 17: postgres 18 moved its data directory; upgrade deliberately.
+    image: postgres:17
+    environment:
+      POSTGRES_DB: bracket
+      POSTGRES_USER: bracket
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    restart: unless-stopped
+    volumes:
+      - bracket_pg_data:/var/lib/postgresql/data
+
+# Same volume names as the earlier Dokploy stack, so the existing data is kept.
+volumes:
+  bracket_pg_data:
+  bracket_static_data:

@@ -81,9 +81,15 @@ export function requestSucceeded(result: AxiosResponse | AxiosError) {
 }
 
 export function getBaseApiUrl() {
-  return import.meta.env.VITE_API_BASE_URL != null
-    ? import.meta.env.VITE_API_BASE_URL
-    : 'http://localhost:8400';
+  const base: string =
+    import.meta.env.VITE_API_BASE_URL != null
+      ? import.meta.env.VITE_API_BASE_URL
+      : 'http://localhost:8400';
+  // A relative base (e.g. "/api" when the backend serves the frontend) becomes absolute, so
+  // links that leave the page (calendar subscriptions, QR codes) keep working.
+  if (base.startsWith('/') && typeof window !== 'undefined')
+    return `${window.location.origin}${base}`;
+  return base;
 }
 
 export function createAxios() {
