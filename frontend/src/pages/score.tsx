@@ -507,9 +507,26 @@ function DelayDrawer({
   );
 }
 
+/**
+ * The page's URL holds the result-link token: tell the browser never to send it to other sites
+ * (images, links) in the Referer header while this page is open.
+ */
+function useNoReferrer() {
+  useEffect(() => {
+    const meta = document.createElement('meta');
+    meta.name = 'referrer';
+    meta.content = 'no-referrer';
+    document.head.appendChild(meta);
+    return () => {
+      meta.remove();
+    };
+  }, []);
+}
+
 export default function ScoreEntryPage() {
   const { t } = useTranslation();
   const { token = '' } = useParams();
+  useNoReferrer();
   const swrView = getScoreEntry(token);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [delayOpened, setDelayOpened] = useState(false);

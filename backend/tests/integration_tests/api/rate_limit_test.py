@@ -1,10 +1,13 @@
 import asyncio
 
+import aiohttp
 import pytest
 
 from bracket.database import database
 from bracket.utils.client_ip import client_ip_from
+from bracket.utils.http import HTTPMethod
 from bracket.utils.rate_limit import RateLimiter, delete_old_rate_limit_hits, hash_key
+from tests.integration_tests.api.shared import get_root_uvicorn_url, send_request_raw
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -81,3 +84,15 @@ def test_client_ip_behind_proxies() -> None:
     assert client_ip_from("127.0.0.1", "garbage", proxies) == "garbage"
     assert client_ip_from("127.0.0.1", None, proxies) == "127.0.0.1"
     assert client_ip_from(None, None, proxies) == "unknown"
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_score_link_tokens_stay_private(startup_and_shutdown_uvicorn_server: None) -> None:
+    """No Referer leaks from result-link pages, and the public metrics hold no tokens."""
+    token = "not-a-real-token-but-secret-looking"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f"{get_root_uvicorn_url()}score/{token}") as response:
+            assert response.headers["Referrer-Policy"] == "no-referrer"
+    metrics = await send_request_raw(HTTPMethod.GET, "metrics")
+    assert token not in metrics
+    assert "/score/<redacted>" in metrics

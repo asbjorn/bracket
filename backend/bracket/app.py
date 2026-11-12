@@ -54,8 +54,10 @@ from bracket.utils.asyncio import AsyncioTasksManager
 from bracket.utils.db_init import init_db_when_empty
 from bracket.utils.error_codes import ERROR_CODE_HEADER, error_code_headers
 from bracket.utils.logging import logger
+from bracket.utils.redact import install_log_redaction
 
 init_sentry()
+install_log_redaction()
 
 
 @asynccontextmanager
@@ -173,6 +175,9 @@ async def add_process_time_header(request: Request, call_next: RequestResponseEn
     request_metrics = get_request_metrics()
     request_metrics.request_count[RequestDefinition.from_request(request)] += 1
     response = await call_next(request)
+    if "/score/" in request.url.path:
+        # Pages and API of result links: never send the token on to other sites
+        response.headers["Referrer-Policy"] = "no-referrer"
     process_time = time.time() - start_time
     request_metrics.response_time[RequestDefinition.from_request(request)] = process_time
     return response

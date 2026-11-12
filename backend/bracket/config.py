@@ -8,6 +8,7 @@ import sentry_sdk
 from pydantic import Field, PostgresDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from bracket.utils.redact import redact_sentry_event
 from bracket.utils.types import EnumAutoStr
 
 
@@ -128,4 +129,8 @@ def init_sentry() -> None:
             dsn=config.sentry_dsn,
             environment=str(environment.value),
             include_local_variables=False,
+            # Result-link tokens in URLs give access: never send them to Sentry
+            before_send=redact_sentry_event,
+            before_breadcrumb=redact_sentry_event,
+            before_send_transaction=redact_sentry_event,
         )

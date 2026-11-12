@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel
 
 from bracket.utils.http import HTTPMethod
+from bracket.utils.redact import redact_tokens
 from bracket.utils.starlette import get_route_path
 from bracket.utils.types import EnumAutoStr
 
@@ -29,7 +30,8 @@ class RequestDefinition(BaseModel):
     @staticmethod
     def from_request(request: Request) -> RequestDefinition:
         return RequestDefinition(
-            url=get_route_path(request),
+            # Result-link tokens in the path must not end up in the (public) metrics
+            url=redact_tokens(get_route_path(request)),
             method=HTTPMethod(request.method),
         )
 
