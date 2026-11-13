@@ -46,7 +46,9 @@ deploy_status() {
 import json, sys
 d = json.load(sys.stdin)
 deps = sorted(d.get("deployments", []), key=lambda x: x.get("createdAt", ""))
-print(d.get("composeStatus"), deps[-1].get("status") if deps else None, len(deps))'
+last = deps[-1] if deps else {}
+# The newest deployment identifies a deploy: Dokploy keeps only the last few, so counting fails
+print(d.get("composeStatus"), last.get("status"), last.get("deploymentId") or last.get("createdAt"))'
 }
 
 echo "1/4 Backing up the database"
@@ -56,14 +58,15 @@ ssh -o BatchMode=yes "$SERVER" "set -e; mkdir -p ~/backups/bracket
   test -s \"\$f\" && echo \"\$f\" > ~/backups/bracket/LATEST && echo \"    \$f\""
 
 echo "2/4 Starting the Dokploy deploy"
-before=$(deploy_status | awk '{print $3}')
+before_deployment=$(deploy_status | awk '{print $3}')
 dokploy POST compose.deploy "{\"composeId\":\"$COMPOSE_ID\"}" \
   | python3 -c 'import json, sys; print("    " + json.load(sys.stdin).get("message", "?"))'
 
 echo "3/4 Waiting for the build and restart"
 for _ in $(seq 1 90); do
-  read -r compose_status last_status count < <(deploy_status)
-  if [ "$count" -gt "$before" ] && [ "$compose_status" != running ] && [ "$last_status" != running ]; then
+  read -r compose_status last_status last_deployment < <(deploy_status)
+  if [ "$last_deployment" != "$before_deployment" ] && [ "$compose_status" != running ] \
+    && [ "$last_status" != running ]; then
     break
   fi
   sleep 10
