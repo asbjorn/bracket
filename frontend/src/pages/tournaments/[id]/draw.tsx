@@ -38,9 +38,13 @@ import {
   requestSucceeded,
 } from '@services/adapter';
 import { drawTeams } from '@services/draw';
+import { withViewTransition } from '@components/motion/view_transition';
+import motion from '@components/builder/stages.module.css';
 import { setTeamPots } from '@services/team';
 
-const REVEAL_INTERVAL_MS = 1500;
+// A drawn team is first shown large, then moves into its group
+const ANNOUNCE_MS = 700;
+const PLACE_MS = 1000;
 const MAX_POTS = 10;
 // More pots than this don't fit as buttons on a phone
 const MAX_POT_BUTTONS = 5;
@@ -80,6 +84,9 @@ function DrawBoard({
                       size="xl"
                       fw={input.team.id === latest ? 700 : 400}
                       c={input.team.id === latest ? 'indigo' : undefined}
+                      className={input.team.id === latest ? motion.justPlaced : undefined}
+                      // The same name as the announced team: the browser moves it here
+                      style={{ viewTransitionName: `draw-team-${input.team.id}` }}
                     >
                       {input.team.name}
                     </Text>
@@ -129,14 +136,27 @@ export default function DrawPage() {
   const [fitOpened, setFitOpened] = useState(false);
   const [placements, setPlacements] = useState<DrawPlacement[]>([]);
   const [revealed, setRevealed] = useState(0);
+  // The next team is shown large before it moves into its group
+  const [announced, setAnnounced] = useState(false);
   const [loading, setLoading] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (revealed >= placements.length) return undefined;
-    const timer = setTimeout(() => setRevealed(revealed + 1), REVEAL_INTERVAL_MS);
+    const timer = setTimeout(
+      () => {
+        if (!announced) setAnnounced(true);
+        else {
+          withViewTransition(() => {
+            setRevealed(revealed + 1);
+            setAnnounced(false);
+          });
+        }
+      },
+      announced ? PLACE_MS : ANNOUNCE_MS,
+    );
     return () => clearTimeout(timer);
-  }, [revealed, placements]);
+  }, [revealed, announced, placements]);
 
   const placed = stage != null ? teamIdsInStage(stage) : new Set<number>();
   const hidden = new Set(placements.slice(revealed).map((placement) => placement.team_id));
@@ -152,6 +172,13 @@ export default function DrawPage() {
   const categoryName = (id: number | null) => categories.find((c) => c.id === id)?.name ?? '';
   const groupName = (id: number) => stage?.stage_items.find((item) => item.id === id)?.name ?? '';
   const latestPlacement = revealed > 0 ? (placements[revealed - 1] ?? null) : null;
+  const announcing = announced ? (placements[revealed] ?? null) : null;
+  const announcingTeam =
+    announcing != null
+      ? stage?.stage_items
+          .flatMap((item) => item.inputs)
+          .find((input) => input.id === announcing.stage_item_input_id)
+      : undefined;
   const latestTeam =
     latestPlacement != null
       ? stage?.stage_items
@@ -206,6 +233,7 @@ export default function DrawPage() {
     if (requestSucceeded(response) && 'data' in response) {
       setPlacements(response.data.data);
       setRevealed(0);
+      setAnnounced(false);
       await swrStagesResponse.mutate();
     }
     setLoading(false);
@@ -445,7 +473,13 @@ export default function DrawPage() {
               </Badge>
               <Group>
                 {revealed < placements.length ? (
-                  <Button variant="default" onClick={() => setRevealed(placements.length)}>
+                  <Button
+                    variant="default"
+                    onClick={() => {
+                      setRevealed(placements.length);
+                      setAnnounced(false);
+                    }}
+                  >
                     {t('draw_show_all_button')}
                   </Button>
                 ) : null}
@@ -458,6 +492,21 @@ export default function DrawPage() {
                 </Button>
               </Group>
             </Group>
+            {announcingTeam != null && 'team' in announcingTeam && announcingTeam.team != null ? (
+              <div className={motion.announce} aria-live="polite">
+                <span
+                  className={motion.announceName}
+                  style={{ viewTransitionName: `draw-team-${announcingTeam.team.id}` }}
+                >
+                  {announcingTeam.team.name}
+                </span>
+                {showPots ? (
+                  <Badge size="lg" variant="white" color="indigo">
+                    {t('draw_pot_badge', { pot: savedPot(announcingTeam.team) })}
+                  </Badge>
+                ) : null}
+              </div>
+            ) : null}
             {latestPlacement != null &&
             latestTeam != null &&
             'team' in latestTeam &&

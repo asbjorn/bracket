@@ -184,10 +184,10 @@ export const HELP: Record<HelpPageId, HelpPage> = {
     ],
   },
   stages: {
-    steps: 3,
-    fields: [],
-    actions: ['add_stage', 'add_item', 'playoffs', 'next', 'lots'],
-    tips: 1,
+    steps: 4,
+    fields: ['mode'],
+    actions: ['format', 'move', 'next', 'add_stage', 'add_item', 'playoffs', 'lots'],
+    tips: 3,
     links: [
       { page: 'setup', to: '/tournaments/:id/setup' },
       { page: 'draw', to: '/tournaments/:id/draw' },

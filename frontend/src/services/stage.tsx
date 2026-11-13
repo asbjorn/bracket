@@ -1,4 +1,4 @@
-import { FitGroupsResponse, LevelRoundBody } from '@openapi';
+import { FitGroupsResponse, LevelRoundBody, PlayoffPreset } from '@openapi';
 import { awaitRequestAndHandleError, createAxios, handleRequestError } from './adapter';
 
 export async function createStage(tournament_id: number, category_id: number | null) {
@@ -39,24 +39,48 @@ export async function createLevelRound(
   );
 }
 
-/** What fitting the groups of a class to its teams would create; throws on an error. */
+/** A change of the format of a class: group size, and optionally its playoffs. */
+export interface FormatParams {
+  group_size: number;
+  playoffs?: PlayoffPreset;
+  third_place_match?: boolean;
+  playoff_stage_name?: string;
+  playoff_name?: string;
+}
+
+/** What changing the format of a class would create; throws on an error. */
 export async function previewFitGroups(
   tournament_id: number,
   stage_id: number,
-  group_size: number,
+  params: FormatParams,
 ) {
   return createAxios().get<FitGroupsResponse>(
     `tournaments/${tournament_id}/stages/${stage_id}/fit_groups`,
-    { params: { group_size } },
+    { params },
   );
 }
 
-export async function fitGroups(tournament_id: number, stage_id: number, group_size: number) {
+export async function fitGroups(tournament_id: number, stage_id: number, params: FormatParams) {
   return awaitRequestAndHandleError(async (axios) =>
     axios.post<FitGroupsResponse>(
       `tournaments/${tournament_id}/stages/${stage_id}/fit_groups`,
       null,
-      { params: { group_size } },
+      { params },
     ),
+  );
+}
+
+/** Moves a team to another place in the groups: an empty one, or swapped with its team. */
+export async function moveTeam(
+  tournament_id: number,
+  stage_id: number,
+  team_id: number,
+  target_input_id: number,
+) {
+  return awaitRequestAndHandleError(async (axios) =>
+    axios.post(`tournaments/${tournament_id}/stages/${stage_id}/move_team`, {
+      team_id,
+      target_input_id,
+    }),
   );
 }

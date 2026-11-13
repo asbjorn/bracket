@@ -1,0 +1,461 @@
+/* The stages page: phase bar, group cards with team chips, progress rings and the bracket. */
+
+/* ---------- Phase bar ---------- */
+.phaseBar {
+  position: relative;
+  padding: var(--mantine-spacing-md) var(--mantine-spacing-lg);
+  border-radius: var(--mantine-radius-lg);
+  border: 1px solid var(--mantine-color-default-border);
+  background:
+    radial-gradient(
+      120% 140% at 0% 0%,
+      light-dark(var(--mantine-color-indigo-0), rgb(76 110 245 / 12%)) 0%,
+      transparent 55%
+    ),
+    var(--mantine-color-body);
+  overflow: hidden;
+}
+
+.steps {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--step-count), 1fr);
+  margin-block: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+}
+
+/* The line behind the dots, and its filled part up to the current step */
+.track,
+.trackFill {
+  position: absolute;
+  top: 0.875rem;
+  left: calc(50% / var(--step-count));
+  height: 3px;
+  border-radius: 3px;
+}
+
+.track {
+  right: calc(50% / var(--step-count));
+  background: var(--mantine-color-default-border);
+}
+
+.trackFill {
+  width: calc((100% - 100% / var(--step-count)) * var(--fill));
+  background: linear-gradient(90deg, var(--mantine-color-green-6), var(--mantine-color-indigo-5));
+  transition: width 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  min-width: 0;
+}
+
+.dot {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 700;
+  background: var(--mantine-color-body);
+  border: 2px solid var(--mantine-color-default-border);
+  color: var(--mantine-color-dimmed);
+  transition:
+    background-color 300ms,
+    border-color 300ms,
+    transform 300ms;
+}
+
+.step[data-state='done'] .dot {
+  background: var(--mantine-color-green-6);
+  border-color: var(--mantine-color-green-6);
+  color: white;
+}
+
+.step[data-state='current'] .dot {
+  border-color: var(--mantine-color-indigo-5);
+  color: var(--mantine-color-indigo-6);
+  transform: scale(1.12);
+  animation: pulse 2.4s ease-out infinite;
+}
+
+.stepLabel {
+  font-size: var(--mantine-font-size-xs);
+  color: var(--mantine-color-dimmed);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.step[data-state='current'] .stepLabel {
+  color: var(--mantine-color-text);
+  font-weight: 700;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgb(76 110 245 / 45%);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgb(76 110 245 / 0%);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(76 110 245 / 0%);
+  }
+}
+
+/* On a phone only the current step keeps its label */
+@media (max-width: 36em) {
+  .step:not([data-state='current']) .stepLabel {
+    visibility: hidden;
+  }
+}
+
+/* ---------- Stage sections and group cards ---------- */
+.stageSection {
+  container-type: inline-size;
+  width: 100%;
+}
+
+.groupGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--mantine-spacing-md);
+  align-items: start;
+}
+
+/* Narrow: the groups become a row you swipe through, one card at a time */
+@container (max-width: 34rem) {
+  .groupGrid {
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    grid-auto-columns: 86%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    padding-bottom: var(--mantine-spacing-xs);
+  }
+
+  .groupGrid > * {
+    scroll-snap-align: start;
+  }
+}
+
+.groupCard {
+  border-radius: var(--mantine-radius-md);
+  border: 1px solid var(--mantine-color-default-border);
+  background: var(--mantine-color-body);
+  padding: var(--mantine-spacing-sm);
+  box-shadow: var(--mantine-shadow-xs);
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease,
+    border-color 200ms ease,
+    opacity 300ms ease;
+}
+
+.groupCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--mantine-shadow-md);
+}
+
+/* Linked to what is hovered elsewhere (a group and its places in the playoffs) */
+.linked {
+  border-color: var(--mantine-color-indigo-5);
+  box-shadow:
+    0 0 0 3px light-dark(rgb(76 110 245 / 18%), rgb(76 110 245 / 30%)),
+    var(--mantine-shadow-md);
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mantine-spacing-xs);
+  margin-bottom: var(--mantine-spacing-xs);
+}
+
+.slots {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 2.25rem;
+}
+
+.teamChip,
+.emptySlot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 2.25rem;
+  padding: 0 var(--mantine-spacing-sm);
+  border-radius: var(--mantine-radius-xl);
+  font-size: var(--mantine-font-size-sm);
+}
+
+.teamChip {
+  background: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
+  border: 1px solid var(--mantine-color-default-border);
+  cursor: grab;
+  user-select: none;
+  transition:
+    background-color 150ms,
+    box-shadow 150ms,
+    transform 150ms;
+}
+
+.teamChip:hover {
+  background: light-dark(var(--mantine-color-indigo-0), var(--mantine-color-dark-5));
+}
+
+.teamChip[data-locked='true'] {
+  cursor: default;
+}
+
+.teamChip[data-dragging='true'] {
+  box-shadow: var(--mantine-shadow-lg);
+  transform: rotate(-2deg) scale(1.03);
+  background: var(--mantine-color-body);
+}
+
+/* A team dragged onto this one: they swap places */
+.teamChip[data-combine='true'],
+.emptySlot[data-combine='true'] {
+  outline: 2px dashed var(--mantine-color-indigo-5);
+  outline-offset: 2px;
+}
+
+.emptySlot {
+  border: 1.5px dashed var(--mantine-color-default-border);
+  color: var(--mantine-color-dimmed);
+}
+
+.handle {
+  color: var(--mantine-color-dimmed);
+  flex-shrink: 0;
+}
+
+.teamName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Progress ring (matches played) ---------- */
+.ring {
+  --size: 2rem;
+  --progress: 0;
+  position: relative;
+  width: var(--size);
+  height: var(--size);
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--mantine-color-green-6) calc(var(--progress) * 1%),
+    var(--mantine-color-default-border) 0
+  );
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+  transition: --progress 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.ringWrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.ringLabel {
+  position: absolute;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--mantine-color-dimmed);
+}
+
+/* ---------- Knockout bracket ---------- */
+.bracketScroll {
+  overflow-x: auto;
+  padding-bottom: var(--mantine-spacing-xs);
+}
+
+.bracket {
+  display: grid;
+  grid-template-columns: repeat(var(--rounds), minmax(12rem, 1fr));
+  column-gap: 2rem;
+  min-width: calc(var(--rounds) * 13rem);
+}
+
+.roundTitle {
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mantine-color-dimmed);
+  margin-bottom: var(--mantine-spacing-xs);
+}
+
+.round {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: var(--mantine-spacing-sm);
+  height: 100%;
+}
+
+.pair {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: var(--mantine-spacing-sm);
+  flex: 1;
+}
+
+/* The bracket line joining two matches to the match they feed */
+.pair[data-connect='true']::after {
+  content: '';
+  position: absolute;
+  right: -1rem;
+  top: 25%;
+  bottom: 25%;
+  width: 1rem;
+  border: 2px solid var(--mantine-color-default-border);
+  border-left: none;
+  border-radius: 0 6px 6px 0;
+  transform-origin: left center;
+  transition: transform 500ms cubic-bezier(0.2, 0.8, 0.2, 1) 150ms;
+}
+
+.match {
+  position: relative;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-md);
+  background: var(--mantine-color-body);
+  box-shadow: var(--mantine-shadow-xs);
+  overflow: hidden;
+  transition:
+    opacity 300ms ease,
+    transform 300ms ease;
+}
+
+/* The line from the bracket into a match of a later round */
+.match[data-fed='true']::before {
+  content: '';
+  position: absolute;
+  left: -1rem;
+  top: 50%;
+  width: 1rem;
+  border-top: 2px solid var(--mantine-color-default-border);
+}
+
+.matchName {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mantine-color-dimmed);
+  padding: 4px var(--mantine-spacing-xs) 0;
+}
+
+.side {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mantine-spacing-xs);
+  padding: 4px var(--mantine-spacing-xs);
+  font-size: var(--mantine-font-size-sm);
+  transition: background-color 200ms;
+}
+
+.side + .side {
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+.side[data-winner='true'] {
+  font-weight: 700;
+}
+
+.side[data-linked='true'] {
+  background: light-dark(var(--mantine-color-indigo-0), rgb(76 110 245 / 20%));
+}
+
+.sideName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bronze {
+  margin-top: var(--mantine-spacing-md);
+}
+
+/* ---------- Entry animations ---------- */
+@starting-style {
+  .groupCard {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  .pair[data-connect='true']::after {
+    transform: scaleX(0);
+  }
+
+  .match {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+}
+
+/* ---------- Draw: the announced team and the team just placed ---------- */
+.announce {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mantine-spacing-md);
+  padding: var(--mantine-spacing-lg);
+  border-radius: var(--mantine-radius-lg);
+  color: white;
+  background: linear-gradient(135deg, var(--mantine-color-indigo-6), var(--mantine-color-violet-6));
+  box-shadow: 0 12px 32px rgb(76 110 245 / 35%);
+  transition:
+    opacity 250ms ease,
+    transform 250ms ease;
+}
+
+.announceName {
+  font-size: clamp(1.75rem, 5vw, 3.25rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+@starting-style {
+  .announce {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+
+.justPlaced {
+  animation: placed 1.6s ease-out;
+  border-radius: 6px;
+}
+
+@keyframes placed {
+  0% {
+    background: rgb(76 110 245 / 25%);
+    box-shadow: 0 0 0 6px rgb(76 110 245 / 25%);
+  }
+  100% {
+    background: transparent;
+    box-shadow: 0 0 0 0 transparent;
+  }
+}

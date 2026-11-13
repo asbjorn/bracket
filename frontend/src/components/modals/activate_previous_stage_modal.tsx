@@ -13,14 +13,26 @@ export default function ActivatePreviousStageModal({
   categoryId,
   swrStagesResponse,
   swrRankingsPerStageItemResponse,
+  opened: openedProp,
+  onClose,
 }: {
   tournamentId: number;
   categoryId: number | null;
   swrStagesResponse: SWRResponse<StagesWithStageItemsResponse>;
   swrRankingsPerStageItemResponse: SWRResponse<StageRankingResponse>;
+  // Controlled from outside (e.g. a menu): no button of its own
+  opened?: boolean;
+  onClose?: () => void;
 }) {
   const { t } = useTranslation();
-  const [opened, setOpened] = useState(false);
+  const [openedState, setOpenedState] = useState(false);
+  const controlled = openedProp !== undefined;
+  const opened = controlled ? openedProp : openedState;
+  const setOpened = (value: boolean) => {
+    if (controlled) {
+      if (!value) onClose?.();
+    } else setOpenedState(value);
+  };
 
   const form = useForm({
     initialValues: {},
@@ -59,17 +71,19 @@ export default function ActivatePreviousStageModal({
         </form>
       </Modal>
 
-      <Button
-        size="md"
-        mb="10"
-        color="indigo"
-        leftSection={<IconSquareArrowLeft size={24} />}
-        onClick={async () => {
-          setOpened(true);
-        }}
-      >
-        {t('previous_stage_button')}
-      </Button>
+      {controlled ? null : (
+        <Button
+          size="md"
+          mb="10"
+          color="indigo"
+          leftSection={<IconSquareArrowLeft size={24} />}
+          onClick={async () => {
+            setOpened(true);
+          }}
+        >
+          {t('previous_stage_button')}
+        </Button>
+      )}
     </>
   );
 }

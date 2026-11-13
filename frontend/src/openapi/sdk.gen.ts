@@ -317,6 +317,9 @@ import type {
   MarkStartedTournamentsTournamentIdMatchesMatchIdStartedPutData,
   MarkStartedTournamentsTournamentIdMatchesMatchIdStartedPutErrors,
   MarkStartedTournamentsTournamentIdMatchesMatchIdStartedPutResponses,
+  MoveTeamInGroupsTournamentsTournamentIdStagesStageIdMoveTeamPostData,
+  MoveTeamInGroupsTournamentsTournamentIdStagesStageIdMoveTeamPostErrors,
+  MoveTeamInGroupsTournamentsTournamentIdStagesStageIdMoveTeamPostResponses,
   PingPingGetData,
   PingPingGetResponses,
   PreviewFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsGetData,
@@ -4034,8 +4037,8 @@ export const drawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPost = <
 /**
  * Preview Fit Groups
  *
- * What fitting the groups of a class to its registered teams would create, in groups of about
- * `group_size` teams. Nothing is changed.
+ * What changing the format of a class would create: its groups for the registered teams in
+ * groups of about `group_size` teams, and its playoffs. Nothing is changed.
  */
 export const previewFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsGet = <
   ThrowOnError extends boolean = false,
@@ -4063,9 +4066,9 @@ export const previewFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsGet = 
 /**
  * Apply Fit Groups
  *
- * Before the draw: replaces the groups of a class by groups for its registered teams (about
- * `group_size` per group) and creates its playoffs again with the same placings. Planned
- * times of the class are lost, so the class has to be planned again.
+ * Changes the format of a class. Before the draw its groups are made again for the registered
+ * teams (about `group_size` per group); its playoffs are made again with the same placings or
+ * from the `playoffs` preset. Planned times of what is made again are lost.
  */
 export const applyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPost = <
   ThrowOnError extends boolean = false,
@@ -4088,6 +4091,40 @@ export const applyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPost = <
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/tournaments/{tournament_id}/stages/{stage_id}/fit_groups',
     ...options,
+  });
+
+/**
+ * Move Team In Groups
+ *
+ * Moves a team to another place in the groups of the stage: an empty place, or the place of
+ * another team, which then takes the old place of the first (a swap). Not for teams that have
+ * played a match in the stage.
+ */
+export const moveTeamInGroupsTournamentsTournamentIdStagesStageIdMoveTeamPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    MoveTeamInGroupsTournamentsTournamentIdStagesStageIdMoveTeamPostData,
+    ThrowOnError
+  >,
+): RequestResult<
+  MoveTeamInGroupsTournamentsTournamentIdStagesStageIdMoveTeamPostResponses,
+  MoveTeamInGroupsTournamentsTournamentIdStagesStageIdMoveTeamPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    MoveTeamInGroupsTournamentsTournamentIdStagesStageIdMoveTeamPostResponses,
+    MoveTeamInGroupsTournamentsTournamentIdStagesStageIdMoveTeamPostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/stages/{stage_id}/move_team',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 
 /**

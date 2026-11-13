@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from starlette import status
 
 from bracket.config import config
@@ -6,13 +8,14 @@ from bracket.database import database
 from bracket.logic.results_visibility import hide_results_of_private_categories
 from bracket.logic.scheduling.builder import determine_available_inputs
 from bracket.logic.scheduling.create_playoffs import create_playoffs
-from bracket.logic.scheduling.fit_groups import fit_groups, plan_fit
+from bracket.logic.scheduling.fit_groups import FormatChange, fit_groups, plan_fit
 from bracket.logic.scheduling.handle_stage_activation import (
     get_updates_to_inputs_in_activated_stage,
     update_matches_in_activated_stage,
     update_matches_in_deactivated_stage,
 )
 from bracket.logic.scheduling.level_round import LevelRoundBody, create_level_round
+from bracket.logic.scheduling.move_team import MoveTeamBody, move_team
 from bracket.logic.subscriptions import check_requirement
 from bracket.models.db.playoffs import PlayoffsCreateBody
 from bracket.models.db.stage import Stage, StageActivateBody, StageCreateBody, StageUpdateBody
@@ -133,14 +136,14 @@ async def create_playoffs_after_group_stage(
 async def preview_fit_groups(
     tournament_id: TournamentId,
     stage_id: StageId,
-    group_size: int,
+    change: Annotated[FormatChange, Query()],
     _: UserPublic = Depends(user_authenticated_for_tournament),
 ) -> FitGroupsResponse:
     """
-    What fitting the groups of a class to its registered teams would create, in groups of about
-    `group_size` teams. Nothing is changed.
+    What changing the format of a class would create: its groups for the registered teams in
+    groups of about `group_size` teams, and its playoffs. Nothing is changed.
     """
-    return FitGroupsResponse(data=(await plan_fit(tournament_id, stage_id, group_size)).preview)
+    return FitGroupsResponse(data=(await plan_fit(tournament_id, stage_id, change)).preview)
 
 
 @router.post(
@@ -149,16 +152,35 @@ async def preview_fit_groups(
 async def apply_fit_groups(
     tournament_id: TournamentId,
     stage_id: StageId,
-    group_size: int,
+    change: Annotated[FormatChange, Query()],
     user: UserPublic = Depends(user_authenticated_for_tournament),
     __: Tournament = Depends(disallow_archived_tournament),
 ) -> FitGroupsResponse:
     """
-    Before the draw: replaces the groups of a class by groups for its registered teams (about
-    `group_size` per group) and creates its playoffs again with the same placings. Planned
-    times of the class are lost, so the class has to be planned again.
+    Changes the format of a class. Before the draw its groups are made again for the registered
+    teams (about `group_size` per group); its playoffs are made again with the same placings or
+    from the `playoffs` preset. Planned times of what is made again are lost.
     """
-    return FitGroupsResponse(data=await fit_groups(tournament_id, stage_id, group_size, user))
+    return FitGroupsResponse(data=await fit_groups(tournament_id, stage_id, change, user))
+
+
+@router.post(
+    "/tournaments/{tournament_id}/stages/{stage_id}/move_team", response_model=SuccessResponse
+)
+async def move_team_in_groups(
+    tournament_id: TournamentId,
+    stage_id: StageId,
+    body: MoveTeamBody,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+    __: Tournament = Depends(disallow_archived_tournament),
+) -> SuccessResponse:
+    """
+    Moves a team to another place in the groups of the stage: an empty place, or the place of
+    another team, which then takes the old place of the first (a swap). Not for teams that have
+    played a match in the stage.
+    """
+    await move_team(tournament_id, stage_id, body)
+    return SuccessResponse()
 
 
 @router.put("/tournaments/{tournament_id}/stages/{stage_id}", response_model=SuccessResponse)

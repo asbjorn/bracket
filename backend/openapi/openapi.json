@@ -2154,6 +2154,10 @@
             "title": "Group Sizes",
             "type": "array"
           },
+          "groups_rebuilt": {
+            "title": "Groups Rebuilt",
+            "type": "boolean"
+          },
           "match_count": {
             "title": "Match Count",
             "type": "integer"
@@ -2198,6 +2202,7 @@
           "match_count",
           "playoffs",
           "removed_playoffs",
+          "groups_rebuilt",
           "planned_match_count"
         ],
         "title": "FitGroupsPreview",
@@ -4402,6 +4407,24 @@
           "squad_size"
         ],
         "title": "MedalTeam",
+        "type": "object"
+      },
+      "MoveTeamBody": {
+        "properties": {
+          "target_input_id": {
+            "title": "Target Input Id",
+            "type": "integer"
+          },
+          "team_id": {
+            "title": "Team Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "team_id",
+          "target_input_id"
+        ],
+        "title": "MoveTeamBody",
         "type": "object"
       },
       "NewClubTeam": {
@@ -17590,7 +17613,7 @@
     },
     "/tournaments/{tournament_id}/stages/{stage_id}/fit_groups": {
       "get": {
-        "description": "What fitting the groups of a class to its registered teams would create, in groups of about\n`group_size` teams. Nothing is changed.",
+        "description": "What changing the format of a class would create: its groups for the registered teams in\ngroups of about `group_size` teams, and its playoffs. Nothing is changed.",
         "operationId": "preview_fit_groups_tournaments__tournament_id__stages__stage_id__fit_groups_get",
         "parameters": [
           {
@@ -17618,6 +17641,63 @@
             "schema": {
               "title": "Group Size",
               "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "playoffs",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/PlayoffPreset"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Playoffs"
+            }
+          },
+          {
+            "in": "query",
+            "name": "third_place_match",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Third Place Match"
+            }
+          },
+          {
+            "in": "query",
+            "name": "playoff_stage_name",
+            "required": false,
+            "schema": {
+              "default": "Playoffs",
+              "maxLength": 40,
+              "minLength": 1,
+              "title": "Playoff Stage Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "playoff_name",
+            "required": false,
+            "schema": {
+              "default": "{} playoff",
+              "maxLength": 40,
+              "minLength": 1,
+              "pattern": "\\{\\}",
+              "title": "Playoff Name",
+              "type": "string"
             }
           }
         ],
@@ -17654,7 +17734,7 @@
         ]
       },
       "post": {
-        "description": "Before the draw: replaces the groups of a class by groups for its registered teams (about\n`group_size` per group) and creates its playoffs again with the same placings. Planned\ntimes of the class are lost, so the class has to be planned again.",
+        "description": "Changes the format of a class. Before the draw its groups are made again for the registered\nteams (about `group_size` per group); its playoffs are made again with the same placings or\nfrom the `playoffs` preset. Planned times of what is made again are lost.",
         "operationId": "apply_fit_groups_tournaments__tournament_id__stages__stage_id__fit_groups_post",
         "parameters": [
           {
@@ -17682,6 +17762,63 @@
             "schema": {
               "title": "Group Size",
               "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "playoffs",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/PlayoffPreset"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Playoffs"
+            }
+          },
+          {
+            "in": "query",
+            "name": "third_place_match",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Third Place Match"
+            }
+          },
+          {
+            "in": "query",
+            "name": "playoff_stage_name",
+            "required": false,
+            "schema": {
+              "default": "Playoffs",
+              "maxLength": 40,
+              "minLength": 1,
+              "title": "Playoff Stage Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "playoff_name",
+            "required": false,
+            "schema": {
+              "default": "{} playoff",
+              "maxLength": 40,
+              "minLength": 1,
+              "pattern": "\\{\\}",
+              "title": "Playoff Name",
+              "type": "string"
             }
           }
         ],
@@ -17713,6 +17850,73 @@
           }
         ],
         "summary": "Apply Fit Groups",
+        "tags": [
+          "Stages"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/stages/{stage_id}/move_team": {
+      "post": {
+        "description": "Moves a team to another place in the groups of the stage: an empty place, or the place of\nanother team, which then takes the old place of the first (a swap). Not for teams that have\nplayed a match in the stage.",
+        "operationId": "move_team_in_groups_tournaments__tournament_id__stages__stage_id__move_team_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "stage_id",
+            "required": true,
+            "schema": {
+              "title": "Stage Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveTeamBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Move Team In Groups",
         "tags": [
           "Stages"
         ]

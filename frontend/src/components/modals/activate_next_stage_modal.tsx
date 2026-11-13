@@ -72,14 +72,26 @@ export default function ActivateNextStageModal({
   categoryId,
   swrStagesResponse,
   swrRankingsPerStageItemResponse,
+  opened: openedProp,
+  onClose,
 }: {
   tournamentId: number;
   categoryId: number | null;
   swrStagesResponse: SWRResponse<StagesWithStageItemsResponse>;
   swrRankingsPerStageItemResponse: SWRResponse<StageRankingResponse>;
+  // Controlled from outside (e.g. a menu): no button of its own
+  opened?: boolean;
+  onClose?: () => void;
 }) {
   const { t } = useTranslation();
-  const [opened, setOpened] = useState(false);
+  const [openedState, setOpenedState] = useState(false);
+  const controlled = openedProp !== undefined;
+  const opened = controlled ? openedProp : openedState;
+  const setOpened = (value: boolean) => {
+    if (controlled) {
+      if (!value) onClose?.();
+    } else setOpenedState(value);
+  };
   const stageItemsLookup = getStageItemLookup(swrStagesResponse);
   const hasUpdates = Object.values(swrRankingsPerStageItemResponse.data?.data ?? {}).some(
     (updates) => updates.length > 0,
@@ -131,17 +143,19 @@ export default function ActivateNextStageModal({
         </form>
       </Modal>
 
-      <Button
-        size="md"
-        mb="10"
-        color="indigo"
-        leftSection={<IconSquareArrowRight size={24} />}
-        onClick={async () => {
-          setOpened(true);
-        }}
-      >
-        {t('next_stage_button')}
-      </Button>
+      {controlled ? null : (
+        <Button
+          size="md"
+          mb="10"
+          color="indigo"
+          leftSection={<IconSquareArrowRight size={24} />}
+          onClick={async () => {
+            setOpened(true);
+          }}
+        >
+          {t('next_stage_button')}
+        </Button>
+      )}
     </>
   );
 }

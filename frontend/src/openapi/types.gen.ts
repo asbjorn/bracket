@@ -1094,6 +1094,10 @@ export type FitGroupsPreview = {
    */
   group_sizes: Array<number>;
   /**
+   * Groups Rebuilt
+   */
+  groups_rebuilt: boolean;
+  /**
    * Match Count
    */
   match_count: number;
@@ -2194,6 +2198,20 @@ export type MedalTeam = {
    * Team Name
    */
   team_name: string;
+};
+
+/**
+ * MoveTeamBody
+ */
+export type MoveTeamBody = {
+  /**
+   * Target Input Id
+   */
+  target_input_id: number;
+  /**
+   * Team Id
+   */
+  team_id: number;
 };
 
 /**
@@ -9947,6 +9965,22 @@ export type PreviewFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsGetData
      * Group Size
      */
     group_size: number;
+    /**
+     * Playoffs
+     */
+    playoffs?: PlayoffPreset | null;
+    /**
+     * Third Place Match
+     */
+    third_place_match?: boolean | null;
+    /**
+     * Playoff Stage Name
+     */
+    playoff_stage_name?: string;
+    /**
+     * Playoff Name
+     */
+    playoff_name?: string;
   };
   url: '/tournaments/{tournament_id}/stages/{stage_id}/fit_groups';
 };
@@ -9988,6 +10022,22 @@ export type ApplyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPostData 
      * Group Size
      */
     group_size: number;
+    /**
+     * Playoffs
+     */
+    playoffs?: PlayoffPreset | null;
+    /**
+     * Third Place Match
+     */
+    third_place_match?: boolean | null;
+    /**
+     * Playoff Stage Name
+     */
+    playoff_stage_name?: string;
+    /**
+     * Playoff Name
+     */
+    playoff_name?: string;
   };
   url: '/tournaments/{tournament_id}/stages/{stage_id}/fit_groups';
 };
@@ -10011,6 +10061,42 @@ export type ApplyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPostRespo
 
 export type ApplyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPostResponse =
   ApplyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPostResponses[keyof ApplyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPostResponses];
+
+export type MoveTeamInGroupsTournamentsTournamentIdStagesStageIdMoveTeamPostData = {
+  body: MoveTeamBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+    /**
+     * Stage Id
+     */
+    stage_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/stages/{stage_id}/move_team';
+};
+
+export type MoveTeamInGroupsTournamentsTournamentIdStagesStageIdMoveTeamPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type MoveTeamInGroupsTournamentsTournamentIdStagesStageIdMoveTeamPostError =
+  MoveTeamInGroupsTournamentsTournamentIdStagesStageIdMoveTeamPostErrors[keyof MoveTeamInGroupsTournamentsTournamentIdStagesStageIdMoveTeamPostErrors];
+
+export type MoveTeamInGroupsTournamentsTournamentIdStagesStageIdMoveTeamPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type MoveTeamInGroupsTournamentsTournamentIdStagesStageIdMoveTeamPostResponse =
+  MoveTeamInGroupsTournamentsTournamentIdStagesStageIdMoveTeamPostResponses[keyof MoveTeamInGroupsTournamentsTournamentIdStagesStageIdMoveTeamPostResponses];
 
 export type GetTournamentTeamConflictsTournamentsTournamentIdTeamConflictsGetData = {
   body?: never;

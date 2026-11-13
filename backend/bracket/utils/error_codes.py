@@ -33,7 +33,13 @@ ERROR_CODES: dict[str, str] = {
         "fit_playoff_other_inputs"
     ),
     "The class needs at least 2 teams": "fit_too_few_teams",
+    "The playoffs have started, so the format can't be changed any more": "fit_playoffs_started",
     "A group has between 2 and 10 teams": "fit_group_size",
+    # Moving teams between groups
+    "Teams can only be moved between groups": "move_not_groups",
+    "The team isn't in a group of this stage": "move_team_not_in_stage",
+    "Could not find the place to move the team to": "move_no_target",
+    "Teams that have played a match in this stage can't be moved": "move_team_played",
     # Group draw
     "The stage has no groups": "draw_no_groups",
     "Teams can only be drawn into round robin or swiss groups": "draw_wrong_stage",

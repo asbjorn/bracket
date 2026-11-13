@@ -1,22 +1,35 @@
 """
-Fit the groups of a class to its registered teams: before the draw, the groups of a group stage
-are replaced by groups for the real number of teams, and the playoffs after it are created again
-with the same placings (the same way as the setup wizard).
+The format of a class: its groups and the playoffs after them, changed in one go.
 
-Only for a class whose groups have no teams yet and whose stages are the group stage plus at most
-one playoff stage fed by it; anything else is changed by hand on the stages page.
+- Groups: before the draw, the groups are made again for the registered teams in groups of about
+  `group_size` (the same way as the setup wizard). After the draw the groups stay as they are, so
+  only a change that keeps their sizes is possible.
+- Playoffs: made again with the same placings, or from a preset (none, A, A+B, A+B+C), as long as
+  they haven't started.
+
+Only for a class whose stages are the group stage plus at most one playoff stage fed by it;
+anything else is changed by hand on the stages page.
 """
 
+from typing import Annotated
+
 from fastapi import HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, StringConstraints
 from starlette import status
 
 from bracket.database import database
 from bracket.logic.planning.matches import update_start_times_of_matches
+from bracket.logic.results_visibility import check_advancing_allowed
 from bracket.logic.scheduling.builder import build_matches_for_stage_item
 from bracket.logic.scheduling.create_playoffs import create_playoffs
 from bracket.logic.scheduling.cup_setup import group_letter
-from bracket.logic.scheduling.cup_structure import MAX_TEAMS_PER_PLAYOFF, split_into_groups
+from bracket.logic.scheduling.cup_structure import (
+    MAX_TEAMS_PER_PLAYOFF,
+    PLAYOFF_NAMES,
+    PlayoffPreset,
+    split_into_groups,
+    split_placings,
+)
 from bracket.logic.scheduling.elimination import MIN_TEAMS_THIRD_PLACE_MATCH
 from bracket.logic.subscriptions import check_requirement
 from bracket.models.db.playoffs import PlayoffBody, PlayoffsCreateBody
@@ -24,10 +37,12 @@ from bracket.models.db.stage_item import StageItemCreateBody, StageType
 from bracket.models.db.stage_item_inputs import (
     StageItemInputBestOf,
     StageItemInputEmpty,
+    StageItemInputFinal,
     StageItemInputTentative,
 )
 from bracket.models.db.user import UserPublic
 from bracket.models.db.util import StageItemWithRounds, StageWithStageItems
+from bracket.sql.categories import get_category_by_id
 from bracket.sql.shared import sql_delete_stage_item_with_foreign_keys
 from bracket.sql.stage_items import sql_create_stage_item_with_empty_inputs
 from bracket.sql.stages import get_full_tournament_details, sql_delete_stage
@@ -35,6 +50,22 @@ from bracket.sql.teams import get_teams_with_members
 from bracket.utils.id_types import StageId, TournamentId
 
 MAX_GROUP_SIZE = 10  # Also in the error message below
+
+Name = Annotated[str, StringConstraints(min_length=1, max_length=40, strip_whitespace=True)]
+
+
+class FormatChange(BaseModel):
+    """
+    `playoffs`: empty keeps the playoffs with their placings, a preset makes them again.
+    `third_place_match`: empty keeps it as it is per playoff. The names are used for a playoff
+    stage or playoff that doesn't exist yet ("{}" is the letter of the playoff).
+    """
+
+    group_size: int
+    playoffs: PlayoffPreset | None = None
+    third_place_match: bool | None = None
+    playoff_stage_name: Name = "Playoffs"
+    playoff_name: Name = Field(default="{} playoff", pattern=r"\{\}")
 
 
 class FittedPlayoff(BaseModel):
@@ -52,9 +83,11 @@ class FitGroupsPreview(BaseModel):
     matches_per_team_max: int
     match_count: int
     playoffs: list[FittedPlayoff]
-    # Playoffs of today that get too few teams and are left out
+    # Playoffs of today that are left out (too few teams, or fewer playoffs chosen)
     removed_playoffs: list[str]
-    # Matches of the class that already have a time: the class has to be planned again
+    # False after the draw: the groups and their teams stay, only the playoffs change
+    groups_rebuilt: bool
+    # Matches that are made again but already had a time: the class has to be planned again
     planned_match_count: int
 
 
@@ -120,11 +153,41 @@ class FitPlan(BaseModel):
     playoff_stage: StageWithStageItems | None
     group_sizes: list[int]
     playoffs: list[PlayoffBody]
+    groups_rebuilt: bool
+    playoff_stage_name: str
     preview: FitGroupsPreview
 
 
-async def plan_fit(tournament_id: TournamentId, stage_id: StageId, group_size: int) -> FitPlan:
-    if not 2 <= group_size <= MAX_GROUP_SIZE:
+def preset_playoffs(
+    change: FormatChange, group_sizes: list[int], old_playoffs: list[PlayoffBody]
+) -> list[PlayoffBody]:
+    """Playoffs for a preset: the placings split evenly, with the names of today's playoffs."""
+    assert change.playoffs is not None
+    placings = split_placings(min(group_sizes), change.playoffs.playoff_count)
+    return [
+        PlayoffBody(
+            name=old_playoffs[index].name
+            if index < len(old_playoffs)
+            else change.playoff_name.replace("{}", PLAYOFF_NAMES[index]),
+            placings=playoff_placings,
+            best_of_placing=None,
+            third_place_match=change.third_place_match is True
+            or (
+                change.third_place_match is None
+                and index < len(old_playoffs)
+                and old_playoffs[index].third_place_match
+            ),
+        )
+        for index, playoff_placings in enumerate(placings)
+    ]
+
+
+def playoff_team_count(playoff: PlayoffBody, group_count: int) -> int:
+    return group_count * len(playoff.placings) + len(playoff.best_ranks)
+
+
+async def plan_fit(tournament_id: TournamentId, stage_id: StageId, change: FormatChange) -> FitPlan:
+    if not 2 <= change.group_size <= MAX_GROUP_SIZE:
         raise bad_request("A group has between 2 and 10 teams")
     stages = await get_full_tournament_details(tournament_id)
     group_stage = next((stage for stage in stages if stage.id == stage_id), None)
@@ -135,10 +198,9 @@ async def plan_fit(tournament_id: TournamentId, stage_id: StageId, group_size: i
     groups = sorted(group_stage.stage_items, key=lambda item: (item.name, item.id))
     if len(groups) < 1 or any(item.type is not StageType.ROUND_ROBIN for item in groups):
         raise bad_request("Only a stage with round robin groups can be fitted")
-    if any(
+    drawn = any(
         not isinstance(input_, StageItemInputEmpty) for item in groups for input_ in item.inputs
-    ):
-        raise bad_request("The groups already have teams: fit them before the draw")
+    )
 
     other_stages = [
         stage
@@ -155,6 +217,15 @@ async def plan_fit(tournament_id: TournamentId, stage_id: StageId, group_size: i
             "The class has more stages than groups and playoffs: change them on the stages page"
         )
     playoff_stage = other_stages[0] if len(other_stages) > 0 else None
+    if playoff_stage is not None and (
+        playoff_stage.is_active
+        or any(
+            isinstance(input_, StageItemInputFinal)
+            for item in playoff_stage.stage_items
+            for input_ in item.inputs
+        )
+    ):
+        raise bad_request("The playoffs have started, so the format can't be changed any more")
     old_playoffs = (
         [
             playoff_body(item, group_ids)
@@ -168,35 +239,55 @@ async def plan_fit(tournament_id: TournamentId, stage_id: StageId, group_size: i
     team_count = len([team for team in teams if not team.withdrawn])
     if team_count < 2:
         raise bad_request("The class needs at least 2 teams")
-    group_sizes = split_into_groups(team_count, group_size)
-    fitted = [fit_playoff(playoff, group_sizes) for playoff in old_playoffs]
-    playoffs = [playoff for playoff in fitted if playoff is not None]
+    current_sizes = [item.team_count for item in groups]
+    group_sizes = split_into_groups(team_count, change.group_size)
+    if drawn and sorted(group_sizes) != sorted(current_sizes):
+        raise bad_request("The groups already have teams: fit them before the draw")
+    if drawn:
+        # The groups stay with their teams: the playoffs are made for these groups
+        group_sizes = current_sizes
 
-    class_stages = [group_stage, *other_stages]
+    if change.playoffs is not None:
+        new_playoffs = preset_playoffs(change, group_sizes, old_playoffs)
+    else:
+        new_playoffs = [
+            playoff.model_copy(
+                update={"third_place_match": change.third_place_match}
+                if change.third_place_match is not None
+                else {}
+            )
+            for playoff in old_playoffs
+        ]
+    fitted = [fit_playoff(playoff, group_sizes) for playoff in new_playoffs]
+    playoffs = [playoff for playoff in fitted if playoff is not None]
+    if len(playoffs) > 0:
+        check_advancing_allowed(await get_category_by_id(tournament_id, group_stage.category_id))
+    kept_names = {playoff.name for playoff in playoffs}
+
+    # Stages that are made again lose their planned times
+    class_stages = [group_stage, *other_stages] if not drawn else other_stages
     preview = FitGroupsPreview(
         team_count=team_count,
-        current_group_sizes=[item.team_count for item in groups],
+        current_group_sizes=current_sizes,
         group_sizes=group_sizes,
         matches_per_team_min=min(group_sizes) - 1,
         matches_per_team_max=max(group_sizes) - 1,
         match_count=sum(size * (size - 1) // 2 for size in group_sizes)
         + sum(
             knockout_match_count(
-                len(group_sizes) * len(playoff.placings) + len(playoff.best_ranks),
-                playoff.third_place_match,
+                playoff_team_count(playoff, len(group_sizes)), playoff.third_place_match
             )
             for playoff in playoffs
         ),
         playoffs=[
             FittedPlayoff(
                 name=playoff.name,
-                team_count=len(group_sizes) * len(playoff.placings) + len(playoff.best_ranks),
+                team_count=playoff_team_count(playoff, len(group_sizes)),
             )
             for playoff in playoffs
         ],
-        removed_playoffs=[
-            old.name for old, new in zip(old_playoffs, fitted, strict=True) if new is None
-        ],
+        removed_playoffs=[old.name for old in old_playoffs if old.name not in kept_names],
+        groups_rebuilt=not drawn,
         planned_match_count=sum(
             1
             for stage in class_stages
@@ -211,6 +302,10 @@ async def plan_fit(tournament_id: TournamentId, stage_id: StageId, group_size: i
         playoff_stage=playoff_stage,
         group_sizes=group_sizes,
         playoffs=playoffs,
+        groups_rebuilt=not drawn,
+        playoff_stage_name=playoff_stage.name
+        if playoff_stage is not None
+        else change.playoff_stage_name,
         preview=preview,
     )
 
@@ -222,16 +317,35 @@ def group_name_prefix(group_stage: StageWithStageItems) -> str:
     return prefix if prefix and letter.isalpha() and letter.isupper() else "Group"
 
 
+async def rebuild_groups(tournament_id: TournamentId, plan: FitPlan) -> None:
+    prefix = group_name_prefix(plan.group_stage)
+    ranking_id = plan.group_stage.stage_items[0].ranking_id
+    for item in plan.group_stage.stage_items:
+        await sql_delete_stage_item_with_foreign_keys(item.id)
+    for index, size in enumerate(plan.group_sizes):
+        group = await sql_create_stage_item_with_empty_inputs(
+            tournament_id,
+            StageItemCreateBody(
+                stage_id=plan.group_stage.id,
+                name=f"{prefix} {group_letter(index)}",
+                type=StageType.ROUND_ROBIN,
+                team_count=size,
+                ranking_id=ranking_id,
+            ),
+        )
+        await build_matches_for_stage_item(group, tournament_id)
+
+
 async def fit_groups(
-    tournament_id: TournamentId, stage_id: StageId, group_size: int, user: UserPublic
+    tournament_id: TournamentId, stage_id: StageId, change: FormatChange, user: UserPublic
 ) -> FitGroupsPreview:
     async with database.transaction():
         # One change at a time per stage (and no draw in between)
         await database.execute(
             "SELECT id FROM stages WHERE id = :stage_id FOR UPDATE", values={"stage_id": stage_id}
         )
-        plan = await plan_fit(tournament_id, stage_id, group_size)
-        replaced_stages = {plan.group_stage.id}
+        plan = await plan_fit(tournament_id, stage_id, change)
+        replaced_stages = {plan.group_stage.id} if plan.groups_rebuilt else set()
         if plan.playoff_stage is not None:
             replaced_stages.add(plan.playoff_stage.id)
         kept_items = [
@@ -244,7 +358,7 @@ async def fit_groups(
             kept_items,
             user,
             "max_stage_items",
-            additions=len(plan.group_sizes) + len(plan.playoffs),
+            additions=(len(plan.group_sizes) if plan.groups_rebuilt else 0) + len(plan.playoffs),
         )
 
         # Playoffs first: their inputs point at the groups
@@ -253,30 +367,15 @@ async def fit_groups(
                 await sql_delete_stage_item_with_foreign_keys(item.id)
             await sql_delete_stage(tournament_id, plan.playoff_stage.id)
 
-        prefix = group_name_prefix(plan.group_stage)
-        ranking_id = plan.group_stage.stage_items[0].ranking_id
-        for item in plan.group_stage.stage_items:
-            await sql_delete_stage_item_with_foreign_keys(item.id)
-        for index, size in enumerate(plan.group_sizes):
-            group = await sql_create_stage_item_with_empty_inputs(
-                tournament_id,
-                StageItemCreateBody(
-                    stage_id=plan.group_stage.id,
-                    name=f"{prefix} {group_letter(index)}",
-                    type=StageType.ROUND_ROBIN,
-                    team_count=size,
-                    ranking_id=ranking_id,
-                ),
-            )
-            await build_matches_for_stage_item(group, tournament_id)
+        if plan.groups_rebuilt:
+            await rebuild_groups(tournament_id, plan)
 
         if len(plan.playoffs) > 0:
-            assert plan.playoff_stage is not None
             await create_playoffs(
                 tournament_id,
                 PlayoffsCreateBody(
                     group_stage_id=plan.group_stage.id,
-                    stage_name=plan.playoff_stage.name,
+                    stage_name=plan.playoff_stage_name,
                     playoffs=plan.playoffs,
                 ),
                 user,
