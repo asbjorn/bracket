@@ -5,7 +5,9 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { SWRResponse } from 'swr';
 
+import KnockoutBracket from '@components/brackets/knockout_bracket';
 import { DashboardFooter } from '@components/dashboard/footer';
+import { FollowedTeamCard, useFollowedTeam } from '@components/dashboard/follow_team';
 import { DoubleHeader, getTournamentHeadTitle } from '@components/dashboard/layout';
 import { NoContent } from '@components/no_content/empty_table_info';
 import { PrintButton } from '@components/print/print_button';
@@ -17,51 +19,12 @@ import {
   stageItemClassNames,
   useCategoryFilter,
 } from '@components/utils/category';
-import { formatMatchInput1, formatMatchInput2, knockoutMatchName } from '@components/utils/match';
 import { TableSkeletonTwoColumns } from '@components/utils/skeletons';
-import { capitalize, responseIsValid, setTitle } from '@components/utils/util';
-import { Category, StageItemWithRounds, StagesWithStageItemsResponse } from '@openapi';
+import { responseIsValid, setTitle } from '@components/utils/util';
+import { Category, StagesWithStageItemsResponse } from '@openapi';
 import { getCategories, getStagesLive } from '@services/adapter';
 import { getTournamentResponseByEndpointName } from '@services/dashboard';
 import { getMatchLookup, getStageItemLookup, getStageItemTeamsLookup } from '@services/lookups';
-
-/** A knockout playoff as its matches, round by round ("Semifinale 1: A – B 2–1"). */
-function KnockoutMatches({
-  stageItem,
-  stageItemsLookup,
-  matchesLookup,
-}: {
-  stageItem: StageItemWithRounds;
-  stageItemsLookup: any;
-  matchesLookup: any;
-}) {
-  const { t } = useTranslation();
-  const matches = [...stageItem.rounds]
-    .sort((a, b) => a.id - b.id)
-    .flatMap((round) => [...round.matches].sort((a, b) => a.id - b.id));
-  return (
-    <Stack gap="sm">
-      {matches.map((match) => (
-        <Stack key={match.id} gap={0}>
-          <Text inherit size="sm" c="dimmed">
-            {capitalize(knockoutMatchName(t, matchesLookup, match.id))}
-          </Text>
-          <Group justify="space-between" wrap="nowrap" gap="xs">
-            <Text inherit style={{ flex: 1, minWidth: 0 }}>
-              {formatMatchInput1(t, stageItemsLookup, matchesLookup, match)} –{' '}
-              {formatMatchInput2(t, stageItemsLookup, matchesLookup, match)}
-            </Text>
-            <Text inherit fw={700} style={{ flexShrink: 0 }}>
-              {match.played
-                ? `${match.stage_item_input1_score}–${match.stage_item_input2_score}`
-                : ''}
-            </Text>
-          </Group>
-        </Stack>
-      ))}
-    </Stack>
-  );
-}
 
 export function StandingsContent({
   swrStagesResponse,
@@ -69,6 +32,7 @@ export function StandingsContent({
   filterCategoryId,
   fontSizeInPixels,
   maxTeamsToDisplay,
+  followedTeamId = null,
 }: {
   swrStagesResponse: SWRResponse<StagesWithStageItemsResponse>;
   categories: Category[];
@@ -76,6 +40,8 @@ export function StandingsContent({
   filterCategoryId: number | null | undefined;
   fontSizeInPixels: number;
   maxTeamsToDisplay: number;
+  // The team a visitor follows, highlighted in tables and brackets
+  followedTeamId?: number | null;
 }) {
   const { t } = useTranslation();
 
@@ -124,10 +90,11 @@ export function StandingsContent({
           {title(stageItemId)}
         </Text>
         {isKnockout(stageItemId) ? (
-          <KnockoutMatches
+          <KnockoutBracket
             stageItem={stageItemsLookup[stageItemId]}
             stageItemsLookup={stageItemsLookup}
             matchesLookup={matchesLookup}
+            highlightTeamId={followedTeamId}
           />
         ) : (
           <StandingsTableForStageItem
@@ -136,6 +103,7 @@ export function StandingsContent({
             stageItemsLookup={stageItemsLookup}
             fontSizeInPixels={fontSizeInPixels}
             maxTeamsToDisplay={maxTeamsToDisplay}
+            highlightTeamId={followedTeamId}
           />
         )}
       </div>
@@ -167,6 +135,7 @@ export default function DashboardStandingsPage() {
   const swrStagesResponse = getStagesLive(tournamentValid ? tournamentDataFull.id : null);
   const categories = getCategories(tournamentValid ? tournamentDataFull.id : null).data?.data ?? [];
   const { filterValue, setFilterValue, filterCategoryId } = useCategoryFilter(categories);
+  const [followedTeamId] = useFollowedTeam(tournamentValid ? tournamentDataFull.id : null);
 
   if (!tournamentValid) {
     return tournamentDataFull;
@@ -184,7 +153,17 @@ export default function DashboardStandingsPage() {
       <Container mt="1rem" px="0rem">
         <Container style={{ width: '100%' }} px="sm">
           <Stack gap={0}>
-            <Group align="end" className="no-print">
+            <FollowedTeamCard
+              tournamentId={tournamentDataFull.id}
+              endpoint={tournamentDataFull.dashboard_endpoint}
+              stages={swrStagesResponse.data?.data ?? []}
+              categories={categories}
+              matchesLookup={
+                responseIsValid(swrStagesResponse) ? getMatchLookup(swrStagesResponse) : {}
+              }
+              stageItemsLookup={getStageItemLookup(swrStagesResponse)}
+            />
+            <Group align="end" className="no-print" mt="sm">
               <div style={{ flex: 1 }}>
                 <CategoryFilterSelect
                   categories={categories}
@@ -200,6 +179,7 @@ export default function DashboardStandingsPage() {
               filterCategoryId={filterCategoryId}
               fontSizeInPixels={16}
               maxTeamsToDisplay={100}
+              followedTeamId={followedTeamId}
             />
           </Stack>
         </Container>

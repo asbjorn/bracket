@@ -287,13 +287,13 @@
 
 .bracket {
   display: grid;
-  grid-template-columns: repeat(var(--rounds), minmax(12rem, 1fr));
+  grid-template-columns: repeat(var(--rounds), minmax(12em, 1fr));
   column-gap: 2rem;
-  min-width: calc(var(--rounds) * 13rem);
+  min-width: calc(var(--rounds) * 13em);
 }
 
 .roundTitle {
-  font-size: var(--mantine-font-size-xs);
+  font-size: 0.75em;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -356,7 +356,7 @@
 }
 
 .matchName {
-  font-size: 0.65rem;
+  font-size: 0.65em;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -369,9 +369,16 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--mantine-spacing-xs);
-  padding: 4px var(--mantine-spacing-xs);
-  font-size: var(--mantine-font-size-sm);
+  padding: 0.25em var(--mantine-spacing-xs);
+  font-size: 0.875em;
   transition: background-color 200ms;
+}
+
+/* The team a visitor follows */
+.side[data-followed='true'] {
+  box-shadow: inset 4px 0 0 var(--mantine-color-yellow-5);
+  background: light-dark(var(--mantine-color-yellow-0), rgb(250 176 5 / 14%));
+  font-weight: 700;
 }
 
 .side + .side {
@@ -457,5 +464,21 @@
   100% {
     background: transparent;
     box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+/* ---------- Schedule board: a match with a conflict draws attention ---------- */
+.conflict {
+  animation: conflict 1.2s ease-in-out 3;
+  border-color: var(--mantine-color-red-5) !important;
+}
+
+@keyframes conflict {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(250 82 82 / 0%);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgb(250 82 82 / 35%);
   }
 }

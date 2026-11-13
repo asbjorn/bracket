@@ -19,7 +19,7 @@ import { useMediaQuery } from '@mantine/hooks';
 import { AiFillWarning } from '@react-icons/all-files/ai/AiFillWarning';
 import { IconAlertCircle, IconDots, IconTrash, IconWand } from '@tabler/icons-react';
 import dayjs from 'dayjs';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SWRResponse } from 'swr';
 
@@ -29,6 +29,8 @@ import MatchModal from '@components/modals/match_modal';
 import MatchPlanPanel from '@components/scheduling/match_plan_panel';
 import NoticesAlert from '@components/scheduling/notices_alert';
 import { PlanIssues } from '@components/scheduling/plan_issues';
+import boardClasses from '@components/builder/stages.module.css';
+import { useFlip } from '@components/motion/use_flip';
 import { NoContent, NoContentLink } from '@components/no_content/empty_table_info';
 import { courtLabel } from '@components/scheduling/courts_panel';
 import { Day, DayAndTime, Time, spansMultipleDays } from '@components/utils/datetime';
@@ -80,13 +82,18 @@ function ScheduleRow({
   return (
     <Draggable key={match.id} index={index} draggableId={`${match.id}`}>
       {(provided) => (
-        <div ref={provided.innerRef} {...provided.draggableProps}>
+        <div ref={provided.innerRef} {...provided.draggableProps} data-flip-id={match.id}>
           <Card
             shadow="sm"
             padding="lg"
             radius="md"
             withBorder
             mt="md"
+            className={
+              match.stage_item_input1_conflict || match.stage_item_input2_conflict
+                ? boardClasses.conflict
+                : undefined
+            }
             onClick={() => {
               openMatchModal(match);
             }}
@@ -256,6 +263,9 @@ function Schedule({
   schedule: { court: Court; matches: MatchWithDetails[] }[];
   openMatchModal: CallableFunction;
 }) {
+  // Matches that move (dragged, or after re-planning) slide to their new place
+  const boardRef = useRef<HTMLDivElement>(null);
+  useFlip(boardRef);
   const multipleDays = spansMultipleDays(
     schedule.flatMap((item) =>
       item.matches.flatMap((match) => (match.start_time == null ? [] : [match.start_time])),
@@ -301,7 +311,7 @@ function Schedule({
   // the pitch names staying on top while scrolling down
   return (
     <ScrollArea.Autosize mah="calc(100vh - 7rem)" type="auto" offsetScrollbars>
-      <Group wrap="nowrap" align="top">
+      <Group wrap="nowrap" align="top" ref={boardRef}>
         {columns}
       </Group>
     </ScrollArea.Autosize>

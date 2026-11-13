@@ -1684,5 +1684,22 @@
     "help_stages_action_move": "Move teams",
     "help_stages_action_move_text": "Drag and drop between groups. Teams that have played a match are locked.",
     "help_stages_tip_2": "Hover a group to see where its teams go in the playoffs, and the other way round.",
-    "help_stages_tip_3": "On a phone, swipe sideways through the groups."
+    "help_stages_tip_3": "On a phone, swipe sideways through the groups.",
+    "follow_team_button": "Follow this team",
+    "follow_team_following": "Following",
+    "follow_team_card_label": "Your team",
+    "follow_team_against": "against {{team}}",
+    "follow_team_no_next_match": "No more matches planned",
+    "follow_team_stop": "Stop following",
+    "follow_team_badge": "Your team",
+    "schedule_all_matches": "All matches",
+    "schedule_my_team": "Only your team",
+    "team_path_title": "Way through the cup",
+    "team_path_position": "{{position}}. place now",
+    "team_path_route": "No. {{placings}} → {{playoff}}",
+    "podium_present_button": "Show on big screen",
+    "podium_next_label": "Show the next place",
+    "podium_next_hint": "Click, Space or → for the next place",
+    "podium_done_hint": "Congratulations! ← goes back",
+    "class_progress_played": "{{played}} of {{total}} played"
 }

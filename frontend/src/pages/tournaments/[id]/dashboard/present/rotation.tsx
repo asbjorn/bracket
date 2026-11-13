@@ -15,6 +15,7 @@ import { Time } from '@components/utils/datetime';
 import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
 import { TableSkeletonTwoColumns } from '@components/utils/skeletons';
 import { setTitle } from '@components/utils/util';
+import { withViewTransition } from '@components/motion/view_transition';
 import { MatchWithDetails } from '@openapi';
 import CourtsPresentPage from '@pages/tournaments/[id]/dashboard/present/courts';
 import StandingsPresentPage from '@pages/tournaments/[id]/dashboard/present/standings';
@@ -86,8 +87,11 @@ export default function RotationPresentPage() {
   }, []);
   useEffect(() => {
     if (elapsed >= seconds) {
-      setElapsed(0);
-      setIndex((value) => value + 1);
+      // The next view cross-fades in (View Transitions) instead of cutting
+      withViewTransition(() => {
+        setElapsed(0);
+        setIndex((value) => value + 1);
+      });
     }
   }, [elapsed, seconds]);
 

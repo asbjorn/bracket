@@ -35,6 +35,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { PageTitle } from '@components/help/help_button';
+import AnimatedProgress from '@components/motion/animated_progress';
 import { NoContent, NoContentLink } from '@components/no_content/empty_table_info';
 import { capitalize, getBaseURL, getTournamentIdFromRouter } from '@components/utils/util';
 import { contentLanguage } from '@components/utils/language';
@@ -133,7 +134,20 @@ function ClassCard({
           {waiting > 0 ? ` · ${t('registration_waiting_count', { count: waiting })}` : ''}
         </Text>
         {category.max_teams != null ? (
-          <Progress value={Math.min(100, (100 * taking) / category.max_teams)} />
+          <AnimatedProgress
+            value={Math.min(100, (100 * taking) / category.max_teams)}
+            color={
+              taking >= category.max_teams
+                ? 'red'
+                : taking >= 0.8 * category.max_teams
+                  ? 'orange'
+                  : 'green'
+            }
+            striped={waiting > 0}
+            animated={waiting > 0}
+            size="lg"
+            radius="xl"
+          />
         ) : null}
         {waiting > 0 && freeSpots != null && freeSpots > 0 ? (
           <Alert color="orange" p="xs">

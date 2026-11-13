@@ -192,6 +192,11 @@ The target workflow:
 - **Change format** (`/stages/{id}/fit_groups` with `playoffs`, `third_place_match`): group size and playoff preset (none, A, A+B, A+B+C) and bronze final in one dialog; after the draw the groups stay and only the playoffs change; refused once the playoffs have started.
 - **Move teams** (`POST /stages/{id}/move_team`): drag a team onto another team to swap, or into a group with a free place; one transaction; teams that have played in the stage are locked.
 - **Motion**: View Transitions (class/view switch, the draw: each team is shown large and then moves into its group), `@starting-style` entries, an animated `@property` progress ring, bracket lines drawing in; all off with `prefers-reduced-motion`.
+- **Public pages**: "Følg laget mitt" (remembered per device): a card with the next match on the schedule and standings pages, the team highlighted in matches, tables and brackets, a "Bare ditt lag" filter, a star on the team list. Playoffs are brackets. The team page has a "Neste kamp" card, the way through the cup ("Nr. 1–2 → A-sluttspill") and the playoff bracket.
+- **Live motion**: table rows slide to their new place (FLIP with the Web Animations API), changed scores and points flash, the big-screen rotation cross-fades.
+- **Prize ceremony**: "Vis på storskjerm" reveals 3rd, 2nd and 1st on a podium (keyboard or click), with confetti for the winner.
+- **Pitch link**: a drawn check after saving, then the next match slides in; the score flashes on every tap.
+- **Organiser pages**: rings per class on the results page, matches on the schedule board slide when moved and conflicts pulse, registration bars fill up (orange near full, red when full, striped with a waitlist).
 
 24. **[Feature] Capacity calculator** (Cup Manager formulas)
     - Inputs: teams per class, group size, playoff type (A / A+B / …), match length + changeover, pitches per format, time windows.

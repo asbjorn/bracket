@@ -8,11 +8,12 @@ import {
   Title,
   UnstyledButton,
 } from '@mantine/core';
-import { IconChevronRight, IconSearch } from '@tabler/icons-react';
+import { IconChevronRight, IconSearch, IconStarFilled } from '@tabler/icons-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { DashboardFooter } from '@components/dashboard/footer';
+import { useFollowedTeam } from '@components/dashboard/follow_team';
 import { DoubleHeader, getTournamentHeadTitle } from '@components/dashboard/layout';
 import { getPublicTeams, normalizeForSearch } from '@components/dashboard/public_teams';
 import { NoContent } from '@components/no_content/empty_table_info';
@@ -29,6 +30,7 @@ export default function DashboardTeamsPage() {
   const swrStagesResponse = getStagesLive(tournamentValid ? tournamentDataFull.id : null);
   const categories = getCategories(tournamentValid ? tournamentDataFull.id : null).data?.data ?? [];
   const [search, setSearch] = useState('');
+  const [followedTeamId] = useFollowedTeam(tournamentValid ? tournamentDataFull.id : null);
 
   if (!tournamentValid) return tournamentDataFull;
   setTitle(getTournamentHeadTitle(tournamentDataFull));
@@ -72,6 +74,11 @@ export default function DashboardTeamsPage() {
               ) : null}
               {teams
                 .filter(({ category }) => (category?.name ?? '') === className)
+                // The followed team first
+                .sort(
+                  (a, b) =>
+                    Number(b.team.id === followedTeamId) - Number(a.team.id === followedTeamId),
+                )
                 .map(({ team }) => (
                   <UnstyledButton
                     key={team.id}
@@ -82,7 +89,18 @@ export default function DashboardTeamsPage() {
                     style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}
                   >
                     <Group justify="space-between" wrap="nowrap">
-                      <Text size="lg">{team.name}</Text>
+                      <Group gap="xs" wrap="nowrap">
+                        {team.id === followedTeamId ? (
+                          <IconStarFilled
+                            size={18}
+                            color="var(--mantine-color-yellow-6)"
+                            aria-label={t('follow_team_badge')}
+                          />
+                        ) : null}
+                        <Text size="lg" fw={team.id === followedTeamId ? 700 : undefined}>
+                          {team.name}
+                        </Text>
+                      </Group>
                       <IconChevronRight size={20} color="var(--mantine-color-dimmed)" />
                     </Group>
                   </UnstyledButton>

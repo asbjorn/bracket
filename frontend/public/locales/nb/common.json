@@ -1684,5 +1684,22 @@
     "help_stages_action_move": "Flytt lag",
     "help_stages_action_move_text": "Dra og slipp mellom puljer. Lag som har spilt en kamp, er låst.",
     "help_stages_tip_2": "Hold musen over en pulje for å se hvor lagene går videre i sluttspillet, og omvendt.",
-    "help_stages_tip_3": "På mobil sveiper du sidelengs mellom puljene."
+    "help_stages_tip_3": "På mobil sveiper du sidelengs mellom puljene.",
+    "follow_team_button": "Følg dette laget",
+    "follow_team_following": "Følger",
+    "follow_team_card_label": "Ditt lag",
+    "follow_team_against": "mot {{team}}",
+    "follow_team_no_next_match": "Ingen flere kamper satt opp",
+    "follow_team_stop": "Slutt å følge",
+    "follow_team_badge": "Ditt lag",
+    "schedule_all_matches": "Alle kamper",
+    "schedule_my_team": "Bare ditt lag",
+    "team_path_title": "Veien gjennom cupen",
+    "team_path_position": "{{position}}. plass nå",
+    "team_path_route": "Nr. {{placings}} → {{playoff}}",
+    "podium_present_button": "Vis på storskjerm",
+    "podium_next_label": "Vis neste plass",
+    "podium_next_hint": "Klikk, mellomrom eller → for neste plass",
+    "podium_done_hint": "Gratulerer! ← går tilbake",
+    "class_progress_played": "{{played}} av {{total}} spilt"
 }

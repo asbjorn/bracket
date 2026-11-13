@@ -16,6 +16,10 @@ function roundTitle(t: Translator, index: number, roundCount: number) {
   return t('round_name_round', { number: index + 1 });
 }
 
+function teamOf(input: Match['stage_item_input1']): number | null {
+  return input != null && 'team' in input && input.team != null ? input.team.id : null;
+}
+
 /** The group a side of a match comes from ("1st of group A"), for linking it to that group. */
 function groupOf(input: Match['stage_item_input1']): number | null {
   if (input == null || !('winner_from_stage_item_id' in input)) return null;
@@ -37,6 +41,7 @@ function MatchBox({
   matchesLookup,
   hoveredGroupId,
   onHoverGroup,
+  highlightTeamId,
 }: {
   match: Match;
   name?: string;
@@ -45,6 +50,7 @@ function MatchBox({
   matchesLookup: any;
   hoveredGroupId: number | null;
   onHoverGroup: (groupId: number | null) => void;
+  highlightTeamId: number | null;
 }) {
   const { t } = useTranslation();
   const outcome = getMatchOutcome(match as MatchWithDetails);
@@ -53,12 +59,14 @@ function MatchBox({
       label: formatMatchInput1(t, stageItemsLookup, matchesLookup, match as MatchWithDetails),
       score: match.stage_item_input1_score,
       group: groupOf(match.stage_item_input1),
+      team: teamOf(match.stage_item_input1),
       winner: outcome === 1,
     },
     {
       label: formatMatchInput2(t, stageItemsLookup, matchesLookup, match as MatchWithDetails),
       score: match.stage_item_input2_score,
       group: groupOf(match.stage_item_input2),
+      team: teamOf(match.stage_item_input2),
       winner: outcome === 2,
     },
   ];
@@ -71,6 +79,7 @@ function MatchBox({
           className={classes.side}
           data-winner={side.winner}
           data-linked={side.group != null && side.group === hoveredGroupId}
+          data-followed={side.team != null && side.team === highlightTeamId}
           onMouseEnter={() => onHoverGroup(side.group)}
           onMouseLeave={() => onHoverGroup(null)}
         >
@@ -92,14 +101,17 @@ export default function KnockoutBracket({
   stageItem,
   stageItemsLookup,
   matchesLookup,
-  hoveredGroupId,
-  onHoverGroup,
+  hoveredGroupId = null,
+  onHoverGroup = () => {},
+  highlightTeamId = null,
 }: {
   stageItem: StageItemWithRounds;
   stageItemsLookup: any;
   matchesLookup: any;
-  hoveredGroupId: number | null;
-  onHoverGroup: (groupId: number | null) => void;
+  hoveredGroupId?: number | null;
+  onHoverGroup?: (groupId: number | null) => void;
+  // The team a visitor follows
+  highlightTeamId?: number | null;
 }) {
   const { t } = useTranslation();
   const rounds = [...stageItem.rounds]
@@ -133,6 +145,7 @@ export default function KnockoutBracket({
       matchesLookup={matchesLookup}
       hoveredGroupId={hoveredGroupId}
       onHoverGroup={onHoverGroup}
+      highlightTeamId={highlightTeamId}
     />
   );
 

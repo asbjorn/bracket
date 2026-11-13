@@ -11,10 +11,11 @@ import {
   Text,
   Title,
 } from '@mantine/core';
-import { IconDownload, IconInfoCircle, IconMedal } from '@tabler/icons-react';
+import { IconDownload, IconInfoCircle, IconMedal, IconPresentation } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import PodiumReveal from '@components/ceremony/podium_reveal';
 import { PageTitle } from '@components/help/help_button';
 import { PrintButton } from '@components/print/print_button';
 import { DayAndTime } from '@components/utils/datetime';
@@ -27,19 +28,37 @@ import { downloadFinalResultsCsv, saveCeremonySettings } from '@services/registr
 
 const PLACE_COLORS: Record<number, string> = { 1: 'yellow', 2: 'gray', 3: 'orange' };
 
-function PodiumCard({ podium }: { podium: Podium }) {
+function PodiumCard({ podium, className }: { podium: Podium; className: string }) {
   const { t } = useTranslation();
   const shown = podium.placings;
+  const [presenting, setPresenting] = useState(false);
   return (
     <Card withBorder padding="sm" radius="md">
       <Group justify="space-between" mb="xs">
         <Text fw={700}>{podium.title}</Text>
-        {podium.complete ? null : (
-          <Badge color="gray" variant="light">
-            {t('ceremony_not_finished_badge')}
-          </Badge>
-        )}
+        <Group gap="xs">
+          {podium.complete ? null : (
+            <Badge color="gray" variant="light">
+              {t('ceremony_not_finished_badge')}
+            </Badge>
+          )}
+          {shown.some((placing) => placing.place <= 3) ? (
+            <Button
+              size="xs"
+              variant="light"
+              color="indigo"
+              className="no-print"
+              leftSection={<IconPresentation size={16} />}
+              onClick={() => setPresenting(true)}
+            >
+              {t('podium_present_button')}
+            </Button>
+          ) : null}
+        </Group>
       </Group>
+      {presenting ? (
+        <PodiumReveal className={className} podium={podium} onClose={() => setPresenting(false)} />
+      ) : null}
       {shown.length < 1 ? (
         <Text size="sm" c="dimmed">
           {t('ceremony_no_placings_yet')}
@@ -96,7 +115,7 @@ function ClassCard({ result }: { result: ClassFinalResults }) {
         {result.results_public ? (
           <SimpleGrid cols={{ base: 1, sm: 2 }}>
             {result.podiums.map((podium) => (
-              <PodiumCard key={podium.stage_item_id} podium={podium} />
+              <PodiumCard key={podium.stage_item_id} podium={podium} className={result.name} />
             ))}
           </SimpleGrid>
         ) : (

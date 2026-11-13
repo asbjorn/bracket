@@ -7,13 +7,14 @@ import {
   Flex,
   Grid,
   Group,
+  SegmentedControl,
   Stack,
   Text,
   Title,
 } from '@mantine/core';
 import { AiOutlineHourglass } from '@react-icons/all-files/ai/AiOutlineHourglass';
 import { IconAlertCircle, IconQrcode } from '@tabler/icons-react';
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { DashboardFooter } from '@components/dashboard/footer';
@@ -44,22 +45,29 @@ import { responseIsValid, setTitle } from '@components/utils/util';
 import { MatchWithDetails } from '@openapi';
 import { getCategories, getCourtsLive, getStagesLive } from '@services/adapter';
 import { getTournamentResponseByEndpointName } from '@services/dashboard';
+import { FollowedTeamCard, useFollowedTeam } from '@components/dashboard/follow_team';
+import publicClasses from '@components/dashboard/public.module.css';
+import { teamIdsOfMatch } from '@components/dashboard/public_teams';
+import { ChangeFlash } from '@components/motion/change_flash';
+import { withViewTransition } from '@components/motion/view_transition';
 import { getMatchLookup, getStageItemLookup, stringToColour } from '@services/lookups';
 import { getMatchOfficials, refereeNamesByMatch } from '@services/officials';
 
 function ScoreBox({ score, color }: { score: number; color: string }) {
   return (
-    <div
-      style={{
-        backgroundColor: color,
-        borderRadius: '0.5rem',
-        width: '2.5rem',
-        color: 'white',
-        fontWeight: 800,
-      }}
-    >
-      <Center>{score}</Center>
-    </div>
+    <ChangeFlash value={score}>
+      <div
+        style={{
+          backgroundColor: color,
+          borderRadius: '0.5rem',
+          width: '2.5rem',
+          color: 'white',
+          fontWeight: 800,
+        }}
+      >
+        <Center>{score}</Center>
+      </div>
+    </ChangeFlash>
   );
 }
 
@@ -69,6 +77,7 @@ function ScheduleRow({
   matchesLookup,
   resultsHidden,
   highlighted = false,
+  followed = false,
   referee = null,
 }: {
   data: any;
@@ -78,6 +87,8 @@ function ScheduleRow({
   resultsHidden: boolean;
   // E.g. the next match of a team
   highlighted?: boolean;
+  // A match of the team the visitor follows
+  followed?: boolean;
   referee?: string | null;
 }) {
   const { t } = useTranslation();
@@ -99,6 +110,7 @@ function ScheduleRow({
       withBorder
       mt="md"
       pt="0rem"
+      className={followed ? publicClasses.followedMatch : undefined}
       style={
         highlighted ? { borderColor: 'var(--mantine-color-indigo-6)', borderWidth: 2 } : undefined
       }
@@ -117,6 +129,11 @@ function ScheduleRow({
             {highlighted ? (
               <Badge color="indigo" ml="sm" size="sm">
                 {t('next_match_badge')}
+              </Badge>
+            ) : null}
+            {followed && !highlighted ? (
+              <Badge color="yellow" variant="light" ml="sm" size="sm">
+                {t('follow_team_badge')}
               </Badge>
             ) : null}
           </Grid.Col>
@@ -196,6 +213,7 @@ export function Schedule({
   includeStageItem,
   includeMatch = () => true,
   highlightMatchId = null,
+  followedTeamId = null,
   referees = {},
 }: {
   t: Translator;
@@ -205,6 +223,7 @@ export function Schedule({
   includeStageItem: (stageItemId: number) => boolean;
   includeMatch?: (match: MatchWithDetails) => boolean;
   highlightMatchId?: number | null;
+  followedTeamId?: number | null;
   // Referee names per match id
   referees?: Record<number, string>;
 }) {
@@ -242,6 +261,7 @@ export function Schedule({
         matchesLookup={matchesLookup}
         resultsHidden={stageItemIdsWithHiddenResults.has(data.stageItem.id)}
         highlighted={data.match.id === highlightMatchId}
+        followed={followedTeamId != null && teamIdsOfMatch(data.match).includes(followedTeamId)}
         referee={referees[data.match.id] ?? null}
       />,
     );
@@ -284,6 +304,8 @@ export default function DashboardSchedulePage() {
   const swrCourtsResponse = getCourtsLive(tournamentValid ? tournamentDataFull.id : null);
   const categories = getCategories(tournamentValid ? tournamentDataFull.id : null).data?.data ?? [];
   const { filterValue, setFilterValue, filterCategoryId } = useCategoryFilter(categories);
+  const [followedTeamId] = useFollowedTeam(tournamentValid ? tournamentDataFull.id : null);
+  const [onlyFollowed, setOnlyFollowed] = useState(false);
 
   if (!tournamentValid) {
     return tournamentDataFull;
@@ -310,6 +332,14 @@ export default function DashboardSchedulePage() {
         <Center>
           <Group style={{ maxWidth: '48rem', width: '100%' }} px="1rem">
             <Stack style={{ width: '100%' }}>
+              <FollowedTeamCard
+                tournamentId={tournamentDataFull.id}
+                endpoint={tournamentDataFull.dashboard_endpoint}
+                stages={stages}
+                categories={categories}
+                matchesLookup={matchesLookup}
+                stageItemsLookup={stageItemsLookup}
+              />
               <Group align="end" className="no-print">
                 <div style={{ flex: 1 }}>
                   <CategoryFilterSelect
@@ -330,6 +360,17 @@ export default function DashboardSchedulePage() {
                 ) : null}
                 <PrintButton />
               </Group>
+              {followedTeamId != null ? (
+                <SegmentedControl
+                  className="no-print"
+                  value={onlyFollowed ? 'mine' : 'all'}
+                  onChange={(value) => withViewTransition(() => setOnlyFollowed(value === 'mine'))}
+                  data={[
+                    { value: 'all', label: t('schedule_all_matches') },
+                    { value: 'mine', label: t('schedule_my_team') },
+                  ]}
+                />
+              ) : null}
               {filterCategoryId != null ? (
                 <Title order={3} className="print-only">
                   {categories.find((c) => c.id === filterCategoryId)?.name}
@@ -345,6 +386,12 @@ export default function DashboardSchedulePage() {
                   filterCategoryId === undefined ||
                   stageItemCategories[stageItemId] === filterCategoryId
                 }
+                includeMatch={(match) =>
+                  !onlyFollowed ||
+                  followedTeamId == null ||
+                  teamIdsOfMatch(match).includes(followedTeamId)
+                }
+                followedTeamId={followedTeamId}
               />
             </Stack>
           </Group>

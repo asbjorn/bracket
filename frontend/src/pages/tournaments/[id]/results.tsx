@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 
 import { PageTitle } from '@components/help/help_button';
 import MatchModal from '@components/modals/match_modal';
+import ClassProgress from '@components/info/class_progress';
 import { NoContent, NoContentLink } from '@components/no_content/empty_table_info';
 import { Time, compareDateTime, spansMultipleDays } from '@components/utils/datetime';
 import {
@@ -31,7 +32,7 @@ import { Translator } from '@components/utils/types';
 import { getTournamentIdFromRouter, responseIsValid } from '@components/utils/util';
 import { MatchWithDetails } from '@openapi';
 import TournamentLayout from '@pages/tournaments/_tournament_layout';
-import { getCourts, getStages } from '@services/adapter';
+import { getCategories, getCourts, getStages } from '@services/adapter';
 import { getMatchLookup, getStageItemLookup, stringToColour } from '@services/lookups';
 
 function ScheduleRow({
@@ -71,7 +72,7 @@ function ScheduleRow({
           <Grid pt="0.75rem" pb="0.5rem">
             <Grid.Col mb="0rem" span={4}>
               <Text pl="sm" mt="sm" fw={800}>
-                {data.match.court.name}
+                {data.match.court?.name}
               </Text>
             </Grid.Col>
             <Grid.Col mb="0rem" span={4}>
@@ -252,6 +253,7 @@ export default function ResultsPage() {
   const { tournamentData } = getTournamentIdFromRouter();
   const swrStagesResponse = getStages(tournamentData.id);
   const swrCourtsResponse = getCourts(tournamentData.id);
+  const categories = getCategories(tournamentData.id).data?.data ?? [];
 
   const stageItemsLookup = responseIsValid(swrStagesResponse)
     ? getStageItemLookup(swrStagesResponse)
@@ -285,6 +287,7 @@ export default function ResultsPage() {
         round={null}
       />
       <PageTitle help="results">{t('results_title')}</PageTitle>
+      <ClassProgress stages={swrStagesResponse.data?.data ?? []} categories={categories} />
       <Center mt="1rem">
         <Schedule
           t={t}

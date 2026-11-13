@@ -1,6 +1,10 @@
 import { Table, Text } from '@mantine/core';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import publicClasses from '@components/dashboard/public.module.css';
+import { ChangeFlash } from '@components/motion/change_flash';
+import { useFlip } from '@components/motion/use_flip';
 import { PlayerScore } from '@components/info/player_score';
 import { WinDistribution } from '@components/info/player_statistics';
 import { EmptyTableInfo } from '@components/no_content/empty_table_info';
@@ -20,14 +24,20 @@ export function StandingsTableForStageItem({
   fontSizeInPixels,
   stageItemsLookup,
   maxTeamsToDisplay,
+  highlightTeamId = null,
 }: {
   teams_with_inputs: StageItemInputFinal[];
   stageItem: StageItemWithRounds;
   fontSizeInPixels: number;
   stageItemsLookup: any;
   maxTeamsToDisplay: number;
+  // The team a visitor follows
+  highlightTeamId?: number | null;
 }) {
   const { t } = useTranslation();
+  // Live tables: a team that moves up or down slides to its new place
+  const bodyRef = useRef<HTMLTableSectionElement>(null);
+  useFlip(bodyRef);
   const isSwiss = stageItem.type === 'SWISS';
 
   const minPoints = Math.min(...teams_with_inputs.map((input) => parseFloat(input.points)));
@@ -42,7 +52,15 @@ export function StandingsTableForStageItem({
     )
     .slice(0, maxTeamsToDisplay)
     .map((team_with_input, index) => (
-      <Table.Tr key={team_with_input.id}>
+      <Table.Tr
+        key={team_with_input.id}
+        data-flip-id={team_with_input.id}
+        className={
+          highlightTeamId != null && team_with_input.team_id === highlightTeamId
+            ? publicClasses.followedRow
+            : undefined
+        }
+      >
         <Table.Td style={{ width: '2rem' }}>{team_with_input.position ?? index + 1}</Table.Td>
         <Table.Td style={{ width: '20rem' }}>
           <Text truncate="end" lineClamp={1} inherit>
@@ -61,7 +79,9 @@ export function StandingsTableForStageItem({
         )}
         <Table.Td style={{ minWidth: '3rem' }}>
           <Text truncate="end" lineClamp={1} inherit fw={700}>
-            {parseFloat(team_with_input.points)}
+            <ChangeFlash value={team_with_input.points}>
+              {parseFloat(team_with_input.points)}
+            </ChangeFlash>
           </Text>
         </Table.Td>
         {stageItem.type === 'SWISS' ? (
@@ -113,7 +133,7 @@ export function StandingsTableForStageItem({
           )}
         </Table.Tr>
       </Table.Thead>
-      <Table.Tbody>{rows}</Table.Tbody>
+      <Table.Tbody ref={bodyRef}>{rows}</Table.Tbody>
     </TableLayoutLarge>
   );
 }

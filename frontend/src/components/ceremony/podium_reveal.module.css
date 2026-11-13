@@ -1,0 +1,138 @@
+/* Prize ceremony on a big screen: the podium revealed place by place. */
+
+.stage {
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(1rem, 4vw, 3rem);
+  color: white;
+  background:
+    radial-gradient(80% 60% at 50% 0%, rgb(121 80 242 / 55%), transparent 70%),
+    radial-gradient(60% 50% at 50% 110%, rgb(76 110 245 / 45%), transparent 70%), #0b1021;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+}
+
+.title {
+  font-size: clamp(1.75rem, 5vw, 4rem);
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  font-size: clamp(1rem, 2.5vw, 1.75rem);
+  opacity: 0.8;
+  text-align: center;
+}
+
+.podium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: clamp(0.5rem, 2vw, 2rem);
+  width: min(70rem, 100%);
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.names {
+  min-height: 3em;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  text-align: center;
+  font-size: clamp(1.1rem, 3vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1.15;
+  transition:
+    opacity 600ms ease,
+    transform 600ms cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+.names[data-hidden='true'] {
+  opacity: 0;
+  transform: translateY(1rem) scale(0.9);
+}
+
+.block {
+  width: 100%;
+  display: grid;
+  place-items: start center;
+  padding-top: 0.5rem;
+  border-radius: 1rem 1rem 0 0;
+  font-size: clamp(2rem, 6vw, 5rem);
+  font-weight: 900;
+  color: rgb(255 255 255 / 85%);
+  transform-origin: bottom;
+  transition:
+    transform 700ms cubic-bezier(0.2, 0.9, 0.2, 1),
+    opacity 400ms ease;
+}
+
+.block[data-hidden='true'] {
+  transform: scaleY(0.05);
+  opacity: 0.25;
+}
+
+.block[data-place='1'] {
+  height: clamp(10rem, 34vh, 22rem);
+  background: linear-gradient(180deg, #ffd43b, #f08c00);
+  box-shadow: 0 0 60px rgb(255 212 59 / 45%);
+}
+
+.block[data-place='2'] {
+  height: clamp(7rem, 24vh, 16rem);
+  background: linear-gradient(180deg, #dee2e6, #868e96);
+}
+
+.block[data-place='3'] {
+  height: clamp(5rem, 17vh, 12rem);
+  background: linear-gradient(180deg, #ffa94d, #c2410c);
+}
+
+.hint {
+  font-size: 0.9rem;
+  opacity: 0.6;
+}
+
+/* Confetti for the winner: pieces fall from the top with their own drift and spin */
+.confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.piece {
+  position: absolute;
+  top: -2rem;
+  left: var(--x);
+  width: 0.6rem;
+  height: 1rem;
+  border-radius: 2px;
+  background: var(--color);
+  animation: fall var(--duration) cubic-bezier(0.3, 0.6, 0.6, 1) var(--delay) forwards;
+}
+
+@keyframes fall {
+  to {
+    transform: translate(var(--drift), 110dvh) rotate(var(--spin));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confetti {
+    display: none;
+  }
+}

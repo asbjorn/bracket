@@ -36,6 +36,9 @@ import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
 
 import { HelpButton } from '@components/help/help_button';
+import { ChangeFlash } from '@components/motion/change_flash';
+import SavedOverlay from '@components/motion/saved_overlay';
+import { withViewTransition } from '@components/motion/view_transition';
 import { CardsEditor, SuspendedAlert } from '@components/discipline/cards_editor';
 import { Time } from '@components/utils/datetime';
 import { capitalize } from '@components/utils/util';
@@ -94,7 +97,7 @@ function ScoreStepper({
           <IconMinus size={28} />
         </ActionIcon>
         <Text fz={40} fw={700} w="3rem" ta="center" aria-live="polite">
-          {value}
+          <ChangeFlash value={value}>{value}</ChangeFlash>
         </Text>
         <ActionIcon
           size={56}
@@ -196,7 +199,8 @@ function ResultForm({
   token: string;
   match: ScoreEntryMatch;
   walkoverGoals: number;
-  onSaved: () => Promise<void>;
+  // Called with the saved result, e.g. "Brann 2 – 1 Lyn"
+  onSaved: (message: string) => Promise<void>;
 }) {
   const { t } = useTranslation();
   const [score1, setScore1] = useState(match.score1);
@@ -232,13 +236,7 @@ function ResultForm({
     });
     setSaving(false);
     if (requestSucceeded(response)) {
-      showNotification({
-        color: 'green',
-        icon: <IconCheck />,
-        title: t('score_saved_title'),
-        message: played ? t('score_marked_played') : t('score_marked_not_played'),
-      });
-      await onSaved();
+      await onSaved(played ? t('score_marked_played') : t('score_marked_not_played'));
     }
   }
 
@@ -323,13 +321,7 @@ function ResultForm({
               const response = await enterWalkover(token, match.id, winner.id as number);
               setSaving(false);
               if (requestSucceeded(response)) {
-                showNotification({
-                  color: 'green',
-                  icon: <IconCheck />,
-                  title: t('score_saved_title'),
-                  message: t('score_walkover_saved', { team: winner.name }),
-                });
-                await onSaved();
+                await onSaved(t('score_walkover_saved', { team: winner.name }));
               }
             }}
           >
@@ -387,13 +379,7 @@ function ResultForm({
           });
           setSaving(false);
           if (requestSucceeded(response)) {
-            showNotification({
-              color: 'green',
-              icon: <IconCheck />,
-              title: t('score_saved_title'),
-              message: `${team1} ${score1} – ${score2} ${team2}`,
-            });
-            await onSaved();
+            await onSaved(`${team1} ${score1} – ${score2} ${team2}`);
           }
         }}
       >
@@ -532,6 +518,7 @@ export default function ScoreEntryPage() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [delayOpened, setDelayOpened] = useState(false);
   const [showPlayed, setShowPlayed] = useState(false);
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
 
   // Only a link the server refuses ends the page. A failed refresh keeps the last data on
   // screen, so a score being typed isn't lost when the connection drops for a moment.
@@ -606,8 +593,24 @@ export default function ScoreEntryPage() {
           </Group>
         </Group>
 
+        {savedMessage != null ? (
+          <SavedOverlay
+            title={t('score_saved_title')}
+            message={savedMessage}
+            onDone={() => {
+              setSavedMessage(null);
+              withViewTransition(() => setSelectedId(null));
+            }}
+          />
+        ) : null}
         {selected != null ? (
-          <Card withBorder shadow="sm" radius="md" padding="md">
+          <Card
+            withBorder
+            shadow="sm"
+            radius="md"
+            padding="md"
+            style={{ viewTransitionName: 'score-card' }}
+          >
             <Stack>
               <Group justify="space-between">
                 <MatchHeader match={selected} />
@@ -671,8 +674,11 @@ export default function ScoreEntryPage() {
                   token={token}
                   match={selected}
                   walkoverGoals={view.walkover_goals}
-                  onSaved={async () => {
-                    setSelectedId(null);
+                  onSaved={async (message) => {
+                    // The saved match stays while the confirmation shows; the next one
+                    // slides in after it (see SavedOverlay's onDone)
+                    setSelectedId(selected.id);
+                    setSavedMessage(message);
                     await swrView.mutate();
                   }}
                 />
