@@ -7,6 +7,7 @@ export type HelpPageId =
   | 'organiser_clubs'
   | 'capacity'
   | 'user'
+  | 'overview'
   | 'setup'
   | 'categories'
   | 'teams'
@@ -83,6 +84,18 @@ export const HELP: Record<HelpPageId, HelpPage> = {
     actions: ['save'],
     tips: 0,
     links: [],
+  },
+  overview: {
+    steps: 3,
+    fields: [],
+    actions: ['fit'],
+    tips: 2,
+    links: [
+      { page: 'setup', to: '/tournaments/:id/setup' },
+      { page: 'teams', to: '/tournaments/:id/teams' },
+      { page: 'draw', to: '/tournaments/:id/draw' },
+      { page: 'schedule', to: '/tournaments/:id/schedule' },
+    ],
   },
   setup: {
     steps: 4,
@@ -163,7 +176,7 @@ export const HELP: Record<HelpPageId, HelpPage> = {
   draw: {
     steps: 3,
     fields: ['pots'],
-    actions: ['draw', 'fullscreen'],
+    actions: ['fit', 'draw', 'fullscreen'],
     tips: 3,
     links: [
       { page: 'clubs', to: '/tournaments/:id/clubs' },

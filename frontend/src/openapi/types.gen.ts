@@ -1080,6 +1080,71 @@ export type FinalResultsResponse = {
 };
 
 /**
+ * FitGroupsPreview
+ *
+ * What fitting the groups would create, for the confirmation.
+ */
+export type FitGroupsPreview = {
+  /**
+   * Current Group Sizes
+   */
+  current_group_sizes: Array<number>;
+  /**
+   * Group Sizes
+   */
+  group_sizes: Array<number>;
+  /**
+   * Match Count
+   */
+  match_count: number;
+  /**
+   * Matches Per Team Max
+   */
+  matches_per_team_max: number;
+  /**
+   * Matches Per Team Min
+   */
+  matches_per_team_min: number;
+  /**
+   * Planned Match Count
+   */
+  planned_match_count: number;
+  /**
+   * Playoffs
+   */
+  playoffs: Array<FittedPlayoff>;
+  /**
+   * Removed Playoffs
+   */
+  removed_playoffs: Array<string>;
+  /**
+   * Team Count
+   */
+  team_count: number;
+};
+
+/**
+ * FitGroupsResponse
+ */
+export type FitGroupsResponse = {
+  data: FitGroupsPreview;
+};
+
+/**
+ * FittedPlayoff
+ */
+export type FittedPlayoff = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Team Count
+   */
+  team_count: number;
+};
+
+/**
  * FullTeamWithPlayers
  */
 export type FullTeamWithPlayers = {
@@ -9864,6 +9929,88 @@ export type DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostRespo
 
 export type DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostResponse =
   DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostResponses[keyof DrawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPostResponses];
+
+export type PreviewFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsGetData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+    /**
+     * Stage Id
+     */
+    stage_id: number;
+  };
+  query: {
+    /**
+     * Group Size
+     */
+    group_size: number;
+  };
+  url: '/tournaments/{tournament_id}/stages/{stage_id}/fit_groups';
+};
+
+export type PreviewFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type PreviewFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsGetError =
+  PreviewFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsGetErrors[keyof PreviewFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsGetErrors];
+
+export type PreviewFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: FitGroupsResponse;
+};
+
+export type PreviewFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsGetResponse =
+  PreviewFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsGetResponses[keyof PreviewFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsGetResponses];
+
+export type ApplyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPostData = {
+  body?: never;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+    /**
+     * Stage Id
+     */
+    stage_id: number;
+  };
+  query: {
+    /**
+     * Group Size
+     */
+    group_size: number;
+  };
+  url: '/tournaments/{tournament_id}/stages/{stage_id}/fit_groups';
+};
+
+export type ApplyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ApplyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPostError =
+  ApplyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPostErrors[keyof ApplyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPostErrors];
+
+export type ApplyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: FitGroupsResponse;
+};
+
+export type ApplyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPostResponse =
+  ApplyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPostResponses[keyof ApplyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPostResponses];
 
 export type GetTournamentTeamConflictsTournamentsTournamentIdTeamConflictsGetData = {
   body?: never;

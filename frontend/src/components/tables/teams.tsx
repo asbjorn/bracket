@@ -7,7 +7,7 @@ import { SWRResponse } from 'swr';
 import DeleteButton from '@components/buttons/delete';
 import PlayerList from '@components/info/player_list';
 import TeamUpdateModal from '@components/modals/team_update_modal';
-import { NoContent } from '@components/no_content/empty_table_info';
+import { NoContent, NoContentLink } from '@components/no_content/empty_table_info';
 import { DateTime } from '@components/utils/datetime';
 import RequestErrorAlert from '@components/utils/error_alert';
 import { TableSkeletonSingleColumn } from '@components/utils/skeletons';
@@ -163,7 +163,27 @@ export default function TeamsTable({
       </Table.Tr>
     ));
 
-  if (rows.length < 1) return <NoContent title={t('no_teams_title')} />;
+  if (rows.length < 1) {
+    return (
+      <NoContent
+        title={t('no_teams_title')}
+        description={t('no_teams_description')}
+        actions={
+          <>
+            <NoContentLink
+              href={`/tournaments/${tournamentData.id}/registrations`}
+              label={t('registrations_title')}
+              primary
+            />
+            <NoContentLink
+              href={`/tournaments/${tournamentData.id}/clubs`}
+              label={t('participating_clubs_title')}
+            />
+          </>
+        }
+      />
+    );
+  }
 
   const editedTeam = teams.find((team) => team.id === editedTeamId) ?? null;
   return (

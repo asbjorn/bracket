@@ -8,14 +8,14 @@ import { PageTitle } from '@components/help/help_button';
 import DeleteButton from '@components/buttons/delete';
 import { CategoryWarningMessage } from '@components/info/category_warnings';
 import CategoryModal from '@components/modals/category_modal';
-import { NoContent } from '@components/no_content/empty_table_info';
+import { NoContent, NoContentLink } from '@components/no_content/empty_table_info';
 import TableLayout, { ThNotSortable } from '@components/tables/table';
 import RequestErrorAlert from '@components/utils/error_alert';
 import { TableSkeletonSingleColumn } from '@components/utils/skeletons';
 import { capitalize, getTournamentIdFromRouter } from '@components/utils/util';
 import { Category } from '@openapi';
 import TournamentLayout from '@pages/tournaments/_tournament_layout';
-import { getCategories, getCategoryWarnings } from '@services/adapter';
+import { getCategories, getCategoryWarnings, getStages } from '@services/adapter';
 import { deleteCategory } from '@services/category';
 
 export default function CategoriesPage() {
@@ -23,6 +23,7 @@ export default function CategoriesPage() {
   const { tournamentData } = getTournamentIdFromRouter();
   const swrCategoriesResponse = getCategories(tournamentData.id);
   const swrWarningsResponse = getCategoryWarnings(tournamentData.id);
+  const swrStagesResponse = getStages(tournamentData.id);
   // `undefined`: modal closed, `null`: create a new class, otherwise: edit that class
   const [editedCategory, setEditedCategory] = useState<Category | null | undefined>(undefined);
 
@@ -35,7 +36,19 @@ export default function CategoriesPage() {
     content = <TableSkeletonSingleColumn />;
   } else if (categories.length < 1) {
     content = (
-      <NoContent title={t('no_categories_title')} description={t('no_categories_description')} />
+      <NoContent
+        title={t('no_categories_title')}
+        description={t('no_categories_description')}
+        actions={
+          (swrStagesResponse.data?.data ?? []).length < 1 ? (
+            <NoContentLink
+              href={`/tournaments/${tournamentData.id}/setup`}
+              label={t('setup_start_button')}
+              primary
+            />
+          ) : undefined
+        }
+      />
     );
   } else {
     const rows = categories.map((category) => (

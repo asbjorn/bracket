@@ -14,6 +14,9 @@ import type {
   ActivateNextStageTournamentsTournamentIdStagesActivatePostData,
   ActivateNextStageTournamentsTournamentIdStagesActivatePostErrors,
   ActivateNextStageTournamentsTournamentIdStagesActivatePostResponses,
+  ApplyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPostData,
+  ApplyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPostErrors,
+  ApplyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPostResponses,
   ApplyMatchScheduleTournamentsTournamentIdScheduleApplyPostData,
   ApplyMatchScheduleTournamentsTournamentIdScheduleApplyPostErrors,
   ApplyMatchScheduleTournamentsTournamentIdScheduleApplyPostResponses,
@@ -316,6 +319,9 @@ import type {
   MarkStartedTournamentsTournamentIdMatchesMatchIdStartedPutResponses,
   PingPingGetData,
   PingPingGetResponses,
+  PreviewFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsGetData,
+  PreviewFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsGetErrors,
+  PreviewFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsGetResponses,
   PreviewScheduleChangeTournamentsTournamentIdScheduleReplanPreviewPostData,
   PreviewScheduleChangeTournamentsTournamentIdScheduleReplanPreviewPostErrors,
   PreviewScheduleChangeTournamentsTournamentIdScheduleReplanPreviewPostResponses,
@@ -4023,6 +4029,65 @@ export const drawTeamsIntoGroupsTournamentsTournamentIdStagesStageIdDrawPost = <
       'Content-Type': 'application/json',
       ...options.headers,
     },
+  });
+
+/**
+ * Preview Fit Groups
+ *
+ * What fitting the groups of a class to its registered teams would create, in groups of about
+ * `group_size` teams. Nothing is changed.
+ */
+export const previewFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    PreviewFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsGetData,
+    ThrowOnError
+  >,
+): RequestResult<
+  PreviewFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsGetResponses,
+  PreviewFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    PreviewFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsGetResponses,
+    PreviewFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsGetErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/stages/{stage_id}/fit_groups',
+    ...options,
+  });
+
+/**
+ * Apply Fit Groups
+ *
+ * Before the draw: replaces the groups of a class by groups for its registered teams (about
+ * `group_size` per group) and creates its playoffs again with the same placings. Planned
+ * times of the class are lost, so the class has to be planned again.
+ */
+export const applyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    ApplyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPostData,
+    ThrowOnError
+  >,
+): RequestResult<
+  ApplyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPostResponses,
+  ApplyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    ApplyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPostResponses,
+    ApplyFitGroupsTournamentsTournamentIdStagesStageIdFitGroupsPostErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/stages/{stage_id}/fit_groups',
+    ...options,
   });
 
 /**

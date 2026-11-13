@@ -46,6 +46,7 @@ import SettingsPage from './pages/tournaments/[id]/settings';
 import CupSetupPage from './pages/tournaments/[id]/setup';
 import DistrictApplicationPage from './pages/tournaments/[id]/application';
 import DrawPage from './pages/tournaments/[id]/draw';
+import OverviewPage from './pages/tournaments/[id]/overview';
 import RegistrationsPage from './pages/tournaments/[id]/registrations';
 import OfficialsPage from './pages/tournaments/[id]/officials';
 import DisciplinePage from './pages/tournaments/[id]/discipline';
@@ -108,6 +109,7 @@ createRoot(document.getElementById('root')!).render(
 
                 <Route path="/tournaments">
                   <Route path=":id">
+                    <Route path="overview" element={<OverviewPage />} />
                     <Route path="players" element={<PlayersPage />} />
                     <Route path="categories" element={<CategoriesPage />} />
                     <Route path="teams" element={<TeamsPage />} />

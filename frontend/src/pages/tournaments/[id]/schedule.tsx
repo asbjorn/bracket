@@ -29,7 +29,7 @@ import MatchModal from '@components/modals/match_modal';
 import MatchPlanPanel from '@components/scheduling/match_plan_panel';
 import NoticesAlert from '@components/scheduling/notices_alert';
 import { PlanIssues } from '@components/scheduling/plan_issues';
-import { NoContent } from '@components/no_content/empty_table_info';
+import { NoContent, NoContentLink } from '@components/no_content/empty_table_info';
 import { courtLabel } from '@components/scheduling/courts_panel';
 import { Day, DayAndTime, Time, spansMultipleDays } from '@components/utils/datetime';
 import PreloadLink from '@components/utils/link';
@@ -323,12 +323,24 @@ function ScheduleList({
   openMatchModal: CallableFunction;
 }) {
   const { t } = useTranslation();
+  const { id } = getTournamentIdFromRouter();
   const matches = schedule
     .flatMap((item) => item.matches.map((match) => ({ match, court: item.court })))
     .filter((item) => item.match.start_time != null)
     .sort((a, b) => (a.match.start_time ?? '').localeCompare(b.match.start_time ?? ''));
   if (matches.length < 1) {
-    return <NoContent title={t('no_matches_title')} description={t('drop_match_alert_title')} />;
+    return (
+      <NoContent
+        title={t('no_matches_title')}
+        description={t('schedule_list_empty_description')}
+        actions={
+          <>
+            <NoContentLink href={`/tournaments/${id}/draw`} label={t('draw_title')} />
+            <NoContentLink href={`/tournaments/${id}/overview`} label={t('overview_title')} />
+          </>
+        }
+      />
+    );
   }
   const days = [
     ...new Set(matches.map((item) => dayjs(item.match.start_time).format('YYYY-MM-DD'))),

@@ -22,6 +22,18 @@ ERROR_CODES: dict[str, str] = {
     "The teams of this match are not known yet": "match_teams_unknown",
     "This team can't be checked in with this link": "score_link_wrong_team",
     "This card can't be changed with this link": "score_link_wrong_card",
+    # Fitting the groups to the registered teams
+    "Only the groups of a class can be fitted to its teams": "fit_no_class",
+    "Only a stage with round robin groups can be fitted": "fit_not_groups",
+    "The groups already have teams: fit them before the draw": "fit_already_drawn",
+    "The class has more stages than groups and playoffs: change them on the stages page": (
+        "fit_more_stages"
+    ),
+    "A playoff isn't filled from the groups only: change the groups on the stages page": (
+        "fit_playoff_other_inputs"
+    ),
+    "The class needs at least 2 teams": "fit_too_few_teams",
+    "A group has between 2 and 10 teams": "fit_group_size",
     # Group draw
     "The stage has no groups": "draw_no_groups",
     "Teams can only be drawn into round robin or swiss groups": "draw_wrong_stage",

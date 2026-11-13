@@ -2,6 +2,7 @@ import { Center, Divider, Group, Tooltip, UnstyledButton } from '@mantine/core';
 import {
   Icon,
   IconArrowsShuffle,
+  IconListCheck,
   IconBook,
   IconBrackets,
   IconBrandGithub,
@@ -126,6 +127,11 @@ export function TournamentLinks({ tournament_id }: any) {
   // Grouped by when they're used: preparing the cup, planning it, match day, settings
   const groups = [
     [
+      {
+        icon: IconListCheck,
+        label: t('overview_title'),
+        link: `${tm_prefix}/overview`,
+      },
       {
         icon: IconWand,
         label: t('setup_title'),

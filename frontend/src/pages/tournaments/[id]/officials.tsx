@@ -33,7 +33,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { PageTitle } from '@components/help/help_button';
-import { NoContent } from '@components/no_content/empty_table_info';
+import { NoContent, NoContentLink } from '@components/no_content/empty_table_info';
 import { Time, formatDayTime } from '@components/utils/datetime';
 import { formatMatchInput1, formatMatchInput2 } from '@components/utils/match';
 import { getTournamentIdFromRouter } from '@components/utils/util';
@@ -541,6 +541,13 @@ function AssignmentTab({
         <NoContent
           title={t('no_scheduled_matches_title')}
           description={t('official_no_matches_description')}
+          actions={
+            <NoContentLink
+              href={`/tournaments/${tournamentId}/schedule`}
+              label={t('planning_title')}
+              primary
+            />
+          }
         />
       ) : (
         <Table.ScrollContainer minWidth={800}>

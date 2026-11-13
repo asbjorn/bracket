@@ -6,6 +6,7 @@ from bracket.database import database
 from bracket.logic.results_visibility import hide_results_of_private_categories
 from bracket.logic.scheduling.builder import determine_available_inputs
 from bracket.logic.scheduling.create_playoffs import create_playoffs
+from bracket.logic.scheduling.fit_groups import fit_groups, plan_fit
 from bracket.logic.scheduling.handle_stage_activation import (
     get_updates_to_inputs_in_activated_stage,
     update_matches_in_activated_stage,
@@ -23,6 +24,7 @@ from bracket.routes.auth import (
     user_authenticated_or_public_dashboard,
 )
 from bracket.routes.models import (
+    FitGroupsResponse,
     StageItemInputOptionsResponse,
     StageRankingResponse,
     StagesWithStageItemsResponse,
@@ -123,6 +125,40 @@ async def create_playoffs_after_group_stage(
     await check_foreign_keys_belong_to_tournament(body, tournament_id)
     await create_playoffs(tournament_id, body, user)
     return SuccessResponse()
+
+
+@router.get(
+    "/tournaments/{tournament_id}/stages/{stage_id}/fit_groups", response_model=FitGroupsResponse
+)
+async def preview_fit_groups(
+    tournament_id: TournamentId,
+    stage_id: StageId,
+    group_size: int,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+) -> FitGroupsResponse:
+    """
+    What fitting the groups of a class to its registered teams would create, in groups of about
+    `group_size` teams. Nothing is changed.
+    """
+    return FitGroupsResponse(data=(await plan_fit(tournament_id, stage_id, group_size)).preview)
+
+
+@router.post(
+    "/tournaments/{tournament_id}/stages/{stage_id}/fit_groups", response_model=FitGroupsResponse
+)
+async def apply_fit_groups(
+    tournament_id: TournamentId,
+    stage_id: StageId,
+    group_size: int,
+    user: UserPublic = Depends(user_authenticated_for_tournament),
+    __: Tournament = Depends(disallow_archived_tournament),
+) -> FitGroupsResponse:
+    """
+    Before the draw: replaces the groups of a class by groups for its registered teams (about
+    `group_size` per group) and creates its playoffs again with the same placings. Planned
+    times of the class are lost, so the class has to be planned again.
+    """
+    return FitGroupsResponse(data=await fit_groups(tournament_id, stage_id, group_size, user))
 
 
 @router.put("/tournaments/{tournament_id}/stages/{stage_id}", response_model=SuccessResponse)

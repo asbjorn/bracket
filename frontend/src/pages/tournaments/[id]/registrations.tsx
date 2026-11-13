@@ -35,8 +35,8 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { PageTitle } from '@components/help/help_button';
-import { NoContent } from '@components/no_content/empty_table_info';
-import { getBaseURL, getTournamentIdFromRouter } from '@components/utils/util';
+import { NoContent, NoContentLink } from '@components/no_content/empty_table_info';
+import { capitalize, getBaseURL, getTournamentIdFromRouter } from '@components/utils/util';
 import { contentLanguage } from '@components/utils/language';
 import { DateTimeField } from '@components/utils/time_fields';
 import { Category, Registration, RegistrationStatus, Tournament } from '@openapi';
@@ -502,7 +502,23 @@ export default function RegistrationsPage() {
         <PublicFormLink tournament={tournament} />
 
         {categories.length < 1 ? (
-          <NoContent title={t('no_categories_title')} description={t('registrations_no_classes')} />
+          <NoContent
+            title={t('no_categories_title')}
+            description={t('registrations_no_classes')}
+            actions={
+              <>
+                <NoContentLink
+                  href={`/tournaments/${tournamentData.id}/setup`}
+                  label={t('setup_start_button')}
+                  primary
+                />
+                <NoContentLink
+                  href={`/tournaments/${tournamentData.id}/categories`}
+                  label={capitalize(t('categories_title'))}
+                />
+              </>
+            }
+          />
         ) : (
           <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
             {categories.map((category) => (

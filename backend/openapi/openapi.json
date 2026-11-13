@@ -2137,6 +2137,102 @@
         "title": "FinalResultsResponse",
         "type": "object"
       },
+      "FitGroupsPreview": {
+        "description": "What fitting the groups would create, for the confirmation.",
+        "properties": {
+          "current_group_sizes": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Current Group Sizes",
+            "type": "array"
+          },
+          "group_sizes": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Group Sizes",
+            "type": "array"
+          },
+          "match_count": {
+            "title": "Match Count",
+            "type": "integer"
+          },
+          "matches_per_team_max": {
+            "title": "Matches Per Team Max",
+            "type": "integer"
+          },
+          "matches_per_team_min": {
+            "title": "Matches Per Team Min",
+            "type": "integer"
+          },
+          "planned_match_count": {
+            "title": "Planned Match Count",
+            "type": "integer"
+          },
+          "playoffs": {
+            "items": {
+              "$ref": "#/components/schemas/FittedPlayoff"
+            },
+            "title": "Playoffs",
+            "type": "array"
+          },
+          "removed_playoffs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Removed Playoffs",
+            "type": "array"
+          },
+          "team_count": {
+            "title": "Team Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "team_count",
+          "current_group_sizes",
+          "group_sizes",
+          "matches_per_team_min",
+          "matches_per_team_max",
+          "match_count",
+          "playoffs",
+          "removed_playoffs",
+          "planned_match_count"
+        ],
+        "title": "FitGroupsPreview",
+        "type": "object"
+      },
+      "FitGroupsResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/FitGroupsPreview"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "FitGroupsResponse",
+        "type": "object"
+      },
+      "FittedPlayoff": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "team_count": {
+            "title": "Team Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "team_count"
+        ],
+        "title": "FittedPlayoff",
+        "type": "object"
+      },
       "FullTeamWithPlayers": {
         "properties": {
           "active": {
@@ -17489,6 +17585,136 @@
         "summary": "Draw Teams Into Groups",
         "tags": [
           "Draw"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/stages/{stage_id}/fit_groups": {
+      "get": {
+        "description": "What fitting the groups of a class to its registered teams would create, in groups of about\n`group_size` teams. Nothing is changed.",
+        "operationId": "preview_fit_groups_tournaments__tournament_id__stages__stage_id__fit_groups_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "stage_id",
+            "required": true,
+            "schema": {
+              "title": "Stage Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "group_size",
+            "required": true,
+            "schema": {
+              "title": "Group Size",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FitGroupsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Preview Fit Groups",
+        "tags": [
+          "Stages"
+        ]
+      },
+      "post": {
+        "description": "Before the draw: replaces the groups of a class by groups for its registered teams (about\n`group_size` per group) and creates its playoffs again with the same placings. Planned\ntimes of the class are lost, so the class has to be planned again.",
+        "operationId": "apply_fit_groups_tournaments__tournament_id__stages__stage_id__fit_groups_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "stage_id",
+            "required": true,
+            "schema": {
+              "title": "Stage Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "group_size",
+            "required": true,
+            "schema": {
+              "title": "Group Size",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FitGroupsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Apply Fit Groups",
+        "tags": [
+          "Stages"
         ]
       }
     },

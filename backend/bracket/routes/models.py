@@ -7,6 +7,7 @@ from bracket.logic.notifications import NotificationStatus, ScheduleNoticeResult
 from bracket.logic.planning.capacity import CapacityResult
 from bracket.logic.planning.propose import PlanIssueOut, ReplanPreview, ScheduleProposal
 from bracket.logic.player_import import PlayerImportResult
+from bracket.logic.scheduling.fit_groups import FitGroupsPreview
 from bracket.logic.scheduling.handle_stage_activation import StageItemInputUpdate
 from bracket.logic.scheduling.stage_draw import DrawPlacement
 from bracket.models.db.category import Category
@@ -51,6 +52,10 @@ class SuccessResponse(BaseModel):
 
 class DataResponse[DataT](BaseModel):
     data: DataT
+
+
+class FitGroupsResponse(DataResponse[FitGroupsPreview]):
+    pass
 
 
 class ClubsResponse(DataResponse[list[Club]]):

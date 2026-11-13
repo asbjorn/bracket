@@ -13,12 +13,21 @@ import {
   Text,
   Title,
 } from '@mantine/core';
-import { IconArrowsShuffle, IconInfoCircle, IconMaximize } from '@tabler/icons-react';
+import {
+  IconAdjustments,
+  IconArrowsShuffle,
+  IconCheck,
+  IconInfoCircle,
+  IconMaximize,
+} from '@tabler/icons-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { PageTitle } from '@components/help/help_button';
-import { getTournamentIdFromRouter } from '@components/utils/util';
+import FitGroupsModal from '@components/modals/fit_groups_modal';
+import { NoContent, NoContentLink } from '@components/no_content/empty_table_info';
+import { freeSlots, isGroupStage, teamIdsInStage } from '@components/utils/group_stage';
+import { capitalize, getTournamentIdFromRouter } from '@components/utils/util';
 import { DrawPlacement, FullTeamWithPlayers, StageWithStageItems } from '@openapi';
 import TournamentLayout from '@pages/tournaments/_tournament_layout';
 import {
@@ -40,33 +49,6 @@ const MAX_POT_BUTTONS = 5;
 function savedPot(team: { pot?: number | null }) {
   return team.pot ?? 1;
 }
-const GROUP_TYPES = new Set(['ROUND_ROBIN', 'SWISS']);
-
-function isGroupStage(stage: StageWithStageItems) {
-  return (
-    stage.stage_items.length > 0 && stage.stage_items.every((item) => GROUP_TYPES.has(item.type))
-  );
-}
-
-function teamIdsInStage(stage: StageWithStageItems) {
-  return new Set(
-    stage.stage_items.flatMap((item) =>
-      item.inputs.flatMap((input) =>
-        'team' in input && input.team != null ? [input.team.id] : [],
-      ),
-    ),
-  );
-}
-
-function freeSlots(stage: StageWithStageItems) {
-  return stage.stage_items
-    .flatMap((item) => item.inputs)
-    .filter(
-      (input) =>
-        input.team_id == null && input.winner_from_stage_item_id == null && input.best_rank == null,
-    ).length;
-}
-
 /** The groups with their teams; teams of the current draw only once they are revealed. */
 function DrawBoard({
   stage,
@@ -136,13 +118,15 @@ export default function DrawPage() {
   }, [stageId, stages.length]);
   const stage = stages.find((s) => `${s.id}` === stageId) ?? null;
   const swrTeams = getAllTeamsOfCategory(tournamentData.id, stage?.category_id ?? null);
-  const teams = swrTeams.data ?? [];
+  // Withdrawn teams aren't drawn
+  const teams = (swrTeams.data ?? []).filter((team) => !team.withdrawn);
   const clubNames = Object.fromEntries(
     (getParticipatingClubs(tournamentData.id).data?.data ?? []).map((club) => [club.id, club.name]),
   );
 
   // The number of pots: at least the highest saved pot of the teams to draw
   const [potCountChoice, setPotCountChoice] = useState<number | null>(null);
+  const [fitOpened, setFitOpened] = useState(false);
   const [placements, setPlacements] = useState<DrawPlacement[]>([]);
   const [revealed, setRevealed] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -234,21 +218,23 @@ export default function DrawPage() {
         <Alert color="gray" icon={<IconInfoCircle />}>
           {t('draw_description')}
         </Alert>
-        <Select
-          label={t('draw_stage_label')}
-          data={stages.map((s) => ({
-            value: `${s.id}`,
-            label: [categoryName(s.category_id), s.name].filter(Boolean).join(' – '),
-          }))}
-          value={stageId}
-          onChange={(value) => {
-            setStageId(value);
-            setPotCountChoice(null);
-            setPlacements([]);
-            setRevealed(0);
-          }}
-          maw="30rem"
-        />
+        {stages.length > 0 ? (
+          <Select
+            label={t('draw_stage_label')}
+            data={stages.map((s) => ({
+              value: `${s.id}`,
+              label: [categoryName(s.category_id), s.name].filter(Boolean).join(' – '),
+            }))}
+            value={stageId}
+            onChange={(value) => {
+              setStageId(value);
+              setPotCountChoice(null);
+              setPlacements([]);
+              setRevealed(0);
+            }}
+            maw="30rem"
+          />
+        ) : null}
 
         {stage != null && toDraw.length > 0 ? (
           <Stack>
@@ -344,13 +330,41 @@ export default function DrawPage() {
             <Text size="sm">
               {t('draw_teams_and_places', { teams: toDraw.length, places: free })}
             </Text>
-            {toDraw.length > free ? (
-              <Alert color="orange">{t('draw_too_many_teams_alert')}</Alert>
-            ) : null}
-            {toDraw.length < free ? (
-              <Alert color="yellow">
-                {t('draw_empty_places_alert', { count: free - toDraw.length })}
+            {toDraw.length !== free ? (
+              <Alert
+                color={toDraw.length > free ? 'orange' : 'yellow'}
+                maw="50rem"
+                title={
+                  toDraw.length > free
+                    ? t('draw_too_many_teams_alert')
+                    : t('draw_empty_places_alert', { count: free - toDraw.length })
+                }
+              >
+                <Stack gap="xs" align="flex-start">
+                  <Text size="sm">
+                    {placed.size === 0 ? t('draw_fit_groups_hint') : t('draw_fit_groups_drawn')}
+                  </Text>
+                  {placed.size === 0 ? (
+                    <Button
+                      size="sm"
+                      color="indigo"
+                      leftSection={<IconAdjustments size={18} />}
+                      onClick={() => setFitOpened(true)}
+                    >
+                      {t('fit_groups_open_button')}
+                    </Button>
+                  ) : null}
+                </Stack>
               </Alert>
+            ) : null}
+            {fitOpened ? (
+              <FitGroupsModal
+                tournamentId={tournamentData.id}
+                stage={stage}
+                className={categoryName(stage.category_id)}
+                onClose={() => setFitOpened(false)}
+                onFitted={() => swrStagesResponse.mutate()}
+              />
             ) : null}
             <Group>
               <Button
@@ -366,8 +380,61 @@ export default function DrawPage() {
             </Group>
           </Stack>
         ) : null}
-        {stage != null && toDraw.length < 1 && placements.length < 1 ? (
-          <Text c="dimmed">{t('draw_no_teams_left')}</Text>
+        {swrStagesResponse.data != null && stages.length < 1 ? (
+          <NoContent
+            title={t('draw_no_groups_title')}
+            description={t('draw_no_groups_description')}
+            actions={
+              <>
+                <NoContentLink
+                  href={`/tournaments/${tournamentData.id}/setup`}
+                  label={t('setup_start_button')}
+                  primary
+                />
+                <NoContentLink
+                  href={`/tournaments/${tournamentData.id}/stages`}
+                  label={t('stage_title')}
+                />
+              </>
+            }
+          />
+        ) : null}
+        {stage != null && swrTeams.data != null && teams.length < 1 ? (
+          <NoContent
+            title={t('draw_no_teams_title')}
+            description={t('draw_no_teams_description')}
+            actions={
+              <>
+                <NoContentLink
+                  href={`/tournaments/${tournamentData.id}/teams`}
+                  label={capitalize(t('teams_title'))}
+                  primary
+                />
+                <NoContentLink
+                  href={`/tournaments/${tournamentData.id}/registrations`}
+                  label={t('registrations_title')}
+                />
+              </>
+            }
+          />
+        ) : null}
+        {stage != null && teams.length > 0 && toDraw.length < 1 && revealed >= placements.length ? (
+          <Alert color="green" icon={<IconCheck />} maw="50rem" title={t('draw_no_teams_left')}>
+            <Stack gap="xs" align="flex-start">
+              <Text size="sm">{t('draw_done_next')}</Text>
+              <Group gap="xs">
+                <NoContentLink
+                  href={`/tournaments/${tournamentData.id}/schedule`}
+                  label={t('planning_title')}
+                  primary
+                />
+                <NoContentLink
+                  href={`/tournaments/${tournamentData.id}/overview`}
+                  label={t('overview_title')}
+                />
+              </Group>
+            </Stack>
+          </Alert>
         ) : null}
 
         {stage != null ? (

@@ -1,8 +1,10 @@
-import { Alert, Container, Text, Title } from '@mantine/core';
-import { IconAlertCircle } from '@tabler/icons-react';
+import { Alert, Button, Container, Group, Text, Title } from '@mantine/core';
+import { IconAlertCircle, IconArrowRight } from '@tabler/icons-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { HiMiniWrenchScrewdriver } from 'react-icons/hi2';
+
+import PreloadLink from '@components/utils/link';
 
 import classes from './empty_table_info.module.css';
 
@@ -28,14 +30,20 @@ export function EmptyTableInfo({
   );
 }
 
+/**
+ * An empty page or list. `actions`: buttons for what to do about it (the first one filled), so
+ * the page is never a dead end.
+ */
 export function NoContent({
   title,
   description,
   icon,
+  actions,
 }: {
   title: string;
   description?: string;
   icon?: React.ReactNode;
+  actions?: React.ReactNode;
 }) {
   return (
     <Container mt="md">
@@ -44,6 +52,34 @@ export function NoContent({
       <Text size="lg" ta="center" className={classes.description} inherit>
         {description}
       </Text>
+      {actions != null ? (
+        <Group justify="center" gap="sm" mt="lg">
+          {actions}
+        </Group>
+      ) : null}
     </Container>
+  );
+}
+
+/** A button in an empty state that goes to another page. */
+export function NoContentLink({
+  href,
+  label,
+  primary = false,
+}: {
+  href: string;
+  label: string;
+  primary?: boolean;
+}) {
+  return (
+    <Button
+      component={PreloadLink}
+      href={href}
+      variant={primary ? 'filled' : 'default'}
+      color="indigo"
+      rightSection={primary ? <IconArrowRight size={16} /> : undefined}
+    >
+      {label}
+    </Button>
   );
 }

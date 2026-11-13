@@ -36,43 +36,40 @@ import dayjs from 'dayjs';
 import i18n from '../../i18n';
 import { getLogin, performLogout, tokenPresent } from './local_storage';
 
-export function handleRequestError(response: AxiosError) {
-  if (response.code === 'ERR_NETWORK') {
-    showNotification({
-      color: 'red',
-      title: i18n.t('error_occurred_title'),
-      message: i18n.t('internal_server_error'),
-      autoClose: 10000,
-    });
-    return;
-  }
+/** The message of a failed request, in the user's language where the error has a code. */
+export function requestErrorMessage(response: AxiosError): string | null {
+  if (response.code === 'ERR_NETWORK') return i18n.t('internal_server_error');
 
   // @ts-ignore
   if (response.response != null && response.response.data.detail != null) {
     // If the detail contains an array, there is likely a pydantic validation error occurring.
     // @ts-ignore
     const { detail } = response.response.data;
-    let message: string;
 
     // Errors with a code (X-Error-Code) are shown in the user's language
     // @ts-ignore
     const code: string | undefined = response.response.headers?.['x-error-code'];
     if (code != null && i18n.exists(`server_error_${code}`)) {
-      message = i18n.t(`server_error_${code}`);
-    } else if (Array.isArray(detail)) {
-      const firstError = detail[0];
-      message = `${firstError.loc.slice(1).join(' - ')}: ${firstError.msg}`;
-    } else {
-      message = detail.toString();
+      return i18n.t(`server_error_${code}`);
     }
-
-    showNotification({
-      color: 'red',
-      title: i18n.t('error_occurred_title'),
-      message,
-      autoClose: 10000,
-    });
+    if (Array.isArray(detail)) {
+      const firstError = detail[0];
+      return `${firstError.loc.slice(1).join(' - ')}: ${firstError.msg}`;
+    }
+    return detail.toString();
   }
+  return null;
+}
+
+export function handleRequestError(response: AxiosError) {
+  const message = requestErrorMessage(response);
+  if (message == null) return;
+  showNotification({
+    color: 'red',
+    title: i18n.t('error_occurred_title'),
+    message,
+    autoClose: 10000,
+  });
 }
 
 export function requestSucceeded(result: AxiosResponse | AxiosError) {

@@ -59,7 +59,7 @@ export default function TournamentsCardTable({
       <Group key={tournament.id} className={classes.card}>
         <UnstyledButton
           component={PreloadLink}
-          href={`/tournaments/${tournament.id}/stages`}
+          href={`/tournaments/${tournament.id}/overview`}
           w="100%"
         >
           <Card shadow="sm" padding="lg" radius="md" withBorder w="100%">

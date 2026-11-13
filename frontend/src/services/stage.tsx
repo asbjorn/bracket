@@ -1,4 +1,4 @@
-import { LevelRoundBody } from '@openapi';
+import { FitGroupsResponse, LevelRoundBody } from '@openapi';
 import { awaitRequestAndHandleError, createAxios, handleRequestError } from './adapter';
 
 export async function createStage(tournament_id: number, category_id: number | null) {
@@ -36,5 +36,27 @@ export async function createLevelRound(
 ) {
   return awaitRequestAndHandleError(async (axios) =>
     axios.post(`tournaments/${tournament_id}/categories/${category_id}/level_round`, body),
+  );
+}
+
+/** What fitting the groups of a class to its teams would create; throws on an error. */
+export async function previewFitGroups(
+  tournament_id: number,
+  stage_id: number,
+  group_size: number,
+) {
+  return createAxios().get<FitGroupsResponse>(
+    `tournaments/${tournament_id}/stages/${stage_id}/fit_groups`,
+    { params: { group_size } },
+  );
+}
+
+export async function fitGroups(tournament_id: number, stage_id: number, group_size: number) {
+  return awaitRequestAndHandleError(async (axios) =>
+    axios.post<FitGroupsResponse>(
+      `tournaments/${tournament_id}/stages/${stage_id}/fit_groups`,
+      null,
+      { params: { group_size } },
+    ),
   );
 }

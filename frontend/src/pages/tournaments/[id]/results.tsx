@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next';
 
 import { PageTitle } from '@components/help/help_button';
 import MatchModal from '@components/modals/match_modal';
-import { NoContent } from '@components/no_content/empty_table_info';
+import { NoContent, NoContentLink } from '@components/no_content/empty_table_info';
 import { Time, compareDateTime, spansMultipleDays } from '@components/utils/datetime';
 import {
   formatMatchInput1,
@@ -166,6 +166,7 @@ function Schedule({
   openMatchModal: CallableFunction;
   matchesLookup: any;
 }) {
+  const { id } = getTournamentIdFromRouter();
   const matches: any[] = Object.values(matchesLookup);
   const sortedMatches = matches
     .filter((m1: any) => m1.match.start_time != null)
@@ -205,8 +206,18 @@ function Schedule({
     return (
       <NoContent
         title={t('no_matches_title')}
-        description={t('no_matches_description')}
+        description={t('results_no_matches_description')}
         icon={<AiOutlineHourglass />}
+        actions={
+          <>
+            <NoContentLink
+              href={`/tournaments/${id}/schedule`}
+              label={t('planning_title')}
+              primary
+            />
+            <NoContentLink href={`/tournaments/${id}/overview`} label={t('overview_title')} />
+          </>
+        }
       />
     );
   }
