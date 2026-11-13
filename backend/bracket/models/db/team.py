@@ -57,6 +57,7 @@ class TeamInsertable(BaseModelORM):
     withdrawn: bool = False
     checked_in: bool = False
     registration_status: RegistrationStatus = RegistrationStatus.APPROVED
+    pot: int | None = None
 
 
 class Team(TeamInsertable):
@@ -79,6 +80,7 @@ class TeamWithPlayers(BaseModel):
     withdrawn: bool = False
     checked_in: bool = False
     registration_status: RegistrationStatus = RegistrationStatus.APPROVED
+    pot: int | None = None
 
     @property
     def player_ids(self) -> list[PlayerId]:
@@ -106,6 +108,9 @@ ClubName = Annotated[
 
 
 MAX_SQUAD_SIZE = 60
+# Seeding pots in the group draw: 1 is the strongest
+MAX_POTS = 10
+Pot = Annotated[int, Field(ge=1, le=MAX_POTS)]
 # Room for a club name (max 50) plus class and number, e.g. "Sandnes IL G9 2"
 MAX_TEAM_NAME_LENGTH = 50
 TeamName = Annotated[
@@ -124,12 +129,25 @@ class TeamBody(BaseModelORM):
     club_id: ParticipatingClubId | None = None
     # Players in the squad (e.g. for counting medals)
     squad_size: int | None = Field(default=None, ge=1, le=MAX_SQUAD_SIZE)
+    # Seeding pot in the group draw; empty means pot 1
+    pot: Pot | None = None
 
 
 class TeamMultiBody(BaseModelORM):
     names: str = Field(..., min_length=1)
     active: bool
     category_id: CategoryId | None = None
+
+
+class TeamPot(BaseModel):
+    team_id: TeamId
+    pot: Pot | None  # Empty means pot 1
+
+
+class TeamPotsBody(BaseModel):
+    """Sets the seeding pots of some teams at once (e.g. from the draw page)."""
+
+    pots: list[TeamPot] = Field(min_length=1, max_length=500)
 
 
 class TeamConflict(BaseModel):

@@ -339,6 +339,8 @@ teams = Table(
     Column("registration_status", Text, nullable=False, index=True, server_default="APPROVED"),
     # Players in the squad, e.g. for counting medals
     Column("squad_size", Integer, nullable=True),
+    # Seeding pot in the group draw (1 = strongest); empty means pot 1
+    Column("pot", Integer, nullable=True),
 )
 
 # Contact details of a registered team: personal data, only for the organiser

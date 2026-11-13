@@ -50,6 +50,7 @@ async def test_teams_endpoint(
                         "withdrawn": False,
                         "checked_in": False,
                         "registration_status": "APPROVED",
+                        "pot": None,
                     }
                 ],
                 "count": 1,
@@ -189,3 +190,74 @@ async def test_cross_tournament_team_access_denied(
                 json={"name": "Hacked", "active": True, "player_ids": []},
             )
             assert response.get("detail") == f"Could not find team with id {other_team.id}"
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_set_team_pots(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    async with (
+        inserted_team(
+            DUMMY_TEAM1.model_copy(update={"tournament_id": auth_context.tournament.id})
+        ) as team1,
+        inserted_team(
+            DUMMY_TEAM1.model_copy(
+                update={"tournament_id": auth_context.tournament.id, "name": "Team 2", "pot": 3}
+            )
+        ) as team2,
+    ):
+        body = {"pots": [{"team_id": team1.id, "pot": 2}, {"team_id": team2.id, "pot": None}]}
+        response = await send_tournament_request(
+            HTTPMethod.PUT, "team_pots", auth_context, None, body
+        )
+        assert response == SUCCESS_RESPONSE
+
+        pots = {
+            team.id: team.pot
+            for team in [
+                await fetch_one_parsed_certain(
+                    database, Team, query=teams.select().where(teams.c.id == team_id)
+                )
+                for team_id in (team1.id, team2.id)
+            ]
+        }
+        assert pots == {team1.id: 2, team2.id: None}
+
+        # The edit form keeps the pot
+        team_body = {"name": "Team 1", "active": True, "player_ids": [], "pot": 4}
+        response = await send_tournament_request(
+            HTTPMethod.PUT, f"teams/{team1.id}", auth_context, None, team_body
+        )
+        assert response["data"]["pot"] == 4
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_set_team_pots_invalid(
+    startup_and_shutdown_uvicorn_server: None, auth_context: AuthContext
+) -> None:
+    async with inserted_team(
+        DUMMY_TEAM1.model_copy(update={"tournament_id": auth_context.tournament.id})
+    ) as team:
+        body = {"pots": [{"team_id": team.id, "pot": 11}]}
+        response = await send_tournament_request(
+            HTTPMethod.PUT, "team_pots", auth_context, None, body
+        )
+        assert "detail" in response and response.get("success") is None
+
+    async with inserted_tournament(
+        DUMMY_TOURNAMENT.model_copy(
+            update={"club_id": auth_context.club.id, "dashboard_endpoint": None}
+        )
+    ) as other_tournament:
+        async with inserted_team(
+            DUMMY_TEAM1.model_copy(update={"tournament_id": other_tournament.id})
+        ) as other_team:
+            body = {"pots": [{"team_id": other_team.id, "pot": 2}]}
+            response = await send_tournament_request(
+                HTTPMethod.PUT, "team_pots", auth_context, None, body
+            )
+            assert response == {"detail": "Some of the teams don't exist in this tournament"}
+            other = await fetch_one_parsed_certain(
+                database, Team, query=teams.select().where(teams.c.id == other_team.id)
+            )
+            assert other.pot is None

@@ -118,7 +118,7 @@ export const HELP: Record<HelpPageId, HelpPage> = {
   },
   team_edit: {
     steps: 0,
-    fields: ['name', 'club', 'squad', 'no_overlap', 'players'],
+    fields: ['name', 'club', 'squad', 'pot', 'no_overlap', 'players'],
     actions: ['save'],
     tips: 0,
     links: [],
@@ -164,7 +164,7 @@ export const HELP: Record<HelpPageId, HelpPage> = {
     steps: 3,
     fields: ['pots'],
     actions: ['draw', 'fullscreen'],
-    tips: 2,
+    tips: 3,
     links: [
       { page: 'clubs', to: '/tournaments/:id/clubs' },
       { page: 'stages', to: '/tournaments/:id/stages' },

@@ -46,6 +46,7 @@ export async function updateTeam(
   category_id: number | null,
   club_id: number | null,
   squad_size: number | null,
+  pot: number | null,
 ) {
   return awaitRequestAndHandleError(async (axios) =>
     axios.put(`tournaments/${tournament_id}/teams/${team_id}`, {
@@ -55,7 +56,18 @@ export async function updateTeam(
       category_id,
       club_id,
       squad_size,
+      pot,
     }),
+  );
+}
+
+/** Saves the seeding pots of the group draw; `null` means pot 1. */
+export async function setTeamPots(
+  tournament_id: number,
+  pots: { team_id: number; pot: number | null }[],
+) {
+  return awaitRequestAndHandleError(async (axios) =>
+    axios.put(`tournaments/${tournament_id}/team_pots`, { pots }),
   );
 }
 

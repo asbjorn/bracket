@@ -1131,6 +1131,10 @@ export type FullTeamWithPlayers = {
    * Players
    */
   players: Array<Player>;
+  /**
+   * Pot
+   */
+  pot: number | null;
   registration_status: RegistrationStatus;
   /**
    * Squad Size
@@ -4656,6 +4660,10 @@ export type Team = {
    * Name
    */
   name: string;
+  /**
+   * Pot
+   */
+  pot: number | null;
   registration_status: RegistrationStatus;
   /**
    * Squad Size
@@ -4703,6 +4711,10 @@ export type TeamBody = {
    * Player Ids
    */
   player_ids: Array<number>;
+  /**
+   * Pot
+   */
+  pot: number | null;
   /**
    * Squad Size
    */
@@ -4763,6 +4775,32 @@ export type TeamMultiBody = {
    * Names
    */
   names: string;
+};
+
+/**
+ * TeamPot
+ */
+export type TeamPot = {
+  /**
+   * Pot
+   */
+  pot: number | null;
+  /**
+   * Team Id
+   */
+  team_id: number;
+};
+
+/**
+ * TeamPotsBody
+ *
+ * Sets the seeding pots of some teams at once (e.g. from the draw page).
+ */
+export type TeamPotsBody = {
+  /**
+   * Pots
+   */
+  pots: Array<TeamPot>;
 };
 
 /**
@@ -9858,6 +9896,38 @@ export type GetTournamentTeamConflictsTournamentsTournamentIdTeamConflictsGetRes
 
 export type GetTournamentTeamConflictsTournamentsTournamentIdTeamConflictsGetResponse =
   GetTournamentTeamConflictsTournamentsTournamentIdTeamConflictsGetResponses[keyof GetTournamentTeamConflictsTournamentsTournamentIdTeamConflictsGetResponses];
+
+export type SetTeamPotsTournamentsTournamentIdTeamPotsPutData = {
+  body: TeamPotsBody;
+  path: {
+    /**
+     * Tournament Id
+     */
+    tournament_id: number;
+  };
+  query?: never;
+  url: '/tournaments/{tournament_id}/team_pots';
+};
+
+export type SetTeamPotsTournamentsTournamentIdTeamPotsPutErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type SetTeamPotsTournamentsTournamentIdTeamPotsPutError =
+  SetTeamPotsTournamentsTournamentIdTeamPotsPutErrors[keyof SetTeamPotsTournamentsTournamentIdTeamPotsPutErrors];
+
+export type SetTeamPotsTournamentsTournamentIdTeamPotsPutResponses = {
+  /**
+   * Successful Response
+   */
+  200: SuccessResponse;
+};
+
+export type SetTeamPotsTournamentsTournamentIdTeamPotsPutResponse =
+  SetTeamPotsTournamentsTournamentIdTeamPotsPutResponses[keyof SetTeamPotsTournamentsTournamentIdTeamPotsPutResponses];
 
 export type GetTeamsTournamentsTournamentIdTeamsGetData = {
   body?: never;

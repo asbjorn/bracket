@@ -81,6 +81,7 @@ export default function TeamUpdateModal({
       category: categoryIdToValue(team.category_id),
       club: team.club_id != null ? `${team.club_id}` : (null as string | null),
       squad_size: (team.squad_size ?? '') as number | string,
+      pot: (team.pot ?? '') as number | string,
     },
 
     validate: {
@@ -106,6 +107,7 @@ export default function TeamUpdateModal({
               valueToCategoryId(values.category),
               values.club != null ? Number(values.club) : null,
               values.squad_size === '' ? null : Number(values.squad_size),
+              values.pot === '' ? null : Number(values.pot),
             );
             if (requestSucceeded(result) && conflicts != null) {
               await setTeamConflicts(tournament_id, team.id, conflicts.map(Number));
@@ -140,6 +142,17 @@ export default function TeamUpdateModal({
             max={60}
             w="12rem"
             {...form.getInputProps('squad_size')}
+          />
+
+          <NumberInput
+            mt="md"
+            label={t('team_pot_label')}
+            description={t('team_pot_description')}
+            placeholder="1"
+            min={1}
+            max={10}
+            w="12rem"
+            {...form.getInputProps('pot')}
           />
 
           <MultiSelect

@@ -24,6 +24,7 @@ from bracket.models.db.team import (
     TeamConflictsBody,
     TeamInsertable,
     TeamMultiBody,
+    TeamPotsBody,
 )
 from bracket.models.db.tournament import Tournament
 from bracket.models.db.user import UserPublic
@@ -263,6 +264,33 @@ async def check_in_team(
     team: Team = Depends(team_dependency),
 ) -> SuccessResponse:
     await set_team_flag(tournament_id, team.id, checked_in=body.checked_in)
+    return SuccessResponse()
+
+
+@router.put("/tournaments/{tournament_id}/team_pots", response_model=SuccessResponse)
+async def set_team_pots(
+    tournament_id: TournamentId,
+    body: TeamPotsBody,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+    __: Tournament = Depends(disallow_archived_tournament),
+) -> SuccessResponse:
+    """Sets the seeding pots of the group draw for some teams at once. Empty means pot 1."""
+    pot_of_team = {team_pot.team_id: team_pot.pot for team_pot in body.pots}
+    found = await get_teams_by_id(set(pot_of_team), tournament_id)
+    if len(found) != len(pot_of_team):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Some of the teams don't exist in this tournament",
+        )
+
+    async with database.transaction():
+        for team_id, pot in pot_of_team.items():
+            await database.execute(
+                query=teams.update().where(
+                    (teams.c.id == team_id) & (teams.c.tournament_id == tournament_id)
+                ),
+                values={"pot": pot},
+            )
     return SuccessResponse()
 
 

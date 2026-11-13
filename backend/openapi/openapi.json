@@ -2217,6 +2217,17 @@
             "title": "Players",
             "type": "array"
           },
+          "pot": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pot"
+          },
           "registration_status": {
             "$ref": "#/components/schemas/RegistrationStatus",
             "default": "APPROVED"
@@ -2270,6 +2281,7 @@
           "withdrawn",
           "checked_in",
           "registration_status",
+          "pot",
           "id",
           "players"
         ],
@@ -8792,6 +8804,17 @@
             "title": "Name",
             "type": "string"
           },
+          "pot": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pot"
+          },
           "registration_status": {
             "$ref": "#/components/schemas/RegistrationStatus",
             "default": "APPROVED"
@@ -8845,6 +8868,7 @@
           "withdrawn",
           "checked_in",
           "registration_status",
+          "pot",
           "id"
         ],
         "title": "Team",
@@ -8892,6 +8916,19 @@
             "type": "array",
             "uniqueItems": true
           },
+          "pot": {
+            "anyOf": [
+              {
+                "maximum": 10.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pot"
+          },
           "squad_size": {
             "anyOf": [
               {
@@ -8912,7 +8949,8 @@
           "player_ids",
           "category_id",
           "club_id",
-          "squad_size"
+          "squad_size",
+          "pot"
         ],
         "title": "TeamBody",
         "type": "object"
@@ -9000,6 +9038,52 @@
           "category_id"
         ],
         "title": "TeamMultiBody",
+        "type": "object"
+      },
+      "TeamPot": {
+        "properties": {
+          "pot": {
+            "anyOf": [
+              {
+                "maximum": 10.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pot"
+          },
+          "team_id": {
+            "title": "Team Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "team_id",
+          "pot"
+        ],
+        "title": "TeamPot",
+        "type": "object"
+      },
+      "TeamPotsBody": {
+        "description": "Sets the seeding pots of some teams at once (e.g. from the draw page).",
+        "properties": {
+          "pots": {
+            "items": {
+              "$ref": "#/components/schemas/TeamPot"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Pots",
+            "type": "array"
+          }
+        },
+        "required": [
+          "pots"
+        ],
+        "title": "TeamPotsBody",
         "type": "object"
       },
       "TeamRegistrationResult": {
@@ -17451,6 +17535,64 @@
           }
         ],
         "summary": "Get Tournament Team Conflicts",
+        "tags": [
+          "Teams"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}/team_pots": {
+      "put": {
+        "description": "Sets the seeding pots of the group draw for some teams at once. Empty means pot 1.",
+        "operationId": "set_team_pots_tournaments__tournament_id__team_pots_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamPotsBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Set Team Pots",
         "tags": [
           "Teams"
         ]

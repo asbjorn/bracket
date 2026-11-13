@@ -184,7 +184,8 @@ The target workflow:
 - **Scheduler speed-up:** court bookings as merged intervals searched with bisect; the worst case (3300 matches, 100 courts) went from 34 s to 5 s with identical plans.
 - **Setup wizard** (`/tournaments/{id}/setup`): classes → courts → playing days → overview with the calculated plan → creates classes, group stages, A/B/C playoffs, courts and time windows in one transaction, and can plan all matches at once. Only for an empty tournament.
 - **Group draw** (`/tournaments/{id}/draw`): pots (one team per pot per group), clubs apart where possible (Hungarian per round), random otherwise; revealed team by team with a full-screen view. Teams have an optional club; empty means the name without a trailing number.
-- **Not done yet:** manual adjustment happens on the stages page (no drag and drop on the draw view); pots are not stored.
+- **Pots are stored on the teams** (`teams.pot`, empty means pot 1): set on the draw page (saved at once) or in the team edit form, shown as a badge on the teams page and on the draw board. The draw page shows the teams per pot against the number of groups and warns when a pot has more teams than there are groups.
+- **Not done yet:** manual adjustment happens on the stages page (no drag and drop on the draw view).
 
 24. **[Feature] Capacity calculator** (Cup Manager formulas)
     - Inputs: teams per class, group size, playoff type (A / A+B / …), match length + changeover, pitches per format, time windows.

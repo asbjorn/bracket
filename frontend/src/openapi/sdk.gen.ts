@@ -376,6 +376,9 @@ import type {
   SetTeamConflictsTournamentsTournamentIdTeamsTeamIdConflictsPutData,
   SetTeamConflictsTournamentsTournamentIdTeamsTeamIdConflictsPutErrors,
   SetTeamConflictsTournamentsTournamentIdTeamsTeamIdConflictsPutResponses,
+  SetTeamPotsTournamentsTournamentIdTeamPotsPutData,
+  SetTeamPotsTournamentsTournamentIdTeamPotsPutErrors,
+  SetTeamPotsTournamentsTournamentIdTeamPotsPutResponses,
   SplitCourtTournamentsTournamentIdCourtsCourtIdSplitPostData,
   SplitCourtTournamentsTournamentIdCourtsCourtIdSplitPostErrors,
   SplitCourtTournamentsTournamentIdCourtsCourtIdSplitPostResponses,
@@ -4048,6 +4051,33 @@ export const getTournamentTeamConflictsTournamentsTournamentIdTeamConflictsGet =
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/tournaments/{tournament_id}/team_conflicts',
     ...options,
+  });
+
+/**
+ * Set Team Pots
+ *
+ * Sets the seeding pots of the group draw for some teams at once. Empty means pot 1.
+ */
+export const setTeamPotsTournamentsTournamentIdTeamPotsPut = <ThrowOnError extends boolean = false>(
+  options: Options<SetTeamPotsTournamentsTournamentIdTeamPotsPutData, ThrowOnError>,
+): RequestResult<
+  SetTeamPotsTournamentsTournamentIdTeamPotsPutResponses,
+  SetTeamPotsTournamentsTournamentIdTeamPotsPutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    SetTeamPotsTournamentsTournamentIdTeamPotsPutResponses,
+    SetTeamPotsTournamentsTournamentIdTeamPotsPutErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/tournaments/{tournament_id}/team_pots',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 
 /**

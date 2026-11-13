@@ -86,6 +86,11 @@ export default function TeamsTable({
         <Table.Td>
           <Group gap="xs">
             {team.name}
+            {team.pot != null ? (
+              <Badge color="gray" variant="light" title={t('team_pot_label')}>
+                {t('draw_pot_badge', { pot: team.pot })}
+              </Badge>
+            ) : null}
             {team.withdrawn ? (
               <Badge color="red" variant="outline">
                 {t('withdrawn_badge')}

@@ -21,6 +21,7 @@ from bracket.logic.scheduling.group_draw import (
 )
 from bracket.models.db.stage_item import StageType
 from bracket.models.db.stage_item_inputs import StageItemInputEmpty, StageItemInputFinal
+from bracket.models.db.team import MAX_POTS
 from bracket.models.db.util import StageWithStageItems
 from bracket.sql.stages import get_full_tournament_details
 from bracket.sql.teams import get_teams_by_id
@@ -32,8 +33,6 @@ from bracket.utils.id_types import (
     TeamId,
     TournamentId,
 )
-
-MAX_POTS = 10
 
 
 class DrawBody(BaseModel):
