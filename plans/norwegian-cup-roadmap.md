@@ -49,7 +49,7 @@ Each item is tagged **[Fix]**, **[Core]**, **[Feature]** or **[Nice]**, and **�
    - Map browser languages `no`, `nb-NO` and `nn-NO` to `nb` in `i18n.ts` (`fallbackLng: { no: ['nb'], nn: ['nb'], default: ['en'] }`).
    - Load the dayjs `nb` locale so Mantine date pickers show Norwegian.
    - Crowdin already maps `%two_letters_code%`; confirm it produces `nb` (not `no`).
-   - Write a football glossary and use it consistently: court → *bane*, match → *kamp*, group → *pulje*, stage → *fase*, playoff → *sluttspill*, team → *lag*, class → *klasse*, referee → *dommer*, match host → *kampvert*, standings → *tabell*.
+   - Write a football glossary and use it consistently. As used in the app (English → Norwegian): cup → *cup* (never "tournament"/*turnering*), pitch → *bane* (never "court"), match → *kamp*, group → *pulje*, stage → *del* (the stages page is *Spilleopplegg*), playoff → *sluttspill*, knockout → *utslagsspill*, bye → *står over* (not *walkover*), walkover → *W.O.*, team → *lag*, class → *klasse*, organising club → *arrangørklubb*, participating club → *deltakende klubb*, schedule → *kampoppsett*, match sheet → *kampskjema*, public cup page → *offentlig cupside*, points and table rules → *poeng og tabellregler*, referee → *dommer*, match host → *kampvert*, standings → *tabell*. English labels use sentence case ("Add team"), and help texts quote the labels exactly as they appear on screen.
    - Backend error messages (≈33 `HTTPException(detail=...)` strings) are English only. Later, give them stable error codes that the frontend translates.
 2. **[Fix] Conflict detection** ⬆ — `matches_overlap` in `logic/planning/conflicts.py` misses partial overlaps and containment. Replace it with the standard interval test `s1 < e2 and s2 < e1`, and add tests.
 3. **[Fix] Production code imports test mocks** ⬆ — `logic/scheduling/builder.py` uses `MOCK_NOW` from `tests/`. Use the real current time.
@@ -277,12 +277,13 @@ After Phase 6, a three-way review (requirements fit for Norwegian cups, an end-t
 **Out of scope:** online payment (Vipps/KID), accommodation, meal tickets and cup passes; server-side PDF (print uses the browser); upstream contribution of the generic fixes.
 
 **Known limitations:**
-- Rate limits are per server process, and behind a proxy all clients share the proxy's IP.
-- Result-link tokens are in the URL path, so they appear in access logs.
+- Result-link tokens are in the URL path. Bracket redacts them in its own logs, metrics and Sentry events, but the reverse proxy must not log full `/score/<token>` URLs.
 - Officials aren't linked to players, so a referee playing at the same time isn't detected.
-- Split pitches are one level deep; there is no "shorten the remaining matches" option.
+- There is no "shorten the remaining matches" option.
 - The wizard's capacity estimate doesn't know club "never at the same time" rules added later; the real plan shows the exact shortfall.
-- Rules text is plain text (no Markdown).
+- "Follow your team" is remembered per device (browser storage), not per account.
+
+Since then (2026-11-12/13): rate limits shared through Postgres (`TRUSTED_PROXIES` for real client IPs), result-link tokens redacted, split pitches at any depth, rules in Markdown, in-app help on every page, the overview checklist, the stages page rework, follow your team and the podium reveal.
 
 ## Reference scenarios (integration tests)
 

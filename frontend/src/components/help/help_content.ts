@@ -263,7 +263,7 @@ export const HELP: Record<HelpPageId, HelpPage> = {
   ceremony: {
     steps: 0,
     fields: ['minutes'],
-    actions: ['export', 'print'],
+    actions: ['present', 'export', 'print'],
     tips: 1,
     links: [
       { page: 'results', to: '/tournaments/:id/results' },
@@ -306,9 +306,9 @@ export const HELP: Record<HelpPageId, HelpPage> = {
   },
   public_matches: {
     steps: 0,
-    fields: ['class'],
+    fields: ['class', 'mine'],
     actions: ['print'],
-    tips: 1,
+    tips: 2,
     links: [
       { page: 'public_teams', to: '/tournaments/:id/dashboard/teams' },
       { page: 'public_courts', to: '/tournaments/:id/dashboard/courts' },
@@ -318,13 +318,13 @@ export const HELP: Record<HelpPageId, HelpPage> = {
     steps: 0,
     fields: ['search'],
     actions: [],
-    tips: 0,
+    tips: 1,
     links: [{ page: 'public_team', to: '/tournaments/:id/dashboard/teams' }],
   },
   public_team: {
     steps: 0,
     fields: [],
-    actions: ['calendar', 'poster', 'print'],
+    actions: ['follow', 'calendar', 'poster', 'print'],
     tips: 1,
     links: [],
   },
@@ -339,7 +339,7 @@ export const HELP: Record<HelpPageId, HelpPage> = {
     steps: 0,
     fields: [],
     actions: [],
-    tips: 1,
+    tips: 2,
     links: [],
   },
   public_rules: {
